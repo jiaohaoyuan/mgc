@@ -1,0 +1,867 @@
+-- MySQL dump 10.13  Distrib 8.0.29, for Win64 (x86_64)
+--
+-- Host: localhost    Database: cdop_sys
+-- ------------------------------------------------------
+-- Server version	8.0.29
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Current Database: `cdop_sys`
+--
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `cdop_sys` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+
+USE `cdop_sys`;
+
+--
+-- Table structure for table `t_ryytn_account`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_account`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_account` (
+  `id` bigint NOT NULL COMMENT '账号编号',
+  `name` varchar(64) DEFAULT NULL COMMENT '姓名',
+  `nick_name` varchar(64) DEFAULT NULL COMMENT '昵称',
+  `work_code` varchar(32) DEFAULT NULL COMMENT '工号',
+  `login_id` varchar(32) DEFAULT NULL COMMENT '登录账号',
+  `password` varchar(64) DEFAULT NULL COMMENT '密码（加密）',
+  `oa_id` varchar(32) DEFAULT NULL COMMENT 'OA人员编号',
+  `status` int DEFAULT '1' COMMENT '状态：1正常，2停用',
+  `description` varchar(256) DEFAULT NULL,
+  `data_type` int DEFAULT '2' COMMENT '数据类型：1系统，2业务',
+  `created_time` datetime(6) DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_time` datetime(6) DEFAULT NULL,
+  `department_id` varchar(32) DEFAULT NULL COMMENT '所属部门编号',
+  `mobile` varchar(32) DEFAULT NULL COMMENT '手机号',
+  `email` varchar(64) DEFAULT NULL COMMENT '邮箱',
+  `helper_code` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_account_login_id` (`login_id`),
+  KEY `idx_account_oa_id` (`oa_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='账号';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_account`
+--
+
+LOCK TABLES `t_ryytn_account` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_account` DISABLE KEYS */;
+INSERT INTO `t_ryytn_account` VALUES (1000,'焦浩元','焦浩元',NULL,'jiaohaoyuan','$2a$10$lM2tnMM7NfhmGx.GVrzs/.bKrGS2GngzFZvAnu7iTcr1So31aRz22',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'130','13800000000',NULL,'GJVCPW'),(1001,'林万才','林万才',NULL,'linwc','$2a$10$pVedAxfs/NxeECpqFOv5T.gJvGOlhJviVOnqu.KjjmU96eN0LjgIS',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'111','18037898423','',NULL),(1002,'陈建国','陈建国',NULL,'chenjg','$2a$10$zs5/69F3WFiHtXEjIuYvVemFZpS1/4VrASZDo5ELQsCGuekT.I3OK',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'111','13811110002',NULL,NULL),(1003,'李强','李强',NULL,'liqiang','$2a$10$UagAVby23TpbeAc4r/1q4Oft3EwWoYlKgqXB49vVOTWKllw9Js3J2',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13822220001',NULL,NULL),(1004,'王亚琴','王亚琴',NULL,'wangyq','$2a$10$p4NiZzHJ0xwa7NzM7sxITOvUom9tVUiskyiQQ5jv/9068ZVwVS2QW',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'121','13822220002',NULL,NULL),(1005,'张海军','张海军',NULL,'zhanghy','$2a$10$nzNoveFjtEBnwgQ2qAQCP.FDjxywM0BGp.T0/haNLx11PNbK9scg.',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'113','13833330001',NULL,NULL),(2001,'员工1','昵称1',NULL,'staff001','$2a$10$kvNQNCF96f8Qmqarx6CetO4x6UHj8bhBfrB4tcWLwLLsejQPLjlfG',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000001',NULL,NULL),(2002,'员工2','昵称2',NULL,'staff002','$2a$10$JudNihf.uNxwT6PhQ/8EgeqfAbfeogUrus7kwipDi/r6.g7WMmo/C',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000002',NULL,NULL),(2003,'员工3','昵称3',NULL,'staff003','$2a$10$rTt2yg4MXCrInPFoLQp1nOpy1LFUs4qBARzGbrYUBCZoSt8I745hS',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000003',NULL,NULL),(2004,'员工4','昵称4',NULL,'staff004','$2a$10$hg9Km8FFWXWAf0s6fHYAHOLrF1mI159JgrCjSvSx/pj9gnLhlPH.u',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000004',NULL,NULL),(2005,'员工5','昵称5',NULL,'staff005','$2a$10$mS3Q6Ng1iEb44o/k1NdT9uvsi16om6G1XJSDz6pAdO6ykcEFMmZC.',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000005',NULL,NULL),(2006,'员工6','昵称6',NULL,'staff006','$2a$10$pnXKmLcFQ6j8nuSUMfXNyeOGWgM6.Ve9YDlDfUqfvZxLoIMspXv86',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000006',NULL,NULL),(2007,'员工7','昵称7',NULL,'staff007','$2a$10$ao57kpkHyT4g41epyjI6BuEZSx3oUfFc30FIHYssxeLUjAvrFjpou',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000007',NULL,NULL),(2008,'员工8','昵称8',NULL,'staff008','$2a$10$VU1uMi8xgXav9XsZK12SsOTUECOiM1nphmRzalLF4xjS3KD9xNLYy',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000008',NULL,NULL),(2009,'员工9','昵称9',NULL,'staff009','$2a$10$piOJTZjfLk/duzIQ4RwKgedGPezk/eHHUWSoQurBXFVPDPAeCKY3e',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000009',NULL,NULL),(2010,'员工10','昵称10',NULL,'staff010','$2a$10$vpbgKhYK87Mzwu9VNZL09.1AU.N5k.K6vJ5gAKualN9hU/a1rrT7e',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000010',NULL,NULL),(2011,'员工11','昵称11',NULL,'staff011','$2a$10$.H4HULIdXh.o4lquP3GbmOYTNkAk1TOIx8gEd7VB/.wiWSH6p099S',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000011',NULL,NULL),(2012,'员工12','昵称12',NULL,'staff012','$2a$10$sBzBRptl9t998ktIA9okPOrdBU8GSsvuSBhxAt9/wlOquD7o3lyBO',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000012',NULL,NULL),(2013,'员工13','昵称13',NULL,'staff013','$2a$10$a7LlrfJkaRn4m7YKk/yI6.8HtW3y5QszxTjeKB2LoGp5/bhRn/ahC',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000013',NULL,NULL),(2014,'员工14','昵称14',NULL,'staff014','$2a$10$hnq.0Bjp08EBeXiQkOhAte4UZ1FqprzekfT0dVoPG7iaPHhrz9GuK',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000014',NULL,NULL),(2015,'员工15','昵称15',NULL,'staff015','$2a$10$FXB..BagsXze3uZI5AsequSvX6VJ24QJclrlkLtziwdKb9GGItPHe',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000015',NULL,NULL),(2016,'员工16','昵称16',NULL,'staff016','$2a$10$apqIMQx7NyNMf3Qdu1cFYOoD5gdIqoxGFIKzItukCGcWmRBeAqhbS',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000016',NULL,NULL),(2017,'员工17','昵称17',NULL,'staff017','$2a$10$SBGL/aZpbSA436Kn0k9RVuHBM4vzyW8oNZqGJNGj6WWXaHo9GXgy6',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000017',NULL,NULL),(2018,'员工18','昵称18',NULL,'staff018','$2a$10$5wgB7TPlEYIzegxbZpfyLefD62mm1HxhMBGfcTGR8Qe/HmJVKf7uO',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000018',NULL,NULL),(2019,'员工19','昵称19',NULL,'staff019','$2a$10$g1NayheQrzlhxnCrBmpSQeFQzDWRNJwXW0Qf7ZDxXbRRe3kAbgLtK',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000019',NULL,NULL),(2020,'员工20','昵称20',NULL,'staff020','$2a$10$bth3l.qVTySipA.Hw6304e8rFiJfSGt8gUYEXL4k0d/AjyHAIk1XW',NULL,1,NULL,2,'2026-03-23 10:30:27.411000',NULL,'120','13920000020',NULL,NULL),(1774332534417,'1111','111111111',NULL,'1111','$2a$10$j64nGGQWmDlepueIJ7PfHezhoNvbHC.Wlebn/dULm8z/9ogY8aIca',NULL,1,NULL,2,'2026-03-24 14:08:54.000000',NULL,'111','1111','111111111',NULL),(1774336901154,'ce\'shi','ceshi',NULL,'ce\'shi','$2a$10$/E9Qk2Sn185KYiOdIGF14OorADuQ/hJgfm8ortML0Hle4vAEenHkm',NULL,1,NULL,2,'2026-03-24 15:21:41.000000',NULL,'111','11111111','',NULL);
+/*!40000 ALTER TABLE `t_ryytn_account` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_account_jobtitle`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_account_jobtitle`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_account_jobtitle` (
+  `account_id` bigint NOT NULL,
+  `job_id` varchar(32) COLLATE utf8mb4_general_ci NOT NULL,
+  PRIMARY KEY (`account_id`,`job_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_account_jobtitle`
+--
+
+LOCK TABLES `t_ryytn_account_jobtitle` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_account_jobtitle` DISABLE KEYS */;
+INSERT INTO `t_ryytn_account_jobtitle` VALUES (1002,'J111'),(1002,'J311'),(1002,'J321'),(1003,'J122'),(1003,'J123'),(1004,'J122'),(1004,'J123'),(1005,'J211'),(1005,'J221'),(1005,'J231'),(2001,'J211'),(2001,'J221'),(2001,'J231'),(2002,'J211'),(2002,'J221'),(2002,'J231'),(2003,'J211'),(2003,'J221'),(2003,'J231'),(2004,'J211'),(2004,'J221'),(2004,'J231'),(2005,'J211'),(2005,'J221'),(2005,'J231'),(2006,'J211'),(2006,'J221'),(2006,'J231'),(2007,'J211'),(2007,'J221'),(2007,'J231'),(2008,'J211'),(2008,'J221'),(2008,'J231'),(2009,'J211'),(2009,'J221'),(2009,'J231'),(2010,'J211'),(2010,'J221'),(2010,'J231'),(2011,'J211'),(2011,'J221'),(2011,'J231'),(2012,'J211'),(2012,'J221'),(2012,'J231'),(2013,'J211'),(2013,'J221'),(2013,'J231'),(2014,'J211'),(2014,'J221'),(2014,'J231'),(2015,'J211'),(2015,'J221'),(2015,'J231'),(2016,'J211'),(2016,'J221'),(2016,'J231'),(2017,'J211'),(2017,'J221'),(2017,'J231'),(2018,'J211'),(2018,'J221'),(2018,'J231'),(2019,'J211'),(2019,'J221'),(2019,'J231'),(2020,'J211'),(2020,'J221'),(2020,'J231'),(1774336901154,'1774332487200'),(1774336901154,'J111');
+/*!40000 ALTER TABLE `t_ryytn_account_jobtitle` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_account_role`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_account_role`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_account_role` (
+  `account_id` bigint NOT NULL COMMENT '账号编号',
+  `role_id` bigint NOT NULL COMMENT '角色编号',
+  KEY `idx_account_role_account` (`account_id`),
+  KEY `idx_account_role_role` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='账号角色关联';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_account_role`
+--
+
+LOCK TABLES `t_ryytn_account_role` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_account_role` DISABLE KEYS */;
+INSERT INTO `t_ryytn_account_role` VALUES (1000,1),(1002,2),(1003,3),(1004,3),(1005,4),(2001,4),(2002,4),(2003,4),(2004,4),(2005,4),(2006,4),(2007,4),(2008,4),(2009,4),(2010,4),(2011,4),(2012,4),(2013,4),(2014,4),(2015,4),(2016,4),(2017,4),(2018,4),(2019,4),(2020,4),(1774332534417,1),(1774332534417,1774331333288),(1774336901154,1),(1774336901154,1774331333288),(1001,2);
+/*!40000 ALTER TABLE `t_ryytn_account_role` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_audit_log`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_audit_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_audit_log` (
+  `id` bigint NOT NULL,
+  `actor_id` bigint DEFAULT NULL,
+  `action` varchar(64) COLLATE utf8mb4_general_ci NOT NULL,
+  `resource` varchar(128) COLLATE utf8mb4_general_ci NOT NULL,
+  `target_id` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `detail` json DEFAULT NULL,
+  `trace_id` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ip` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `user_agent` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_time` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_audit_log`
+--
+
+LOCK TABLES `t_ryytn_audit_log` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_audit_log` DISABLE KEYS */;
+/*!40000 ALTER TABLE `t_ryytn_audit_log` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_button`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_button`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_button` (
+  `id` bigint NOT NULL COMMENT '按钮编号',
+  `name` varchar(64) NOT NULL COMMENT '按钮名称',
+  `alias` varchar(64) DEFAULT NULL COMMENT '按钮别名',
+  `permission` varchar(256) DEFAULT NULL COMMENT '权限码，用于后端校验，逗号分隔',
+  `dependency_ids` varchar(1024) DEFAULT NULL COMMENT '依赖按钮编号，逗号分隔',
+  `page_id` bigint NOT NULL COMMENT '所属页面编号',
+  `sort_no` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_button_page` (`page_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='按钮';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_button`
+--
+
+LOCK TABLES `t_ryytn_button` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_button` DISABLE KEYS */;
+/*!40000 ALTER TABLE `t_ryytn_button` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_dict_data`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_dict_data`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_dict_data` (
+  `dict_id` int NOT NULL AUTO_INCREMENT COMMENT '字典编号',
+  `dict_type` varchar(64) NOT NULL COMMENT '字典类型',
+  `name` varchar(64) NOT NULL COMMENT '字典项名称',
+  `code` varchar(64) NOT NULL COMMENT '字典项编码',
+  `parent_id` varchar(64) NOT NULL COMMENT '父级编号',
+  `parent_ids` varchar(2048) NOT NULL COMMENT '所有父级编号，逗号分隔',
+  `level` int NOT NULL COMMENT '层级',
+  `leaf_flag` smallint NOT NULL DEFAULT '1' COMMENT '是否叶子节点：0否，1是',
+  `css_class` varchar(64) DEFAULT NULL,
+  `list_class` varchar(64) DEFAULT NULL,
+  `item_check` int DEFAULT '0',
+  `sort_no` int DEFAULT NULL,
+  `status` int DEFAULT '1' COMMENT '状态：1正常，2停用',
+  `delete_flag` smallint DEFAULT '0' COMMENT '删除状态：0未删除，1已删除',
+  `description` varchar(256) DEFAULT NULL,
+  `created_by` varchar(64) DEFAULT NULL,
+  `created_time` datetime(6) DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_by` varchar(64) DEFAULT NULL,
+  `updated_time` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`dict_id`),
+  KEY `idx_dict_data_type` (`dict_type`),
+  KEY `idx_dict_data_parent` (`parent_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='字典数据';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_dict_data`
+--
+
+LOCK TABLES `t_ryytn_dict_data` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_dict_data` DISABLE KEYS */;
+INSERT INTO `t_ryytn_dict_data` VALUES (1,'warehouse_type','CDC（中央配送中心）','1','0','0',1,1,NULL,NULL,0,1,1,0,NULL,'system','2026-03-15 15:41:44.000000',NULL,NULL),(2,'warehouse_type','RDC（区域配送中心）','2','0','0',1,1,NULL,NULL,0,2,1,0,NULL,'system','2026-03-15 15:41:44.000000',NULL,NULL),(3,'product_status','在售','1','0','0',1,1,NULL,NULL,0,1,1,0,NULL,'system','2026-03-15 15:41:44.000000',NULL,NULL),(4,'product_status','停售','2','0','0',1,1,NULL,NULL,0,2,1,0,NULL,'system','2026-03-15 15:41:44.000000',NULL,NULL),(5,'product_status','下市','3','0','0',1,1,NULL,NULL,0,3,1,0,NULL,'system','2026-03-15 15:41:44.000000',NULL,NULL),(6,'account_status','正常','1','0','0',1,1,NULL,NULL,0,1,1,0,NULL,'system','2026-03-15 15:41:44.000000',NULL,NULL),(7,'account_status','停用','2','0','0',1,1,NULL,NULL,0,2,1,0,NULL,'system','2026-03-15 15:41:44.000000',NULL,NULL);
+/*!40000 ALTER TABLE `t_ryytn_dict_data` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_dict_type`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_dict_type`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_dict_type` (
+  `dict_type_id` int NOT NULL AUTO_INCREMENT COMMENT '字典类型编号',
+  `dict_type` varchar(64) NOT NULL COMMENT '字典类型标识',
+  `dict_name` varchar(64) NOT NULL COMMENT '字典名称',
+  `status` int DEFAULT '1' COMMENT '状态：1正常，2停用',
+  `delete_flag` smallint DEFAULT '0' COMMENT '删除状态：0未删除，1已删除',
+  `description` varchar(256) DEFAULT NULL,
+  `data_type` int NOT NULL DEFAULT '2' COMMENT '数据类型：1系统，2业务',
+  `created_by` varchar(64) DEFAULT NULL,
+  `created_time` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_by` varchar(64) DEFAULT NULL,
+  `updated_time` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`dict_type_id`),
+  UNIQUE KEY `uk_dict_type` (`dict_type`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='字典类型';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_dict_type`
+--
+
+LOCK TABLES `t_ryytn_dict_type` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_dict_type` DISABLE KEYS */;
+INSERT INTO `t_ryytn_dict_type` VALUES (1,'warehouse_type','仓库类型',1,0,NULL,1,'system','2026-03-15 15:41:44.000000',NULL,NULL),(2,'product_status','产品状态',1,0,NULL,1,'system','2026-03-15 15:41:44.000000',NULL,NULL),(3,'account_status','账号状态',1,0,NULL,1,'system','2026-03-15 15:41:44.000000',NULL,NULL);
+/*!40000 ALTER TABLE `t_ryytn_dict_type` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_inventory`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_inventory`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_inventory` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `pasture_id` varchar(32) NOT NULL,
+  `sku_id` varchar(50) NOT NULL,
+  `stock_liters` decimal(10,2) NOT NULL,
+  `milking_time` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_sku` (`sku_id`),
+  KEY `idx_pasture` (`pasture_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='牧场库存表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_inventory`
+--
+
+LOCK TABLES `t_ryytn_inventory` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_inventory` DISABLE KEYS */;
+/*!40000 ALTER TABLE `t_ryytn_inventory` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_master_sku`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_master_sku`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_master_sku` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `product_code` varchar(50) NOT NULL COMMENT '产品编码',
+  `product_name` varchar(200) DEFAULT NULL COMMENT '产品名称',
+  `create_time` datetime(6) DEFAULT NULL,
+  `material_type` varchar(50) DEFAULT NULL COMMENT '物料类型编码',
+  `material_type_desc` varchar(100) DEFAULT NULL COMMENT '物料类型描述',
+  `material_group` varchar(50) DEFAULT NULL COMMENT '物料组编码',
+  `material_group_desc` varchar(100) DEFAULT NULL COMMENT '物料组描述',
+  `base_unit_desc` varchar(50) DEFAULT NULL COMMENT '基本单位',
+  `gross_weight` decimal(10,3) DEFAULT NULL COMMENT '毛重',
+  `net_weight` decimal(10,3) DEFAULT NULL COMMENT '净重',
+  `weight_unit` varchar(10) DEFAULT NULL COMMENT '重量单位',
+  `barcode` varchar(50) DEFAULT NULL COMMENT '条形码',
+  `brand` varchar(50) DEFAULT NULL COMMENT '品牌',
+  `short_name` varchar(100) DEFAULT NULL COMMENT '简称',
+  `model_spec` varchar(200) DEFAULT NULL COMMENT '规格型号',
+  `shelf_life` decimal(10,3) DEFAULT NULL COMMENT '保质期（天）',
+  `length` decimal(10,6) DEFAULT NULL COMMENT '长度',
+  `width` decimal(10,6) DEFAULT NULL COMMENT '宽度',
+  `height` decimal(10,6) DEFAULT NULL COMMENT '高度',
+  `volume` decimal(10,6) DEFAULT NULL COMMENT '体积',
+  `batch_management_flag` varchar(1) DEFAULT NULL COMMENT '批次管理标',
+  `layer11_unit` varchar(10) DEFAULT NULL,
+  `layer9_quantity` decimal(10,3) DEFAULT NULL,
+  `layer10_quantity` decimal(10,3) DEFAULT NULL,
+  `tax_classification` varchar(50) DEFAULT NULL,
+  `sn_enabled` varchar(1) DEFAULT NULL COMMENT '序列号启用标识',
+  `traceability_enabled` varchar(1) DEFAULT NULL COMMENT '可追溯标识',
+  `primary_category` varchar(50) DEFAULT NULL COMMENT '一级品类',
+  `secondary_category` varchar(50) DEFAULT NULL COMMENT '二级品类',
+  `tertiary_category` varchar(50) DEFAULT NULL COMMENT '三级品类',
+  `quaternary_category` varchar(50) DEFAULT NULL COMMENT '四级品类',
+  `off_market_status` varchar(10) DEFAULT NULL COMMENT '下市状态',
+  `off_market_date` date DEFAULT NULL COMMENT '下市日期',
+  `product_status` varchar(10) DEFAULT NULL COMMENT '产品状态',
+  `zero_level_desc` varchar(100) DEFAULT NULL,
+  `zero_level_code` varchar(50) DEFAULT NULL,
+  `sap_create_date` varchar(50) DEFAULT NULL COMMENT 'SAP创建日期',
+  `sap_create_time` varchar(50) DEFAULT NULL COMMENT 'SAP创建时间',
+  `sap_update_date` varchar(50) DEFAULT NULL COMMENT 'SAP更改日期',
+  `sap_updater` varchar(50) DEFAULT NULL COMMENT 'SAP更改者',
+  `update_time` datetime(6) DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_master_sku_product_code` (`product_code`),
+  KEY `idx_master_sku_off_market_date` (`off_market_date`)
+) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='SKU产品主数据';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_master_sku`
+--
+
+LOCK TABLES `t_ryytn_master_sku` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_master_sku` DISABLE KEYS */;
+INSERT INTO `t_ryytn_master_sku` VALUES (1,'SKU-2','纯牛奶系列-全脂纯牛奶','2026-03-23 10:30:27.420000','LowTemp',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,15.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(2,'SKU-3','纯牛奶系列-娟姗鲜牛乳','2026-03-23 10:30:27.420000','LowTemp',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,15.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(3,'SKU-4','纯牛奶系列-脱脂牛奶','2026-03-23 10:30:27.420000','LowTemp',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,15.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(4,'SKU-5','纯牛奶系列-高钙纯牛奶','2026-03-23 10:30:27.420000','LowTemp',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,15.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(5,'SKU-6','酸奶系列-风味发酵乳','2026-03-23 10:30:27.420000','Normal',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,180.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(6,'SKU-7','酸奶系列-希腊风味酸奶','2026-03-23 10:30:27.420000','Normal',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,180.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(7,'SKU-8','酸奶系列-减糖原生酸奶','2026-03-23 10:30:27.420000','Normal',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,180.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(8,'SKU-9','酸奶系列-白桃风味酸奶','2026-03-23 10:30:27.420000','Normal',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,180.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(9,'SKU-10','奶粉系列-高钙成人奶粉','2026-03-23 10:30:27.420000','Normal',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,180.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(10,'SKU-11','奶粉系列-青少年配方奶粉','2026-03-23 10:30:27.420000','Normal',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,180.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(11,'SKU-12','奶粉系列-中老年益生菌奶粉','2026-03-23 10:30:27.420000','Normal',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,180.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(12,'SKU-13','联名跨界-认养一头牛x小黄人燕麦奶','2026-03-23 10:30:27.420000','Normal',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,180.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(13,'SKU-14','联名跨界-生牛乳冰淇淋','2026-03-23 10:30:27.420000','Normal',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,180.000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+/*!40000 ALTER TABLE `t_ryytn_master_sku` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_master_warehouse`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_master_warehouse`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_master_warehouse` (
+  `id` varchar(32) NOT NULL COMMENT '主键',
+  `plant_code` varchar(50) DEFAULT NULL COMMENT '工厂编码',
+  `warehouse_code` varchar(50) NOT NULL COMMENT '仓库编码',
+  `warehouse_name` varchar(100) NOT NULL COMMENT '仓库名称',
+  `contact_person` varchar(50) DEFAULT NULL COMMENT '联系人',
+  `mobile` varchar(20) DEFAULT NULL COMMENT '手机号',
+  `telephone` varchar(20) DEFAULT NULL COMMENT '电话',
+  `province` varchar(50) DEFAULT NULL COMMENT '省份',
+  `city` varchar(50) DEFAULT NULL COMMENT '城市',
+  `district` varchar(50) DEFAULT NULL COMMENT '区县',
+  `full_address` varchar(255) DEFAULT NULL COMMENT '详细地址',
+  `warehouse_type` int DEFAULT NULL COMMENT '仓库类型：1 CDC，2 RDC',
+  `created_by` varchar(64) DEFAULT NULL,
+  `updated_by` varchar(64) DEFAULT NULL,
+  `created_time` datetime(6) DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_time` datetime(6) DEFAULT CURRENT_TIMESTAMP(6),
+  `phy_warehouse_name` varchar(255) DEFAULT NULL COMMENT '物理仓库名称',
+  `latitude` decimal(10,6) DEFAULT NULL COMMENT '纬度',
+  `longitude` decimal(10,6) DEFAULT NULL COMMENT '经度',
+  PRIMARY KEY (`id`),
+  KEY `idx_master_warehouse_code` (`warehouse_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='仓库主数据';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_master_warehouse`
+--
+
+LOCK TABLES `t_ryytn_master_warehouse` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_master_warehouse` DISABLE KEYS */;
+INSERT INTO `t_ryytn_master_warehouse` VALUES ('PAS-00',NULL,'PAS-0','河北衡水智慧万头牧场','场长',NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,44.975900,100.404200),('PAS-01',NULL,'PAS-1','黑龙江齐齐哈尔智慧万头牧场','场长',NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,44.370000,90.190100),('PAS-02',NULL,'PAS-2','内蒙古乌兰察布智慧万头牧场','场长',NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,35.717300,100.519000),('PAS-03',NULL,'PAS-3','新疆天山智慧万头牧场','场长',NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,42.190700,110.277800),('PAS-04',NULL,'PAS-4','甘肃张掖智慧万头牧场','场长',NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,36.553700,102.149700),('W-HQ',NULL,'RY-HQ-00','认养一头牛全国数字化总部 (北京)','林万才',NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,39.900000,116.400000),('W-L3-0-0',NULL,'DIST-苏州','苏州城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.110000,111.564100),('W-L3-0-1',NULL,'DIST-杭州','杭州城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.479700,110.950600),('W-L3-0-2',NULL,'DIST-南京','南京城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.813600,115.109300),('W-L3-0-3',NULL,'DIST-宁波','宁波城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.084900,117.597000),('W-L3-1-0',NULL,'DIST-深圳','深圳城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.205900,111.980500),('W-L3-1-1',NULL,'DIST-东莞','东莞城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.536900,110.456100),('W-L3-1-2',NULL,'DIST-佛山','佛山城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.346500,118.439200),('W-L3-1-3',NULL,'DIST-海口','海口城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.480300,111.488800),('W-L3-2-0',NULL,'DIST-济南','济南城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.492200,118.517000),('W-L3-2-1',NULL,'DIST-青岛','青岛城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.727600,119.921600),('W-L3-2-2',NULL,'DIST-石家庄','石家庄城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.376900,110.139200),('W-L3-2-3',NULL,'DIST-太原','太原城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.597100,116.146200),('W-L3-3-0',NULL,'DIST-长沙','长沙城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.797700,110.187800),('W-L3-3-1',NULL,'DIST-郑州','郑州城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.728400,110.583200),('W-L3-3-2',NULL,'DIST-南昌','南昌城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.529600,111.642500),('W-L3-3-3',NULL,'DIST-合肥','合肥城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.965900,117.414700),('W-L3-4-0',NULL,'DIST-重庆','重庆城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.119900,117.465000),('W-L3-4-1',NULL,'DIST-西安','西安城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.326300,112.811600),('W-L3-4-2',NULL,'DIST-昆明','昆明城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.338100,111.310800),('W-L3-4-3',NULL,'DIST-贵阳','贵阳城市级总代理','分销伙伴',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.134900,115.532900),('W-RDC-0',NULL,'RDC-0','华东大区配送中心 (上海)','区域经理',NULL,NULL,NULL,NULL,NULL,NULL,2,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.405900,115.656800),('W-RDC-1',NULL,'RDC-1','华南大区配送中心 (广州)','区域经理',NULL,NULL,NULL,NULL,NULL,NULL,2,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.206000,114.246200),('W-RDC-2',NULL,'RDC-2','华北大区配送中心 (天津)','区域经理',NULL,NULL,NULL,NULL,NULL,NULL,2,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.199400,110.898200),('W-RDC-3',NULL,'RDC-3','华中大区配送中心 (武汉)','区域经理',NULL,NULL,NULL,NULL,NULL,NULL,2,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.879600,111.762500),('W-RDC-4',NULL,'RDC-4','华西大区配送中心 (成都)','区域经理',NULL,NULL,NULL,NULL,NULL,NULL,2,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.045200,112.844400),('W-ST-0-0-1',NULL,'STORE-苏州-1','苏州认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.726800,116.104200),('W-ST-0-0-2',NULL,'STORE-苏州-2','苏州认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.403200,116.459100),('W-ST-0-0-3',NULL,'STORE-苏州-3','苏州认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.490800,119.211500),('W-ST-0-1-1',NULL,'STORE-杭州-1','杭州认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.514600,116.160200),('W-ST-0-1-2',NULL,'STORE-杭州-2','杭州认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.285200,112.578600),('W-ST-0-1-3',NULL,'STORE-杭州-3','杭州认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.174900,112.952500),('W-ST-0-2-1',NULL,'STORE-南京-1','南京认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.412600,116.905500),('W-ST-0-2-2',NULL,'STORE-南京-2','南京认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.809800,118.437800),('W-ST-0-2-3',NULL,'STORE-南京-3','南京认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.576800,117.872500),('W-ST-0-3-1',NULL,'STORE-宁波-1','宁波认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.692300,110.136800),('W-ST-0-3-2',NULL,'STORE-宁波-2','宁波认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.277900,111.689600),('W-ST-0-3-3',NULL,'STORE-宁波-3','宁波认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.617900,119.992200),('W-ST-1-0-1',NULL,'STORE-深圳-1','深圳认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.084600,111.957600),('W-ST-1-0-2',NULL,'STORE-深圳-2','深圳认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.288200,118.486000),('W-ST-1-0-3',NULL,'STORE-深圳-3','深圳认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.187200,112.281400),('W-ST-1-1-1',NULL,'STORE-东莞-1','东莞认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.190900,116.301100),('W-ST-1-1-2',NULL,'STORE-东莞-2','东莞认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.823800,117.100400),('W-ST-1-1-3',NULL,'STORE-东莞-3','东莞认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.678800,119.002400),('W-ST-1-2-1',NULL,'STORE-佛山-1','佛山认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.441100,115.759200),('W-ST-1-2-2',NULL,'STORE-佛山-2','佛山认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.631500,119.717800),('W-ST-1-2-3',NULL,'STORE-佛山-3','佛山认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.126000,110.220700),('W-ST-1-3-1',NULL,'STORE-海口-1','海口认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.954100,116.014400),('W-ST-1-3-2',NULL,'STORE-海口-2','海口认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.918100,114.534100),('W-ST-1-3-3',NULL,'STORE-海口-3','海口认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.651100,117.859600),('W-ST-2-0-1',NULL,'STORE-济南-1','济南认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.859400,110.008600),('W-ST-2-0-2',NULL,'STORE-济南-2','济南认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.074700,117.254900),('W-ST-2-0-3',NULL,'STORE-济南-3','济南认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.287300,117.306000),('W-ST-2-1-1',NULL,'STORE-青岛-1','青岛认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.859800,116.891000),('W-ST-2-1-2',NULL,'STORE-青岛-2','青岛认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.451300,117.102100),('W-ST-2-1-3',NULL,'STORE-青岛-3','青岛认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.283900,116.140900),('W-ST-2-2-1',NULL,'STORE-石家庄-1','石家庄认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.201500,114.410600),('W-ST-2-2-2',NULL,'STORE-石家庄-2','石家庄认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.059100,110.005300),('W-ST-2-2-3',NULL,'STORE-石家庄-3','石家庄认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.934300,110.240000),('W-ST-2-3-1',NULL,'STORE-太原-1','太原认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.060500,118.913400),('W-ST-2-3-2',NULL,'STORE-太原-2','太原认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.611200,118.973100),('W-ST-2-3-3',NULL,'STORE-太原-3','太原认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.474200,115.004600),('W-ST-3-0-1',NULL,'STORE-长沙-1','长沙认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.804300,111.240300),('W-ST-3-0-2',NULL,'STORE-长沙-2','长沙认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.947900,114.777100),('W-ST-3-0-3',NULL,'STORE-长沙-3','长沙认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.039300,115.411800),('W-ST-3-1-1',NULL,'STORE-郑州-1','郑州认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.426400,111.645400),('W-ST-3-1-2',NULL,'STORE-郑州-2','郑州认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.843700,112.071000),('W-ST-3-1-3',NULL,'STORE-郑州-3','郑州认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.677100,112.271300),('W-ST-3-2-1',NULL,'STORE-南昌-1','南昌认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.999500,113.777100),('W-ST-3-2-2',NULL,'STORE-南昌-2','南昌认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.823800,113.346500),('W-ST-3-2-3',NULL,'STORE-南昌-3','南昌认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.993100,118.871600),('W-ST-3-3-1',NULL,'STORE-合肥-1','合肥认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.073100,114.610600),('W-ST-3-3-2',NULL,'STORE-合肥-2','合肥认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.596500,117.490600),('W-ST-3-3-3',NULL,'STORE-合肥-3','合肥认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.219200,117.922900),('W-ST-4-0-1',NULL,'STORE-重庆-1','重庆认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.889400,110.532100),('W-ST-4-0-2',NULL,'STORE-重庆-2','重庆认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.990900,119.076900),('W-ST-4-0-3',NULL,'STORE-重庆-3','重庆认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.833700,111.703500),('W-ST-4-1-1',NULL,'STORE-西安-1','西安认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,30.004000,118.531300),('W-ST-4-1-2',NULL,'STORE-西安-2','西安认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,31.512300,119.148600),('W-ST-4-1-3',NULL,'STORE-西安-3','西安认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.414100,110.366300),('W-ST-4-2-1',NULL,'STORE-昆明-1','昆明认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.374900,113.865700),('W-ST-4-2-2',NULL,'STORE-昆明-2','昆明认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.315000,112.194100),('W-ST-4-2-3',NULL,'STORE-昆明-3','昆明认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,34.379800,111.709600),('W-ST-4-3-1',NULL,'STORE-贵阳-1','贵阳认养一头牛生活馆-01号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,32.049700,115.203400),('W-ST-4-3-2',NULL,'STORE-贵阳-2','贵阳认养一头牛生活馆-02号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.049200,110.921300),('W-ST-4-3-3',NULL,'STORE-贵阳-3','贵阳认养一头牛生活馆-03号店','店长',NULL,NULL,NULL,NULL,NULL,NULL,4,NULL,NULL,'2026-03-23 10:30:27.418956','2026-03-23 10:30:27.418956',NULL,33.697000,115.484700);
+/*!40000 ALTER TABLE `t_ryytn_master_warehouse` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_moudel`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_moudel`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_moudel` (
+  `id` bigint NOT NULL COMMENT '模块编号',
+  `name` varchar(64) NOT NULL COMMENT '模块名称',
+  `type` int NOT NULL DEFAULT '1' COMMENT '系统类型：1 Web，2 App',
+  `path` varchar(128) DEFAULT NULL COMMENT '首页路由',
+  `status` int NOT NULL DEFAULT '1' COMMENT '状态：1正常，2禁用',
+  `description` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统模块';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_moudel`
+--
+
+LOCK TABLES `t_ryytn_moudel` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_moudel` DISABLE KEYS */;
+INSERT INTO `t_ryytn_moudel` VALUES (1,'供应链决策平台',1,'/intelligent',1,NULL);
+/*!40000 ALTER TABLE `t_ryytn_moudel` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_oa_department`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_oa_department`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_oa_department` (
+  `id` varchar(32) NOT NULL COMMENT '编号',
+  `department_mark` varchar(32) DEFAULT NULL COMMENT '部门简称',
+  `department_name` varchar(64) DEFAULT NULL COMMENT '部门名称',
+  `department_code` varchar(32) DEFAULT NULL COMMENT '部门编码',
+  `sub_company_id` varchar(32) DEFAULT NULL COMMENT '所属子公司编号',
+  `sup_dep_id` varchar(32) DEFAULT NULL COMMENT '上级部门编号',
+  `sup_dep_ids` varchar(2048) DEFAULT NULL COMMENT '所有上级部门编号，逗号分隔',
+  `level` int DEFAULT '1' COMMENT '层级',
+  `canceled` varchar(10) DEFAULT NULL COMMENT '是否注销',
+  `sort_no` float DEFAULT NULL,
+  `created_time` datetime(6) DEFAULT NULL,
+  `updated_time` datetime(6) DEFAULT NULL,
+  `sync_time` bigint DEFAULT NULL COMMENT 'OA同步时间戳',
+  `leader` varchar(64) DEFAULT NULL COMMENT '负责人',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='部门';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_oa_department`
+--
+
+LOCK TABLES `t_ryytn_oa_department` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_oa_department` DISABLE KEYS */;
+INSERT INTO `t_ryytn_oa_department` VALUES ('100','CORP','认养一头牛集团总部','HQ-001','1','0','0',1,NULL,1,'2026-03-23 10:30:27.405000',NULL,NULL,'焦浩元'),('110','SCM-CTR','供应链管理中心','SCM-000','1','100','100',2,NULL,10,'2026-03-23 10:30:27.405000',NULL,NULL,'林万才'),('111','PLAN','供应链规划部','SCM-P01','1','110','100,110',3,NULL,11,'2026-03-23 10:30:27.405000',NULL,NULL,'陈建国'),('112','PURCH','采购管理部','SCM-P02','1','110','100,110',3,NULL,12,'2026-03-23 10:30:27.405000',NULL,NULL,'采购经理'),('113','LOGS','物流仓储中心','SCM-L03','1','110','100,110',3,NULL,13,'2026-03-23 10:30:27.405000',NULL,NULL,'张海军'),('114','QC','质量安全监控部','SCM-Q04','1','110','100,110',3,NULL,14,'2026-03-23 10:30:27.405000',NULL,NULL,'质检经理'),('120','SALES-CTR','全国销售分销中心','MKT-000','1','100','100',2,NULL,20,'2026-03-23 10:30:27.405000',NULL,NULL,'李强'),('121','AREA','大区渠道发展部','MKT-A01','1','120','100,120',3,NULL,21,'2026-03-23 10:30:27.405000',NULL,NULL,'王亚琴'),('122','OM','订单与履约部','MKT-O02','1','120','100,120',3,NULL,22,'2026-03-23 10:30:27.405000',NULL,NULL,'订单部主管'),('123','EC','新零售电商部','MKT-E03','1','120','100,120',3,NULL,23,'2026-03-23 10:30:27.405000',NULL,NULL,'电商组长'),('130','DIGITAL','数字化技术中心','TEC-000','1','100','100',2,NULL,30,'2026-03-23 10:30:27.405000',NULL,NULL,'焦浩元'),('131','IT-DEV','系统研发部','TEC-D01','1','130','100,130',3,NULL,31,'2026-03-23 10:30:27.405000',NULL,NULL,'研发组长'),('132','DATA','大数据分析处','TEC-D02','1','130','100,130',3,NULL,32,'2026-03-23 10:30:27.405000',NULL,NULL,'数据专家'),('1774337865727',NULL,'1',NULL,NULL,'100',NULL,3,NULL,0,'2026-03-24 15:37:54.000000',NULL,NULL,'');
+/*!40000 ALTER TABLE `t_ryytn_oa_department` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_oa_jobtitle`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_oa_jobtitle`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_oa_jobtitle` (
+  `id` varchar(32) NOT NULL COMMENT '编号',
+  `job_title_mark` varchar(32) DEFAULT NULL COMMENT '职位简称',
+  `job_title_name` varchar(64) DEFAULT NULL COMMENT '职位全称',
+  `job_doc` varchar(32) DEFAULT NULL COMMENT '相关文档ID',
+  `job_department_id` varchar(32) DEFAULT NULL COMMENT '部门编号（OA废弃字段，以人员表为准）',
+  `job_responsibility` varchar(256) DEFAULT NULL COMMENT '岗位职责',
+  `job_competency` varchar(256) DEFAULT NULL COMMENT '任职资格',
+  `job_title_remark` varchar(256) DEFAULT NULL,
+  `created_time` datetime(6) DEFAULT NULL,
+  `updated_time` datetime(6) DEFAULT NULL,
+  `sync_time` bigint DEFAULT NULL COMMENT 'OA同步时间戳',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='职位';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_oa_jobtitle`
+--
+
+LOCK TABLES `t_ryytn_oa_jobtitle` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_oa_jobtitle` DISABLE KEYS */;
+INSERT INTO `t_ryytn_oa_jobtitle` VALUES ('1774332487200','11','11',NULL,'111',NULL,NULL,'11','2026-03-24 14:08:13.000000',NULL,NULL),('1774332504173','111111','11111',NULL,'123',NULL,NULL,'','2026-03-24 14:08:29.000000',NULL,NULL),('J101','SCM-DIR','供应链中心总监',NULL,'110',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J111','PN-MGR','产销平衡高级经理',NULL,'111',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J112','PL-SPEC','需求计划分析员',NULL,'111',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J121','PU-SPEC','全球直采采购专家',NULL,'112',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J122','WH-MGR','仓储运营部长',NULL,'113',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J123','DISP-SPEC','智能调度专员',NULL,'113',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J131','QC-MGR','食品安全质量经理',NULL,'114',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J132','QC-OP','质量检测技术员',NULL,'114',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J201','SAL-DIR','销售部总经理',NULL,'120',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J211','CH-MGR','全国渠道开发经理',NULL,'121',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J212','AR-MGR','大区客户成功经理',NULL,'121',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J221','OM-SPEC','订单履约专员',NULL,'122',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J231','EC-OP','电商平台直营组长',NULL,'123',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J301','CTO','首席技术官(CTO)',NULL,'130',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J311','ARCH','系统平台架构师',NULL,'131',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J312','BE-DEV','Golang/Java 后端专家',NULL,'131',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J313','FE-DEV','Vue/React 前端工程师',NULL,'131',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J321','DT-AN','供应链算法模型师',NULL,'132',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL),('J322','DBA','MySQL/Redis 运维专家',NULL,'132',NULL,NULL,NULL,'2026-03-23 10:30:27.409000',NULL,NULL);
+/*!40000 ALTER TABLE `t_ryytn_oa_jobtitle` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_oa_person`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_oa_person`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_oa_person` (
+  `id` varchar(32) NOT NULL COMMENT '编号',
+  `work_code` varchar(32) DEFAULT NULL COMMENT '工号',
+  `last_name` varchar(32) DEFAULT NULL COMMENT '姓名',
+  `login_id` varchar(32) DEFAULT NULL COMMENT '登录账号',
+  `account_type` int DEFAULT NULL COMMENT '账号类型',
+  `be_long_to` varchar(32) DEFAULT NULL,
+  `department_id` varchar(32) DEFAULT NULL COMMENT '所属部门编号',
+  `job_title_id` varchar(32) DEFAULT NULL COMMENT '职位编号',
+  `location_id` varchar(32) DEFAULT NULL,
+  `status` int DEFAULT NULL COMMENT '状态：1在职，0离职',
+  `language` varchar(32) DEFAULT NULL,
+  `job_activity_desc` varchar(256) DEFAULT NULL,
+  `job_level` varchar(32) DEFAULT NULL,
+  `job_call` varchar(32) DEFAULT NULL,
+  `manager_id` varchar(32) DEFAULT NULL COMMENT '直属上级编号',
+  `assistant_id` varchar(32) DEFAULT NULL,
+  `sex` varchar(10) DEFAULT NULL COMMENT '性别',
+  `telephone` varchar(32) DEFAULT NULL,
+  `mobile` varchar(32) DEFAULT NULL COMMENT '手机号',
+  `mobile_call` varchar(32) DEFAULT NULL,
+  `email` varchar(32) DEFAULT NULL COMMENT '邮箱',
+  `start_date` varchar(20) DEFAULT NULL COMMENT '入职日期',
+  `end_date` varchar(20) DEFAULT NULL COMMENT '离职日期',
+  `sec_level` varchar(10) DEFAULT NULL,
+  `password` varchar(64) DEFAULT NULL,
+  `certificate_num` varchar(32) DEFAULT NULL,
+  `birthday` varchar(20) DEFAULT NULL,
+  `height` varchar(10) DEFAULT NULL,
+  `weight` varchar(10) DEFAULT NULL,
+  `folk` varchar(32) DEFAULT NULL,
+  `native_place` varchar(32) DEFAULT NULL,
+  `health_info` varchar(32) DEFAULT NULL,
+  `marital_status` varchar(32) DEFAULT NULL,
+  `temp_resident_number` varchar(32) DEFAULT NULL,
+  `resident_place` varchar(64) DEFAULT NULL,
+  `regresident_place` varchar(64) DEFAULT NULL,
+  `home_address` varchar(32) DEFAULT NULL,
+  `policy` varchar(32) DEFAULT NULL,
+  `be_member_date` varchar(20) DEFAULT NULL,
+  `be_party_date` varchar(20) DEFAULT NULL,
+  `degree` varchar(32) DEFAULT NULL,
+  `education_level` varchar(10) DEFAULT NULL,
+  `is_labouunion` smallint DEFAULT '0',
+  `last_mod_date` varchar(20) DEFAULT NULL,
+  `sort_no` float DEFAULT NULL,
+  `created_time` datetime(6) DEFAULT NULL,
+  `updated_time` datetime(6) DEFAULT NULL,
+  `sync_time` bigint DEFAULT NULL COMMENT 'OA同步时间戳',
+  PRIMARY KEY (`id`),
+  KEY `idx_oa_person_department` (`department_id`),
+  KEY `idx_oa_person_login_id` (`login_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='员工';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_oa_person`
+--
+
+LOCK TABLES `t_ryytn_oa_person` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_oa_person` DISABLE KEYS */;
+/*!40000 ALTER TABLE `t_ryytn_oa_person` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_oa_subcompany`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_oa_subcompany`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_oa_subcompany` (
+  `id` varchar(32) NOT NULL COMMENT '编号',
+  `sub_company_name` varchar(32) DEFAULT NULL COMMENT '子公司名称',
+  `sub_company_desc` varchar(64) DEFAULT NULL,
+  `sub_company_code` varchar(32) DEFAULT NULL COMMENT '子公司编码',
+  `sup_sub_com_id` varchar(32) DEFAULT NULL COMMENT '上级子公司编号',
+  `sup_sub_com_ids` varchar(2048) DEFAULT NULL COMMENT '所有上级子公司编号，逗号分隔',
+  `level` int DEFAULT '0' COMMENT '层级',
+  `canceled` varchar(10) DEFAULT NULL COMMENT '是否注销',
+  `sort_no` float DEFAULT NULL,
+  `created_time` datetime(6) DEFAULT NULL,
+  `updated_time` datetime(6) DEFAULT NULL,
+  `sync_time` bigint DEFAULT NULL COMMENT 'OA同步时间戳',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='子公司';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_oa_subcompany`
+--
+
+LOCK TABLES `t_ryytn_oa_subcompany` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_oa_subcompany` DISABLE KEYS */;
+/*!40000 ALTER TABLE `t_ryytn_oa_subcompany` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_order_main`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_order_main`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_order_main` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `order_id` varchar(50) NOT NULL,
+  `distributor_id` varchar(32) NOT NULL,
+  `sku_id` varchar(50) NOT NULL,
+  `request_liters` decimal(10,2) NOT NULL,
+  `status` varchar(32) DEFAULT 'Pending',
+  `source_pasture_id` varchar(32) DEFAULT NULL,
+  `match_score` decimal(5,2) DEFAULT NULL,
+  `create_time` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order` (`order_id`),
+  KEY `idx_order_main_create_time` (`create_time`),
+  KEY `idx_order_main_distributor_id` (`distributor_id`),
+  KEY `idx_order_main_sku_id` (`sku_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3801 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='调度订单主表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_order_main`
+--
+
+LOCK TABLES `t_ryytn_order_main` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_order_main` DISABLE KEYS */;
+INSERT INTO `t_ryytn_order_main` VALUES (3601,'ORD-20260001','W-ST-0-3-2','SKU-4',316.00,'Matched',NULL,NULL,1774233027423),(3602,'ORD-20260002','W-L3-0-2','SKU-5',1045.00,'Pending',NULL,NULL,1774233027423),(3603,'ORD-20260003','W-ST-0-2-1','SKU-13',135.00,'Pending',NULL,NULL,1774233027423),(3604,'ORD-20260004','W-ST-4-0-3','SKU-5',387.00,'Matched',NULL,NULL,1774233027423),(3605,'ORD-20260005','W-L3-3-0','SKU-5',906.00,'Matched',NULL,NULL,1774233027423),(3606,'ORD-20260006','W-ST-0-3-3','SKU-6',609.00,'Pending',NULL,NULL,1774233027423),(3607,'ORD-20260007','W-L3-1-1','SKU-10',365.00,'Matched',NULL,NULL,1774233027423),(3608,'ORD-20260008','W-ST-2-3-2','SKU-10',891.00,'Pending',NULL,NULL,1774233027423),(3609,'ORD-20260009','W-ST-2-0-3','SKU-2',386.00,'Pending',NULL,NULL,1774233027423),(3610,'ORD-20260010','W-ST-1-2-2','SKU-2',694.00,'Pending',NULL,NULL,1774233027423),(3611,'ORD-20260011','W-ST-3-0-3','SKU-10',93.00,'Pending',NULL,NULL,1774233027423),(3612,'ORD-20260012','W-ST-3-1-3','SKU-2',672.00,'Matched',NULL,NULL,1774233027423),(3613,'ORD-20260013','W-ST-3-1-3','SKU-2',792.00,'Matched',NULL,NULL,1774233027423),(3614,'ORD-20260014','W-ST-1-2-3','SKU-4',913.00,'Matched',NULL,NULL,1774233027423),(3615,'ORD-20260015','W-ST-1-0-1','SKU-11',236.00,'Pending',NULL,NULL,1774233027423),(3616,'ORD-20260016','W-ST-3-1-1','SKU-12',606.00,'Matched',NULL,NULL,1774233027423),(3617,'ORD-20260017','W-L3-1-3','SKU-10',530.00,'Pending',NULL,NULL,1774233027423),(3618,'ORD-20260018','W-ST-1-2-1','SKU-2',533.00,'Pending',NULL,NULL,1774233027423),(3619,'ORD-20260019','W-ST-4-2-2','SKU-9',554.00,'Pending',NULL,NULL,1774233027423),(3620,'ORD-20260020','W-ST-4-2-2','SKU-2',386.00,'Pending',NULL,NULL,1774233027423),(3621,'ORD-20260021','W-L3-0-1','SKU-9',989.00,'Pending',NULL,NULL,1774233027423),(3622,'ORD-20260022','W-ST-1-1-3','SKU-6',659.00,'Matched',NULL,NULL,1774233027423),(3623,'ORD-20260023','W-ST-3-2-3','SKU-6',71.00,'Pending',NULL,NULL,1774233027423),(3624,'ORD-20260024','W-ST-4-0-1','SKU-5',195.00,'Pending',NULL,NULL,1774233027423),(3625,'ORD-20260025','W-ST-0-1-3','SKU-14',283.00,'Pending',NULL,NULL,1774233027423),(3626,'ORD-20260026','W-ST-3-2-3','SKU-7',381.00,'Matched',NULL,NULL,1774233027423),(3627,'ORD-20260027','W-L3-2-2','SKU-13',237.00,'Pending',NULL,NULL,1774233027423),(3628,'ORD-20260028','W-L3-4-3','SKU-3',546.00,'Pending',NULL,NULL,1774233027423),(3629,'ORD-20260029','W-ST-3-1-3','SKU-6',848.00,'Matched',NULL,NULL,1774233027423),(3630,'ORD-20260030','W-ST-0-3-2','SKU-11',445.00,'Pending',NULL,NULL,1774233027423),(3631,'ORD-20260031','W-ST-4-3-3','SKU-3',533.00,'Pending',NULL,NULL,1774233027423),(3632,'ORD-20260032','W-ST-3-3-2','SKU-4',543.00,'Pending',NULL,NULL,1774233027423),(3633,'ORD-20260033','W-ST-0-0-2','SKU-12',692.00,'Matched',NULL,NULL,1774233027423),(3634,'ORD-20260034','W-ST-1-2-2','SKU-8',291.00,'Pending',NULL,NULL,1774233027423),(3635,'ORD-20260035','W-ST-3-2-2','SKU-6',1024.00,'Matched',NULL,NULL,1774233027423),(3636,'ORD-20260036','W-L3-0-0','SKU-10',720.00,'Matched',NULL,NULL,1774233027423),(3637,'ORD-20260037','W-ST-4-2-1','SKU-8',258.00,'Matched',NULL,NULL,1774233027423),(3638,'ORD-20260038','W-ST-3-1-2','SKU-9',744.00,'Pending',NULL,NULL,1774233027423),(3639,'ORD-20260039','W-L3-3-2','SKU-3',478.00,'Pending',NULL,NULL,1774233027423),(3640,'ORD-20260040','W-ST-2-0-1','SKU-8',422.00,'Matched',NULL,NULL,1774233027423),(3641,'ORD-20260041','PAS-02','SKU-11',447.00,'Matched',NULL,NULL,1774233027423),(3642,'ORD-20260042','W-ST-3-0-2','SKU-3',248.00,'Pending',NULL,NULL,1774233027423),(3643,'ORD-20260043','W-L3-3-2','SKU-11',213.00,'Pending',NULL,NULL,1774233027423),(3644,'ORD-20260044','W-ST-1-0-2','SKU-13',798.00,'Pending',NULL,NULL,1774233027423),(3645,'ORD-20260045','W-ST-0-3-1','SKU-11',321.00,'Pending',NULL,NULL,1774233027423),(3646,'ORD-20260046','W-L3-1-1','SKU-14',524.00,'Matched',NULL,NULL,1774233027423),(3647,'ORD-20260047','W-ST-0-3-1','SKU-8',820.00,'Matched',NULL,NULL,1774233027423),(3648,'ORD-20260048','W-ST-2-0-2','SKU-9',90.00,'Pending',NULL,NULL,1774233027423),(3649,'ORD-20260049','W-ST-3-2-2','SKU-10',382.00,'Pending',NULL,NULL,1774233027423),(3650,'ORD-20260050','W-L3-4-2','SKU-4',131.00,'Pending',NULL,NULL,1774233027423),(3651,'ORD-20260051','W-L3-0-2','SKU-3',950.00,'Pending',NULL,NULL,1774233027423),(3652,'ORD-20260052','W-L3-1-1','SKU-8',980.00,'Pending',NULL,NULL,1774233027423),(3653,'ORD-20260053','W-ST-4-2-1','SKU-8',978.00,'Pending',NULL,NULL,1774233027423),(3654,'ORD-20260054','W-ST-0-0-3','SKU-12',158.00,'Pending',NULL,NULL,1774233027423),(3655,'ORD-20260055','W-ST-3-1-1','SKU-7',735.00,'Matched',NULL,NULL,1774233027423),(3656,'ORD-20260056','W-ST-2-0-2','SKU-5',861.00,'Pending',NULL,NULL,1774233027423),(3657,'ORD-20260057','W-ST-1-0-2','SKU-14',699.00,'Pending',NULL,NULL,1774233027423),(3658,'ORD-20260058','W-ST-1-2-1','SKU-8',827.00,'Matched',NULL,NULL,1774233027423),(3659,'ORD-20260059','W-ST-2-2-1','SKU-11',878.00,'Matched',NULL,NULL,1774233027423),(3660,'ORD-20260060','W-ST-2-3-3','SKU-7',177.00,'Pending',NULL,NULL,1774233027423),(3661,'ORD-20260061','W-L3-4-1','SKU-4',631.00,'Pending',NULL,NULL,1774233027423),(3662,'ORD-20260062','W-ST-1-2-3','SKU-7',1026.00,'Pending',NULL,NULL,1774233027423),(3663,'ORD-20260063','W-ST-2-1-2','SKU-14',615.00,'Pending',NULL,NULL,1774233027423),(3664,'ORD-20260064','W-ST-0-3-3','SKU-10',490.00,'Matched',NULL,NULL,1774233027423),(3665,'ORD-20260065','W-L3-2-0','SKU-4',540.00,'Matched',NULL,NULL,1774233027423),(3666,'ORD-20260066','W-ST-3-3-2','SKU-13',956.00,'Matched',NULL,NULL,1774233027423),(3667,'ORD-20260067','W-ST-0-0-3','SKU-6',732.00,'Pending',NULL,NULL,1774233027423),(3668,'ORD-20260068','W-L3-0-1','SKU-12',989.00,'Pending',NULL,NULL,1774233027423),(3669,'ORD-20260069','W-ST-3-2-1','SKU-5',1030.00,'Matched',NULL,NULL,1774233027423),(3670,'ORD-20260070','W-ST-3-2-3','SKU-13',996.00,'Pending',NULL,NULL,1774233027423),(3671,'ORD-20260071','W-ST-2-1-1','SKU-2',261.00,'Pending',NULL,NULL,1774233027423),(3672,'ORD-20260072','W-ST-3-1-1','SKU-10',708.00,'Pending',NULL,NULL,1774233027423),(3673,'ORD-20260073','W-ST-0-0-3','SKU-3',597.00,'Matched',NULL,NULL,1774233027423),(3674,'ORD-20260074','W-ST-3-1-3','SKU-4',456.00,'Pending',NULL,NULL,1774233027423),(3675,'ORD-20260075','W-ST-1-1-2','SKU-8',847.00,'Pending',NULL,NULL,1774233027423),(3676,'ORD-20260076','W-L3-0-2','SKU-14',276.00,'Pending',NULL,NULL,1774233027423),(3677,'ORD-20260077','W-ST-3-3-2','SKU-9',919.00,'Matched',NULL,NULL,1774233027423),(3678,'ORD-20260078','W-L3-4-2','SKU-4',89.00,'Pending',NULL,NULL,1774233027423),(3679,'ORD-20260079','W-ST-4-3-3','SKU-7',259.00,'Pending',NULL,NULL,1774233027423),(3680,'ORD-20260080','W-ST-3-3-1','SKU-2',1021.00,'Pending',NULL,NULL,1774233027423),(3681,'ORD-20260081','W-ST-4-3-3','SKU-12',766.00,'Pending',NULL,NULL,1774233027423),(3682,'ORD-20260082','W-ST-4-0-3','SKU-13',663.00,'Pending',NULL,NULL,1774233027423),(3683,'ORD-20260083','W-ST-2-0-1','SKU-8',85.00,'Matched',NULL,NULL,1774233027423),(3684,'ORD-20260084','W-ST-3-1-2','SKU-12',873.00,'Pending',NULL,NULL,1774233027423),(3685,'ORD-20260085','W-ST-4-0-2','SKU-12',826.00,'Pending',NULL,NULL,1774233027423),(3686,'ORD-20260086','W-L3-3-2','SKU-8',883.00,'Pending',NULL,NULL,1774233027423),(3687,'ORD-20260087','W-ST-2-3-1','SKU-11',455.00,'Matched',NULL,NULL,1774233027423),(3688,'ORD-20260088','W-RDC-0','SKU-9',688.00,'Pending',NULL,NULL,1774233027423),(3689,'ORD-20260089','W-ST-0-3-2','SKU-9',87.00,'Matched',NULL,NULL,1774233027423),(3690,'ORD-20260090','W-ST-4-0-3','SKU-12',168.00,'Pending',NULL,NULL,1774233027423),(3691,'ORD-20260091','W-ST-3-3-2','SKU-14',758.00,'Matched',NULL,NULL,1774233027423),(3692,'ORD-20260092','W-ST-2-1-2','SKU-14',408.00,'Matched',NULL,NULL,1774233027423),(3693,'ORD-20260093','W-L3-2-0','SKU-11',178.00,'Pending',NULL,NULL,1774233027423),(3694,'ORD-20260094','W-ST-3-1-1','SKU-10',73.00,'Pending',NULL,NULL,1774233027423),(3695,'ORD-20260095','W-ST-4-2-1','SKU-9',527.00,'Pending',NULL,NULL,1774233027423),(3696,'ORD-20260096','W-L3-2-3','SKU-2',577.00,'Pending',NULL,NULL,1774233027423),(3697,'ORD-20260097','W-ST-3-1-2','SKU-13',1048.00,'Pending',NULL,NULL,1774233027423),(3698,'ORD-20260098','PAS-03','SKU-6',678.00,'Pending',NULL,NULL,1774233027423),(3699,'ORD-20260099','W-ST-3-3-2','SKU-3',796.00,'Pending',NULL,NULL,1774233027423),(3700,'ORD-20260100','W-L3-4-2','SKU-7',172.00,'Matched',NULL,NULL,1774233027423),(3701,'ORD-20260101','PAS-01','SKU-6',105.00,'Pending',NULL,NULL,1774233027423),(3702,'ORD-20260102','W-ST-1-2-2','SKU-2',229.00,'Matched',NULL,NULL,1774233027423),(3703,'ORD-20260103','W-ST-0-3-3','SKU-13',211.00,'Pending',NULL,NULL,1774233027423),(3704,'ORD-20260104','W-ST-0-0-1','SKU-6',936.00,'Pending',NULL,NULL,1774233027423),(3705,'ORD-20260105','W-ST-1-0-1','SKU-2',139.00,'Pending',NULL,NULL,1774233027423),(3706,'ORD-20260106','W-L3-1-2','SKU-9',79.00,'Pending',NULL,NULL,1774233027423),(3707,'ORD-20260107','PAS-00','SKU-8',837.00,'Pending',NULL,NULL,1774233027423),(3708,'ORD-20260108','W-ST-4-3-2','SKU-7',375.00,'Pending',NULL,NULL,1774233027423),(3709,'ORD-20260109','W-ST-1-2-2','SKU-5',841.00,'Matched',NULL,NULL,1774233027423),(3710,'ORD-20260110','W-ST-3-2-2','SKU-6',984.00,'Pending',NULL,NULL,1774233027423),(3711,'ORD-20260111','W-L3-1-3','SKU-13',60.00,'Pending',NULL,NULL,1774233027423),(3712,'ORD-20260112','W-L3-1-2','SKU-7',380.00,'Pending',NULL,NULL,1774233027423),(3713,'ORD-20260113','W-ST-4-0-1','SKU-6',134.00,'Pending',NULL,NULL,1774233027423),(3714,'ORD-20260114','W-ST-0-2-1','SKU-14',461.00,'Matched',NULL,NULL,1774233027423),(3715,'ORD-20260115','W-ST-0-2-3','SKU-8',61.00,'Pending',NULL,NULL,1774233027423),(3716,'ORD-20260116','W-ST-0-0-2','SKU-12',1037.00,'Matched',NULL,NULL,1774233027423),(3717,'ORD-20260117','PAS-03','SKU-12',767.00,'Pending',NULL,NULL,1774233027423),(3718,'ORD-20260118','W-ST-3-1-2','SKU-13',766.00,'Matched',NULL,NULL,1774233027423),(3719,'ORD-20260119','W-L3-3-0','SKU-5',180.00,'Matched',NULL,NULL,1774233027423),(3720,'ORD-20260120','W-ST-4-3-2','SKU-10',768.00,'Pending',NULL,NULL,1774233027423),(3721,'ORD-20260121','W-ST-1-3-2','SKU-14',373.00,'Pending',NULL,NULL,1774233027423),(3722,'ORD-20260122','W-ST-0-3-2','SKU-14',143.00,'Pending',NULL,NULL,1774233027423),(3723,'ORD-20260123','W-L3-1-0','SKU-6',879.00,'Pending',NULL,NULL,1774233027423),(3724,'ORD-20260124','W-ST-0-0-1','SKU-2',661.00,'Pending',NULL,NULL,1774233027423),(3725,'ORD-20260125','PAS-00','SKU-14',397.00,'Matched',NULL,NULL,1774233027423),(3726,'ORD-20260126','W-ST-3-0-3','SKU-11',709.00,'Pending',NULL,NULL,1774233027423),(3727,'ORD-20260127','W-ST-1-2-2','SKU-13',775.00,'Matched',NULL,NULL,1774233027423),(3728,'ORD-20260128','W-ST-1-0-3','SKU-13',120.00,'Pending',NULL,NULL,1774233027423),(3729,'ORD-20260129','PAS-00','SKU-7',581.00,'Pending',NULL,NULL,1774233027423),(3730,'ORD-20260130','W-ST-1-3-1','SKU-2',221.00,'Pending',NULL,NULL,1774233027423),(3731,'ORD-20260131','W-ST-3-3-2','SKU-11',1046.00,'Pending',NULL,NULL,1774233027423),(3732,'ORD-20260132','W-ST-4-2-1','SKU-8',189.00,'Pending',NULL,NULL,1774233027423),(3733,'ORD-20260133','W-ST-1-0-2','SKU-12',882.00,'Matched',NULL,NULL,1774233027423),(3734,'ORD-20260134','W-ST-4-2-1','SKU-2',994.00,'Matched',NULL,NULL,1774233027423),(3735,'ORD-20260135','W-L3-2-0','SKU-10',584.00,'Matched',NULL,NULL,1774233027423),(3736,'ORD-20260136','W-ST-3-1-1','SKU-14',825.00,'Pending',NULL,NULL,1774233027423),(3737,'ORD-20260137','W-RDC-1','SKU-10',667.00,'Matched',NULL,NULL,1774233027423),(3738,'ORD-20260138','W-ST-1-2-3','SKU-2',463.00,'Pending',NULL,NULL,1774233027423),(3739,'ORD-20260139','W-L3-3-0','SKU-4',358.00,'Pending',NULL,NULL,1774233027423),(3740,'ORD-20260140','W-L3-0-3','SKU-10',62.00,'Pending',NULL,NULL,1774233027423),(3741,'ORD-20260141','W-L3-4-0','SKU-4',830.00,'Pending',NULL,NULL,1774233027423),(3742,'ORD-20260142','W-ST-4-1-3','SKU-4',295.00,'Pending',NULL,NULL,1774233027423),(3743,'ORD-20260143','W-ST-2-1-2','SKU-9',556.00,'Pending',NULL,NULL,1774233027423),(3744,'ORD-20260144','PAS-00','SKU-11',832.00,'Pending',NULL,NULL,1774233027423),(3745,'ORD-20260145','W-ST-3-2-3','SKU-11',152.00,'Matched',NULL,NULL,1774233027423),(3746,'ORD-20260146','W-RDC-3','SKU-5',170.00,'Pending',NULL,NULL,1774233027423),(3747,'ORD-20260147','W-ST-4-3-3','SKU-10',811.00,'Matched',NULL,NULL,1774233027423),(3748,'ORD-20260148','PAS-03','SKU-5',530.00,'Pending',NULL,NULL,1774233027423),(3749,'ORD-20260149','W-ST-0-1-1','SKU-4',616.00,'Matched',NULL,NULL,1774233027423),(3750,'ORD-20260150','PAS-03','SKU-7',777.00,'Pending',NULL,NULL,1774233027423),(3751,'ORD-20260151','W-ST-1-1-3','SKU-3',456.00,'Matched',NULL,NULL,1774233027423),(3752,'ORD-20260152','W-ST-3-0-3','SKU-12',1045.00,'Pending',NULL,NULL,1774233027423),(3753,'ORD-20260153','W-L3-3-1','SKU-4',914.00,'Pending',NULL,NULL,1774233027423),(3754,'ORD-20260154','W-ST-2-2-1','SKU-2',363.00,'Matched',NULL,NULL,1774233027423),(3755,'ORD-20260155','W-ST-0-0-2','SKU-5',641.00,'Pending',NULL,NULL,1774233027423),(3756,'ORD-20260156','W-ST-4-0-1','SKU-6',852.00,'Pending',NULL,NULL,1774233027423),(3757,'ORD-20260157','W-L3-4-1','SKU-2',778.00,'Pending',NULL,NULL,1774233027423),(3758,'ORD-20260158','W-L3-3-3','SKU-5',426.00,'Matched',NULL,NULL,1774233027423),(3759,'ORD-20260159','W-L3-4-0','SKU-4',229.00,'Matched',NULL,NULL,1774233027423),(3760,'ORD-20260160','W-L3-0-1','SKU-3',633.00,'Pending',NULL,NULL,1774233027423),(3761,'ORD-20260161','W-ST-3-1-2','SKU-4',326.00,'Pending',NULL,NULL,1774233027423),(3762,'ORD-20260162','W-L3-3-3','SKU-13',714.00,'Pending',NULL,NULL,1774233027423),(3763,'ORD-20260163','W-ST-0-0-2','SKU-7',1040.00,'Matched',NULL,NULL,1774233027423),(3764,'ORD-20260164','W-ST-3-3-3','SKU-7',943.00,'Pending',NULL,NULL,1774233027423),(3765,'ORD-20260165','W-ST-1-2-1','SKU-3',588.00,'Pending',NULL,NULL,1774233027423),(3766,'ORD-20260166','W-ST-2-0-2','SKU-14',342.00,'Pending',NULL,NULL,1774233027423),(3767,'ORD-20260167','W-ST-2-0-2','SKU-11',106.00,'Matched',NULL,NULL,1774233027423),(3768,'ORD-20260168','W-ST-1-0-2','SKU-13',94.00,'Matched',NULL,NULL,1774233027423),(3769,'ORD-20260169','W-L3-4-2','SKU-11',870.00,'Pending',NULL,NULL,1774233027423),(3770,'ORD-20260170','W-ST-3-2-3','SKU-14',793.00,'Pending',NULL,NULL,1774233027423),(3771,'ORD-20260171','W-L3-4-3','SKU-11',831.00,'Pending',NULL,NULL,1774233027423),(3772,'ORD-20260172','W-ST-1-1-3','SKU-10',626.00,'Matched',NULL,NULL,1774233027423),(3773,'ORD-20260173','W-ST-1-3-2','SKU-14',201.00,'Matched',NULL,NULL,1774233027423),(3774,'ORD-20260174','W-ST-2-3-3','SKU-4',279.00,'Matched',NULL,NULL,1774233027423),(3775,'ORD-20260175','W-L3-2-2','SKU-11',133.00,'Matched',NULL,NULL,1774233027423),(3776,'ORD-20260176','W-ST-2-1-3','SKU-11',873.00,'Matched',NULL,NULL,1774233027423),(3777,'ORD-20260177','W-ST-1-1-3','SKU-4',556.00,'Matched',NULL,NULL,1774233027423),(3778,'ORD-20260178','W-ST-0-0-1','SKU-4',1026.00,'Pending',NULL,NULL,1774233027423),(3779,'ORD-20260179','W-ST-4-2-2','SKU-14',715.00,'Pending',NULL,NULL,1774233027423),(3780,'ORD-20260180','W-ST-1-0-2','SKU-5',486.00,'Pending',NULL,NULL,1774233027423),(3781,'ORD-20260181','W-L3-2-0','SKU-12',311.00,'Pending',NULL,NULL,1774233027423),(3782,'ORD-20260182','W-RDC-2','SKU-6',126.00,'Pending',NULL,NULL,1774233027423),(3783,'ORD-20260183','W-ST-3-0-2','SKU-6',396.00,'Matched',NULL,NULL,1774233027423),(3784,'ORD-20260184','PAS-03','SKU-14',660.00,'Pending',NULL,NULL,1774233027423),(3785,'ORD-20260185','W-L3-0-2','SKU-4',93.00,'Pending',NULL,NULL,1774233027423),(3786,'ORD-20260186','W-L3-0-1','SKU-4',179.00,'Matched',NULL,NULL,1774233027423),(3787,'ORD-20260187','W-ST-3-1-3','SKU-7',972.00,'Pending',NULL,NULL,1774233027423),(3788,'ORD-20260188','W-L3-2-0','SKU-12',942.00,'Pending',NULL,NULL,1774233027423),(3789,'ORD-20260189','W-ST-4-2-3','SKU-7',148.00,'Matched',NULL,NULL,1774233027423),(3790,'ORD-20260190','W-ST-2-1-1','SKU-14',359.00,'Pending',NULL,NULL,1774233027423),(3791,'ORD-20260191','W-ST-0-2-1','SKU-13',435.00,'Pending',NULL,NULL,1774233027423),(3792,'ORD-20260192','W-ST-0-2-1','SKU-3',589.00,'Matched',NULL,NULL,1774233027423),(3793,'ORD-20260193','W-ST-3-3-1','SKU-8',163.00,'Pending',NULL,NULL,1774233027423),(3794,'ORD-20260194','W-ST-3-1-2','SKU-11',700.00,'Pending',NULL,NULL,1774233027423),(3795,'ORD-20260195','W-L3-3-2','SKU-11',350.00,'Pending',NULL,NULL,1774233027423),(3796,'ORD-20260196','W-ST-1-1-2','SKU-4',98.00,'Pending',NULL,NULL,1774233027423),(3797,'ORD-20260197','W-ST-3-3-2','SKU-2',920.00,'Pending',NULL,NULL,1774233027423),(3798,'ORD-20260198','W-ST-0-0-1','SKU-3',328.00,'Matched',NULL,NULL,1774233027423),(3799,'ORD-20260199','PAS-03','SKU-5',436.00,'Matched',NULL,NULL,1774233027423),(3800,'ORD-20260200','PAS-04','SKU-9',622.00,'Pending',NULL,NULL,1774233027423);
+/*!40000 ALTER TABLE `t_ryytn_order_main` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_page`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_page`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_page` (
+  `id` bigint NOT NULL COMMENT '页面编号',
+  `name` varchar(64) NOT NULL COMMENT '页面名称',
+  `alias` varchar(64) DEFAULT NULL COMMENT '页面别名',
+  `permission` varchar(256) DEFAULT NULL COMMENT '权限码，用于后端校验',
+  `parent_id` bigint NOT NULL COMMENT '父级页面编号',
+  `parent_ids` varchar(2048) NOT NULL COMMENT '所有父级编号，逗号分隔',
+  `dependency_ids` varchar(1024) DEFAULT NULL COMMENT '依赖页面编号，逗号分隔',
+  `type` varchar(32) NOT NULL COMMENT '类型：menu菜单，page页面',
+  `path` varchar(256) DEFAULT NULL COMMENT '路由路径',
+  `config_path` varchar(256) DEFAULT NULL,
+  `component` varchar(256) DEFAULT NULL COMMENT '组件路径',
+  `icon` varchar(256) DEFAULT NULL COMMENT '图标',
+  `moudel_id` bigint NOT NULL COMMENT '所属模块编号',
+  `sort_no` bigint DEFAULT NULL,
+  `sum_flag` smallint DEFAULT '0' COMMENT '是否汇总页：0否，1是',
+  `description` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_page_moudel` (`moudel_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='页面/菜单';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_page`
+--
+
+LOCK TABLES `t_ryytn_page` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_page` DISABLE KEYS */;
+INSERT INTO `t_ryytn_page` VALUES (1,'系统概览','DASH','sys:dashboard',0,'0',NULL,'page','/dashboard',NULL,NULL,'Monitor',1,1,0,NULL),(10,'组织架构','ORG',NULL,0,'0',NULL,'menu',NULL,NULL,NULL,'Setting',1,2,0,NULL),(11,'部门管理','DEPT','sys:dept:view',10,'10',NULL,'page','/department',NULL,NULL,'OfficeBuilding',1,3,0,NULL),(12,'用户管理','USER','sys:user:view',10,'10',NULL,'page','/user',NULL,NULL,'User',1,4,0,NULL),(13,'角色管理','ROLE','sys:role:view',10,'10',NULL,'page','/role',NULL,NULL,'Key',1,5,0,NULL),(20,'供应链协同','BIZ',NULL,0,'0',NULL,'menu',NULL,NULL,NULL,'List',1,6,0,NULL),(21,'牧场概览','PASTURE','biz:pasture:view',20,'20',NULL,'page','/pasture',NULL,NULL,'Van',1,7,0,NULL),(22,'三级渠道管理','CHANNEL','biz:channel:view',20,'20',NULL,'page','/channels',NULL,NULL,'DataAnalysis',1,8,0,NULL),(23,'智能订购中心','ORDER','biz:order:view',20,'20',NULL,'page','/intelligent',NULL,NULL,'Cpu',1,9,0,NULL),(24,'品类物资维护','SKU','biz:sku:view',20,'20',NULL,'page','/categories',NULL,NULL,'SetUp',1,10,0,NULL);
+/*!40000 ALTER TABLE `t_ryytn_page` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_role`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_role`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_role` (
+  `id` bigint NOT NULL COMMENT '角色编号',
+  `name` varchar(64) NOT NULL COMMENT '角色名称',
+  `default_flag` smallint DEFAULT '0' COMMENT '是否默认角色：0否，1是',
+  `status` int NOT NULL DEFAULT '1' COMMENT '状态：1正常，2停用',
+  `description` varchar(256) DEFAULT NULL,
+  `sort_no` int DEFAULT NULL COMMENT '排序号',
+  `data_type` int NOT NULL DEFAULT '2' COMMENT '数据类型：1系统，2业务',
+  `created_by` varchar(64) DEFAULT NULL,
+  `created_time` datetime(6) DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_by` varchar(64) DEFAULT NULL,
+  `updated_time` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_role`
+--
+
+LOCK TABLES `t_ryytn_role` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_role` DISABLE KEYS */;
+INSERT INTO `t_ryytn_role` VALUES (1,'系统特权管理员',0,1,NULL,1,1,NULL,'2026-03-23 10:30:27.398803',NULL,NULL),(2,'供应链数字化专家',0,1,NULL,2,2,NULL,'2026-03-23 10:30:27.398803',NULL,NULL),(3,'物流运营调度主管',0,1,NULL,3,2,NULL,'2026-03-23 10:30:27.398803',NULL,NULL),(4,'全渠道分销中台',0,1,NULL,4,2,NULL,'2026-03-23 10:30:27.398803',NULL,NULL),(5,'质量安全总监',0,1,NULL,5,2,NULL,'2026-03-23 10:30:27.398803',NULL,NULL),(6,'采购中心经理',0,1,NULL,6,2,NULL,'2026-03-23 10:30:27.398803',NULL,NULL),(7,'区域销售主管',0,1,NULL,7,2,NULL,'2026-03-23 10:30:27.398803',NULL,NULL),(8,'需求计划员',0,1,NULL,8,2,NULL,'2026-03-23 10:30:27.398803',NULL,NULL),(9,'系统审计员',0,1,NULL,9,2,NULL,'2026-03-23 10:30:27.398803',NULL,NULL),(1774331333288,'11',0,1,'11',0,2,NULL,'2026-03-24 13:48:57.000000',NULL,NULL);
+/*!40000 ALTER TABLE `t_ryytn_role` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_role_button`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_role_button`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_role_button` (
+  `role_id` bigint NOT NULL COMMENT '角色编号',
+  `button_id` bigint NOT NULL COMMENT '按钮编号',
+  KEY `idx_role_button_role` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色按钮关联';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_role_button`
+--
+
+LOCK TABLES `t_ryytn_role_button` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_role_button` DISABLE KEYS */;
+/*!40000 ALTER TABLE `t_ryytn_role_button` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_role_channel`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_role_channel`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_role_channel` (
+  `role_id` bigint NOT NULL COMMENT '角色编号',
+  `channel_id` varchar(32) NOT NULL COMMENT '渠道编号',
+  KEY `idx_role_channel_role` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色渠道关联';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_role_channel`
+--
+
+LOCK TABLES `t_ryytn_role_channel` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_role_channel` DISABLE KEYS */;
+/*!40000 ALTER TABLE `t_ryytn_role_channel` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_role_depository`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_role_depository`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_role_depository` (
+  `role_id` bigint NOT NULL COMMENT '角色编号',
+  `depository_id` varchar(32) NOT NULL COMMENT '仓库编号',
+  KEY `idx_role_depository_role` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色仓库关联';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_role_depository`
+--
+
+LOCK TABLES `t_ryytn_role_depository` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_role_depository` DISABLE KEYS */;
+/*!40000 ALTER TABLE `t_ryytn_role_depository` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_role_factory`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_role_factory`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_role_factory` (
+  `role_id` bigint NOT NULL COMMENT '角色编号',
+  `factory_id` varchar(32) NOT NULL COMMENT '工厂编号',
+  KEY `idx_role_factory_role` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色工厂关联';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_role_factory`
+--
+
+LOCK TABLES `t_ryytn_role_factory` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_role_factory` DISABLE KEYS */;
+/*!40000 ALTER TABLE `t_ryytn_role_factory` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_role_jobtitle`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_role_jobtitle`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_role_jobtitle` (
+  `role_id` bigint DEFAULT NULL COMMENT '角色ID',
+  `job_id` varchar(32) DEFAULT NULL COMMENT '岗位ID'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色岗位关联表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_role_jobtitle`
+--
+
+LOCK TABLES `t_ryytn_role_jobtitle` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_role_jobtitle` DISABLE KEYS */;
+INSERT INTO `t_ryytn_role_jobtitle` VALUES (2,'J311'),(2,'J111'),(2,'J321'),(3,'J122'),(3,'J123'),(4,'J211'),(4,'J221'),(4,'J231'),(5,'J131'),(5,'J132'),(2,'J311'),(2,'J111'),(2,'J321'),(3,'J122'),(3,'J123'),(4,'J211'),(4,'J221'),(4,'J231'),(5,'J131'),(5,'J132'),(2,'J311'),(2,'J111'),(2,'J321'),(3,'J122'),(3,'J123'),(4,'J211'),(4,'J221'),(4,'J231'),(5,'J131'),(5,'J132'),(6,'J121'),(6,'J112'),(7,'J211'),(7,'J212'),(8,'J111'),(8,'J112'),(9,'J301'),(2,'J311'),(2,'J111'),(2,'J321'),(3,'J122'),(3,'J123'),(4,'J211'),(4,'J221'),(4,'J231'),(5,'J131'),(5,'J132'),(6,'J121'),(6,'J112'),(7,'J211'),(7,'J212'),(8,'J111'),(8,'J112'),(9,'J301'),(2,'J311'),(2,'J111'),(2,'J321'),(3,'J122'),(3,'J123'),(4,'J211'),(4,'J221'),(4,'J231'),(5,'J131'),(5,'J132'),(6,'J121'),(6,'J112'),(7,'J211'),(7,'J212'),(8,'J111'),(8,'J112'),(9,'J301');
+/*!40000 ALTER TABLE `t_ryytn_role_jobtitle` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_role_page`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_role_page`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_role_page` (
+  `role_id` bigint NOT NULL COMMENT '角色编号',
+  `page_id` bigint NOT NULL COMMENT '页面编号',
+  KEY `idx_role_page_role` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色页面关联';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_role_page`
+--
+
+LOCK TABLES `t_ryytn_role_page` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_role_page` DISABLE KEYS */;
+INSERT INTO `t_ryytn_role_page` VALUES (1,1),(1,10),(1,11),(1,12),(1,13),(1,20),(1,21),(1,22),(1,23),(1,24),(2,1),(2,10),(2,13),(2,20),(2,23),(2,24),(3,1),(3,20),(3,21),(3,23),(4,1),(4,20),(4,22),(4,23),(5,1),(5,20),(5,21),(5,23),(5,24),(6,1),(6,20),(6,23),(6,24),(7,1),(7,20),(7,22),(8,1),(8,20),(8,23),(9,1),(9,10),(9,11),(9,12),(9,13),(1774331333288,1),(1774331333288,11),(1774331333288,111),(1774331333288,112),(1774331333288,113),(1774331333288,114),(1774331333288,115),(1774331333288,12),(1774331333288,121),(1774331333288,122),(1774331333288,123),(1774331333288,13),(1774331333288,131),(1774331333288,132),(1774331333288,133),(1774331333288,14),(1774331333288,141),(1774331333288,142),(1774331333288,143);
+/*!40000 ALTER TABLE `t_ryytn_role_page` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_ryytn_role_productcategory`
+--
+
+DROP TABLE IF EXISTS `t_ryytn_role_productcategory`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_ryytn_role_productcategory` (
+  `role_id` bigint NOT NULL COMMENT '角色编号',
+  `category_id` varchar(32) NOT NULL COMMENT '产品品类编号',
+  KEY `idx_role_productcategory_role` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色产品品类关联';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_ryytn_role_productcategory`
+--
+
+LOCK TABLES `t_ryytn_role_productcategory` WRITE;
+/*!40000 ALTER TABLE `t_ryytn_role_productcategory` DISABLE KEYS */;
+/*!40000 ALTER TABLE `t_ryytn_role_productcategory` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-03-30 14:00:48
