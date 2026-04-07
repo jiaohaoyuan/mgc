@@ -1092,13 +1092,24 @@ const getAdapterByTableType = (tableType) => {
                     throw new Error(`开始日期 (${beginDate}) 大于 结束日期 (${endDate})`);
                 }
 
+                const resellerName = row.reseller_name || row['经销商名称'] || '';
+                const region = row.region || row['所属大区'] || '';
+                const channelType = row.channel_type || row['渠道类型'] || 'DIST';
+                const priceGrade = row.price_grade || row['价格等级'] || 'A';
+                const quotaCases = row.quota_cases || row['月度配额(箱)'] || null;
+
                 await conn.query(`
                     INSERT INTO cdop_master.mst_rltn_sku_reseller 
-                    (sku_code, reseller_code, begin_date, end_date)
-                    VALUES (?, ?, ?, ?)
+                    (sku_code, reseller_code, reseller_name, region, channel_type, begin_date, end_date, price_grade, quota_cases)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE
-                    begin_date=VALUES(begin_date), end_date=VALUES(end_date), updated_time=NOW()
-                `, [String(skuCode), String(resellerCode), String(beginDate), String(endDate)]);
+                    reseller_name=VALUES(reseller_name), region=VALUES(region),
+                    channel_type=VALUES(channel_type), begin_date=VALUES(begin_date),
+                    end_date=VALUES(end_date), price_grade=VALUES(price_grade),
+                    quota_cases=VALUES(quota_cases), updated_time=NOW()
+                `, [String(skuCode), String(resellerCode), String(resellerName), String(region),
+                    String(channelType), String(beginDate), String(endDate),
+                    String(priceGrade), quotaCases ? Number(quotaCases) : null]);
             }
         };
     }
@@ -1164,8 +1175,9 @@ app.get('/api/master/:tableType/list', authRequired, async (req, res) => {
     try {
         const { tableType } = req.params;
         const page = parseInt(req.query.page) || 1;
-        const pageSize = parseInt(req.query.pageSize) || 20;
+        const pageSize = Math.min(parseInt(req.query.pageSize) || 20, 200);
         const keyword = req.query.keyword || '';
+        const lifecycleStatus = req.query.lifecycleStatus || '';
         const offset = (page - 1) * pageSize;
         
         let queryStr = '';
@@ -1180,13 +1192,38 @@ app.get('/api/master/:tableType/list', authRequired, async (req, res) => {
                 countQueryStr += ' AND (sku_code LIKE ? OR sku_name LIKE ?)';
                 queryParams.push(`%${keyword}%`, `%${keyword}%`);
             }
+            if (lifecycleStatus) {
+                queryStr += ' AND lifecycle_status = ?';
+                countQueryStr += ' AND lifecycle_status = ?';
+                queryParams.push(lifecycleStatus);
+            }
         } else if (tableType === 'RESELLER_RLTN') {
+            const region = req.query.region || '';
+            const channelType = req.query.channelType || '';
+            const validity = req.query.validity || ''; // 'valid' | 'expired' | ''
             queryStr = 'SELECT * FROM cdop_master.mst_rltn_sku_reseller WHERE status=1';
             countQueryStr = 'SELECT count(*) as total FROM cdop_master.mst_rltn_sku_reseller WHERE status=1';
             if (keyword) {
-                queryStr += ' AND (sku_code LIKE ? OR reseller_code LIKE ?)';
-                countQueryStr += ' AND (sku_code LIKE ? OR reseller_code LIKE ?)';
-                queryParams.push(`%${keyword}%`, `%${keyword}%`);
+                queryStr += ' AND (sku_code LIKE ? OR reseller_code LIKE ? OR reseller_name LIKE ?)';
+                countQueryStr += ' AND (sku_code LIKE ? OR reseller_code LIKE ? OR reseller_name LIKE ?)';
+                queryParams.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
+            }
+            if (region) {
+                queryStr += ' AND region = ?';
+                countQueryStr += ' AND region = ?';
+                queryParams.push(region);
+            }
+            if (channelType) {
+                queryStr += ' AND channel_type = ?';
+                countQueryStr += ' AND channel_type = ?';
+                queryParams.push(channelType);
+            }
+            if (validity === 'valid') {
+                queryStr += ' AND begin_date <= CURDATE() AND end_date >= CURDATE()';
+                countQueryStr += ' AND begin_date <= CURDATE() AND end_date >= CURDATE()';
+            } else if (validity === 'expired') {
+                queryStr += ' AND end_date < CURDATE()';
+                countQueryStr += ' AND end_date < CURDATE()';
             }
         } else {
             return res.status(400).json({ code: 400, msg: '未知的TableType' });
@@ -1211,7 +1248,155 @@ app.get('/api/master/:tableType/list', authRequired, async (req, res) => {
     }
 });
 
-app.delete('/api/master/:tableType', authRequired, superAdminRequired, async (req, res) => {
+// 新增 SKU
+app.post('/api/master/SKU', authRequired, asyncHandler(async (req, res) => {
+    const { sku_code, sku_name, bar_code, category_code, lifecycle_status, shelf_life_days, unit_ratio, volume_m3 } = req.body;
+    if (!sku_code || !sku_name) return res.status(400).json({ code: 400, msg: 'SKU编码和名称不能为空' });
+    const [exist] = await mysqlPool.query('SELECT id FROM cdop_master.mst_sku_info WHERE sku_code = ? AND status = 1', [sku_code]);
+    if (exist.length > 0) return res.status(400).json({ code: 400, msg: 'SKU编码已存在' });
+    await mysqlPool.query(
+        'INSERT INTO cdop_master.mst_sku_info (sku_code, sku_name, bar_code, category_code, lifecycle_status, shelf_life_days, unit_ratio, volume_m3) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [sku_code, sku_name, bar_code || '', category_code || '', lifecycle_status || 'ACTIVE', Number(shelf_life_days) || 0, Number(unit_ratio) || 1, Number(volume_m3) || 0]
+    );
+    await writeAuditLog({ req, action: 'CREATE', resource: 'sku', detail: { sku_code, sku_name } });
+    res.json({ code: 200, msg: '新增成功' });
+}));
+
+// 编辑 SKU
+app.put('/api/master/SKU/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { sku_name, bar_code, category_code, lifecycle_status, shelf_life_days, unit_ratio, volume_m3 } = req.body;
+    if (!sku_name) return res.status(400).json({ code: 400, msg: 'SKU名称不能为空' });
+    await mysqlPool.query(
+        'UPDATE cdop_master.mst_sku_info SET sku_name=?, bar_code=?, category_code=?, lifecycle_status=?, shelf_life_days=?, unit_ratio=?, volume_m3=?, updated_time=NOW() WHERE id=?',
+        [sku_name, bar_code || '', category_code || '', lifecycle_status || 'ACTIVE', Number(shelf_life_days) || 0, Number(unit_ratio) || 1, Number(volume_m3) || 0, id]
+    );
+    await writeAuditLog({ req, action: 'UPDATE', resource: 'sku', targetId: id, detail: { sku_name, lifecycle_status } });
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+// 批量逻辑删除 SKU（必须在 /:id 之前注册，避免 'batch' 被当作 id）
+app.delete('/api/master/SKU/batch', authRequired, asyncHandler(async (req, res) => {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ code: 400, msg: '请传入有效的 ids 数组' });
+    }
+    await mysqlPool.query('UPDATE cdop_master.mst_sku_info SET status=0, updated_time=NOW() WHERE id IN (?)', [ids]);
+    await writeAuditLog({ req, action: 'BATCH_DELETE', resource: 'sku', detail: { ids, count: ids.length } });
+    res.json({ code: 200, msg: `成功删除 ${ids.length} 条 SKU` });
+}));
+
+// 单条逻辑删除 SKU
+app.delete('/api/master/SKU/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    await mysqlPool.query('UPDATE cdop_master.mst_sku_info SET status=0, updated_time=NOW() WHERE id=?', [id]);
+    await writeAuditLog({ req, action: 'DELETE', resource: 'sku', targetId: id });
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+// 批量启用/停用 SKU（lifecycle_status: ACTIVE / INACTIVE）
+app.patch('/api/master/SKU/batch-status', authRequired, asyncHandler(async (req, res) => {
+    const { ids, lifecycleStatus } = req.body;
+    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '请选择要操作的数据' });
+    if (!['ACTIVE', 'INACTIVE'].includes(lifecycleStatus)) return res.status(400).json({ code: 400, msg: '无效的状态值' });
+    await mysqlPool.query('UPDATE cdop_master.mst_sku_info SET lifecycle_status=?, updated_time=NOW() WHERE id IN (?)', [lifecycleStatus, ids]);
+    await writeAuditLog({ req, action: 'BATCH_STATUS', resource: 'sku', detail: { ids, lifecycleStatus } });
+    res.json({ code: 200, msg: '操作成功' });
+}));
+
+// 按条件导出 SKU 列表（返回完整数据，前端处理为Excel）
+app.get('/api/master/SKU/export', authRequired, asyncHandler(async (req, res) => {
+    const keyword = req.query.keyword || '';
+    const lifecycleStatus = req.query.lifecycleStatus || '';
+    let sql = 'SELECT sku_code, sku_name, bar_code, category_code, lifecycle_status, shelf_life_days, unit_ratio, volume_m3, created_time, updated_time FROM cdop_master.mst_sku_info WHERE status=1';
+    const params = [];
+    if (keyword) { sql += ' AND (sku_code LIKE ? OR sku_name LIKE ?)'; params.push(`%${keyword}%`, `%${keyword}%`); }
+    if (lifecycleStatus) { sql += ' AND lifecycle_status = ?'; params.push(lifecycleStatus); }
+    sql += ' ORDER BY created_time DESC';
+    const [rows] = await mysqlPool.query(sql, params);
+    res.json({ code: 200, msg: '获取成功', data: rows });
+}));
+
+// ═══════════════════════════════════════════════════════
+// 经销关系授权 CRUD
+// ═══════════════════════════════════════════════════════
+
+// 新增 经销关系
+app.post('/api/master/RESELLER_RLTN', authRequired, asyncHandler(async (req, res) => {
+    const { sku_code, reseller_code, reseller_name, region, channel_type, begin_date, end_date, price_grade, quota_cases } = req.body;
+    if (!sku_code || !reseller_code || !begin_date || !end_date) {
+        return res.status(400).json({ code: 400, msg: 'SKU编码、经销商编码、生效日期均为必填' });
+    }
+    if (new Date(begin_date) > new Date(end_date)) {
+        return res.status(400).json({ code: 400, msg: '开始日期不能晚于结束日期' });
+    }
+    const [exist] = await mysqlPool.query(
+        'SELECT id FROM cdop_master.mst_rltn_sku_reseller WHERE sku_code=? AND reseller_code=? AND status=1',
+        [sku_code, reseller_code]
+    );
+    if (exist.length > 0) return res.status(400).json({ code: 400, msg: '该 SKU + 经销商 授权关系已存在，请直接编辑' });
+    await mysqlPool.query(
+        'INSERT INTO cdop_master.mst_rltn_sku_reseller (sku_code, reseller_code, reseller_name, region, channel_type, begin_date, end_date, price_grade, quota_cases) VALUES (?,?,?,?,?,?,?,?,?)',
+        [sku_code, reseller_code, reseller_name||'', region||'', channel_type||'DIST', begin_date, end_date, price_grade||'A', quota_cases ? Number(quota_cases) : null]
+    );
+    await writeAuditLog({ req, action: 'CREATE', resource: 'reseller_rltn', detail: { sku_code, reseller_code } });
+    res.json({ code: 200, msg: '新增成功' });
+}));
+
+// 编辑 经销关系
+app.put('/api/master/RESELLER_RLTN/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { reseller_name, region, channel_type, begin_date, end_date, price_grade, quota_cases } = req.body;
+    if (!begin_date || !end_date) return res.status(400).json({ code: 400, msg: '生效日期不能为空' });
+    if (new Date(begin_date) > new Date(end_date)) return res.status(400).json({ code: 400, msg: '开始日期不能晚于结束日期' });
+    await mysqlPool.query(
+        'UPDATE cdop_master.mst_rltn_sku_reseller SET reseller_name=?, region=?, channel_type=?, begin_date=?, end_date=?, price_grade=?, quota_cases=?, updated_time=NOW() WHERE id=?',
+        [reseller_name||'', region||'', channel_type||'DIST', begin_date, end_date, price_grade||'A', quota_cases ? Number(quota_cases) : null, id]
+    );
+    await writeAuditLog({ req, action: 'UPDATE', resource: 'reseller_rltn', targetId: id });
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+// 批量逻辑删除 经销关系（必须在 /:id 之前注册）
+app.delete('/api/master/RESELLER_RLTN/batch', authRequired, asyncHandler(async (req, res) => {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ code: 400, msg: '请传入有效的 ids 数组' });
+    }
+    await mysqlPool.query('UPDATE cdop_master.mst_rltn_sku_reseller SET status=0, updated_time=NOW() WHERE id IN (?)', [ids]);
+    await writeAuditLog({ req, action: 'BATCH_DELETE', resource: 'reseller_rltn', detail: { ids, count: ids.length } });
+    res.json({ code: 200, msg: `成功撤销 ${ids.length} 条授权关系` });
+}));
+
+// 单条逻辑删除 经销关系
+app.delete('/api/master/RESELLER_RLTN/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    await mysqlPool.query('UPDATE cdop_master.mst_rltn_sku_reseller SET status=0, updated_time=NOW() WHERE id=?', [id]);
+    await writeAuditLog({ req, action: 'DELETE', resource: 'reseller_rltn', targetId: id });
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+// 按条件导出 经销关系
+app.get('/api/master/RESELLER_RLTN/export', authRequired, asyncHandler(async (req, res) => {
+    const keyword = req.query.keyword || '';
+    const region = req.query.region || '';
+    const channelType = req.query.channelType || '';
+    const validity = req.query.validity || '';
+    let sql = 'SELECT sku_code, reseller_code, reseller_name, region, channel_type, begin_date, end_date, price_grade, quota_cases, created_time, updated_time FROM cdop_master.mst_rltn_sku_reseller WHERE status=1';
+    const params = [];
+    if (keyword) { sql += ' AND (sku_code LIKE ? OR reseller_code LIKE ? OR reseller_name LIKE ?)'; params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`); }
+    if (region) { sql += ' AND region = ?'; params.push(region); }
+    if (channelType) { sql += ' AND channel_type = ?'; params.push(channelType); }
+    if (validity === 'valid') sql += ' AND begin_date <= CURDATE() AND end_date >= CURDATE()';
+    else if (validity === 'expired') sql += ' AND end_date < CURDATE()';
+    sql += ' ORDER BY region, reseller_code, sku_code';
+    const [rows] = await mysqlPool.query(sql, params);
+    res.json({ code: 200, msg: '获取成功', data: rows });
+}));
+
+
+// 兼容旧路由（保留但降级为仅需 authRequired）
+app.delete('/api/master/:tableType', authRequired, async (req, res) => {
     try {
         const { tableType } = req.params;
         const { ids } = req.body;
@@ -1222,14 +1407,518 @@ app.delete('/api/master/:tableType', authRequired, superAdminRequired, async (re
         else if (tableType === 'RESELLER_RLTN') table = 'cdop_master.mst_rltn_sku_reseller';
         else return res.status(400).json({ code: 400, msg: '未知的TableType' });
 
-        // Logic Delete
-        await mysqlPool.query(`UPDATE ${table} SET status=0 WHERE id IN (?)`, [ids]);
+        await mysqlPool.query(`UPDATE ${table} SET status=0, updated_time=NOW() WHERE id IN (?)`, [ids]);
         res.json({ code: 200, msg: '删除成功' });
     } catch (e) {
-        console.error('Delete error:', e);
+        console.error('Batch delete error:', e);
         res.status(500).json({ code: 500, msg: '服务器异常' });
     }
 });
+
+
+// =====================================================================
+// 基础数据管理 (MDM) 模块 API - 品类管理
+// =====================================================================
+
+// 品类树
+app.get('/api/master/category/tree', authRequired, asyncHandler(async (req, res) => {
+    const [rows] = await mysqlPool.query('SELECT * FROM cdop_master.mst_category_info ORDER BY level ASC, sort_order ASC, id ASC');
+    res.json({ code: 200, msg: '获取成功', data: rows });
+}));
+
+// 品类列表（分页）
+app.get('/api/master/category', authRequired, asyncHandler(async (req, res) => {
+    const { keyword = '', level = '', parentCode = '', status = '', page = 1, pageSize = 20 } = req.query;
+    const p = parseInt(page), ps = Math.min(parseInt(pageSize) || 20, 200);
+    const offset = (p - 1) * ps;
+    let where = 'WHERE 1=1';
+    const params = [];
+    if (keyword) { where += ' AND (category_code LIKE ? OR category_name LIKE ?)'; params.push(`%${keyword}%`, `%${keyword}%`); }
+    if (level) { where += ' AND level = ?'; params.push(parseInt(level)); }
+    if (parentCode) { where += ' AND parent_code = ?'; params.push(parentCode); }
+    if (status !== '') { where += ' AND status = ?'; params.push(parseInt(status)); }
+    const [[{ total }]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_category_info ${where}`, params);
+    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_category_info ${where} ORDER BY level ASC, sort_order ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
+    res.json({ code: 200, msg: '获取成功', data: { total, list } });
+}));
+
+// 新增品类
+app.post('/api/master/category', authRequired, asyncHandler(async (req, res) => {
+    const { category_code, category_name, level, parent_code, sort_order, status, remark } = req.body;
+    if (!category_code || !category_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
+    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_category_info WHERE category_code = ?', [category_code]);
+    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '品类编码已存在' });
+    await mysqlPool.query('INSERT INTO cdop_master.mst_category_info (category_code, category_name, level, parent_code, sort_order, status, remark) VALUES (?,?,?,?,?,?,?)',
+        [category_code, category_name, level || 1, parent_code || null, sort_order || 0, status !== undefined ? status : 1, remark || null]);
+    res.json({ code: 200, msg: '新增成功' });
+}));
+
+// 编辑品类
+app.put('/api/master/category/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { category_name, sort_order, status, remark } = req.body;
+    await mysqlPool.query('UPDATE cdop_master.mst_category_info SET category_name=?, sort_order=?, status=?, remark=?, updated_time=NOW() WHERE id=?',
+        [category_name, sort_order || 0, status !== undefined ? status : 1, remark || null, id]);
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+// 删除品类
+app.delete('/api/master/category/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const [row] = await mysqlPool.query('SELECT category_code FROM cdop_master.mst_category_info WHERE id=?', [id]);
+    if (!row.length) return res.status(404).json({ code: 404, msg: '数据不存在' });
+    const code = row[0].category_code;
+    const [children] = await mysqlPool.query('SELECT id FROM cdop_master.mst_category_info WHERE parent_code=?', [code]);
+    if (children.length > 0) return res.status(400).json({ code: 400, msg: '请先删除下级品类' });
+    await mysqlPool.query('DELETE FROM cdop_master.mst_category_info WHERE id=?', [id]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+// =====================================================================
+// 工厂管理
+// =====================================================================
+app.get('/api/master/factory', authRequired, asyncHandler(async (req, res) => {
+    const { keyword = '', typeName = '', isOwn = '', status = '', page = 1, pageSize = 20 } = req.query;
+    const p = parseInt(page), ps = Math.min(parseInt(pageSize) || 20, 200), offset = (p - 1) * ps;
+    let where = 'WHERE 1=1'; const params = [];
+    if (keyword) { where += ' AND (factory_code LIKE ? OR factory_name LIKE ?)'; params.push(`%${keyword}%`, `%${keyword}%`); }
+    if (typeName) { where += ' AND type_name = ?'; params.push(typeName); }
+    if (isOwn !== '') { where += ' AND is_own = ?'; params.push(parseInt(isOwn)); }
+    if (status !== '') { where += ' AND status = ?'; params.push(parseInt(status)); }
+    const [[{ total }]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_factory_info ${where}`, params);
+    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_factory_info ${where} ORDER BY id ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
+    res.json({ code: 200, msg: '获取成功', data: { total, list } });
+}));
+
+app.post('/api/master/factory', authRequired, asyncHandler(async (req, res) => {
+    const { factory_code, factory_name, company_code, company_name, type_code, type_name, is_own, province_name, city_name, district_name, address, longitude, latitude, status, remark } = req.body;
+    if (!factory_code || !factory_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
+    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_factory_info WHERE factory_code=?', [factory_code]);
+    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '工厂编码已存在' });
+    await mysqlPool.query('INSERT INTO cdop_master.mst_factory_info (factory_code,factory_name,company_code,company_name,type_code,type_name,is_own,province_name,city_name,district_name,address,longitude,latitude,status,remark) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        [factory_code, factory_name, company_code||null, company_name||null, type_code||null, type_name||null, is_own!==undefined?is_own:1, province_name||null, city_name||null, district_name||null, address||null, longitude||null, latitude||null, status!==undefined?status:1, remark||null]);
+    res.json({ code: 200, msg: '新增成功' });
+}));
+
+app.put('/api/master/factory/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { factory_name, company_code, company_name, type_code, type_name, is_own, province_name, city_name, district_name, address, longitude, latitude, status, remark } = req.body;
+    await mysqlPool.query('UPDATE cdop_master.mst_factory_info SET factory_name=?,company_code=?,company_name=?,type_code=?,type_name=?,is_own=?,province_name=?,city_name=?,district_name=?,address=?,longitude=?,latitude=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
+        [factory_name, company_code||null, company_name||null, type_code||null, type_name||null, is_own!==undefined?is_own:1, province_name||null, city_name||null, district_name||null, address||null, longitude||null, latitude||null, status!==undefined?status:1, remark||null, id]);
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+app.delete('/api/master/factory/batch', authRequired, asyncHandler(async (req, res) => {
+    const { ids } = req.body;
+    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
+    await mysqlPool.query('UPDATE cdop_master.mst_factory_info SET status=0,updated_time=NOW() WHERE id IN (?)', [ids]);
+    res.json({ code: 200, msg: `已停用 ${ids.length} 条` });
+}));
+
+app.delete('/api/master/factory/:id', authRequired, asyncHandler(async (req, res) => {
+    await mysqlPool.query('DELETE FROM cdop_master.mst_factory_info WHERE id=?', [req.params.id]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+// =====================================================================
+// 仓库管理
+// =====================================================================
+app.get('/api/master/warehouse', authRequired, asyncHandler(async (req, res) => {
+    const { keyword = '', lv1TypeName = '', factoryCode = '', isOwn = '', status = '', page = 1, pageSize = 20 } = req.query;
+    const p = parseInt(page), ps = Math.min(parseInt(pageSize)||20,200), offset = (p-1)*ps;
+    let where = 'WHERE 1=1'; const params = [];
+    if (keyword) { where += ' AND (warehouse_code LIKE ? OR warehouse_name LIKE ?)'; params.push(`%${keyword}%`,`%${keyword}%`); }
+    if (lv1TypeName) { where += ' AND lv1_type_name=?'; params.push(lv1TypeName); }
+    if (factoryCode) { where += ' AND factory_code=?'; params.push(factoryCode); }
+    if (isOwn !== '') { where += ' AND is_own=?'; params.push(parseInt(isOwn)); }
+    if (status !== '') { where += ' AND status=?'; params.push(parseInt(status)); }
+    const [[{ total }]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_warehouse_info ${where}`, params);
+    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_warehouse_info ${where} ORDER BY id ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
+    res.json({ code: 200, msg: '获取成功', data: { total, list } });
+}));
+
+app.get('/api/master/warehouse/all', authRequired, asyncHandler(async (req, res) => {
+    const [list] = await mysqlPool.query('SELECT warehouse_code, warehouse_name FROM cdop_master.mst_warehouse_info WHERE status=1 ORDER BY warehouse_code ASC');
+    res.json({ code: 200, msg: '获取成功', data: list });
+}));
+
+app.post('/api/master/warehouse', authRequired, asyncHandler(async (req, res) => {
+    const { warehouse_code, warehouse_name, biz_warehouse_code, biz_warehouse_name, lv1_type_code, lv1_type_name, lv2_type_name, factory_code, factory_name, warehouse_type_code, is_own, province_name, city_name, district_name, address, longitude, latitude, status, remark } = req.body;
+    if (!warehouse_code || !warehouse_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
+    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_warehouse_info WHERE warehouse_code=?', [warehouse_code]);
+    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '仓库编码已存在' });
+    await mysqlPool.query('INSERT INTO cdop_master.mst_warehouse_info (warehouse_code,warehouse_name,biz_warehouse_code,biz_warehouse_name,lv1_type_code,lv1_type_name,lv2_type_name,factory_code,factory_name,warehouse_type_code,is_own,province_name,city_name,district_name,address,longitude,latitude,status,remark) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        [warehouse_code,warehouse_name,biz_warehouse_code||null,biz_warehouse_name||null,lv1_type_code||null,lv1_type_name||null,lv2_type_name||null,factory_code||null,factory_name||null,warehouse_type_code||null,is_own!==undefined?is_own:1,province_name||null,city_name||null,district_name||null,address||null,longitude||null,latitude||null,status!==undefined?status:1,remark||null]);
+    res.json({ code: 200, msg: '新增成功' });
+}));
+
+app.put('/api/master/warehouse/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { warehouse_name, biz_warehouse_code, biz_warehouse_name, lv1_type_code, lv1_type_name, lv2_type_name, factory_code, factory_name, warehouse_type_code, is_own, province_name, city_name, district_name, address, longitude, latitude, status, remark } = req.body;
+    await mysqlPool.query('UPDATE cdop_master.mst_warehouse_info SET warehouse_name=?,biz_warehouse_code=?,biz_warehouse_name=?,lv1_type_code=?,lv1_type_name=?,lv2_type_name=?,factory_code=?,factory_name=?,warehouse_type_code=?,is_own=?,province_name=?,city_name=?,district_name=?,address=?,longitude=?,latitude=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
+        [warehouse_name,biz_warehouse_code||null,biz_warehouse_name||null,lv1_type_code||null,lv1_type_name||null,lv2_type_name||null,factory_code||null,factory_name||null,warehouse_type_code||null,is_own!==undefined?is_own:1,province_name||null,city_name||null,district_name||null,address||null,longitude||null,latitude||null,status!==undefined?status:1,remark||null,id]);
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+app.delete('/api/master/warehouse/batch', authRequired, asyncHandler(async (req, res) => {
+    const { ids } = req.body;
+    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
+    await mysqlPool.query('UPDATE cdop_master.mst_warehouse_info SET status=0,updated_time=NOW() WHERE id IN (?)', [ids]);
+    res.json({ code: 200, msg: `已停用 ${ids.length} 条` });
+}));
+
+app.delete('/api/master/warehouse/:id', authRequired, asyncHandler(async (req, res) => {
+    await mysqlPool.query('DELETE FROM cdop_master.mst_warehouse_info WHERE id=?', [req.params.id]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+// =====================================================================
+// 渠道管理（树形）
+// =====================================================================
+app.get('/api/master/channel/tree', authRequired, asyncHandler(async (req, res) => {
+    const [rows] = await mysqlPool.query('SELECT * FROM cdop_master.mst_channel_info ORDER BY level ASC, sort_order ASC, id ASC');
+    res.json({ code: 200, msg: '获取成功', data: rows });
+}));
+
+app.get('/api/master/channel', authRequired, asyncHandler(async (req, res) => {
+    const { keyword='', level='', parentCode='', status='', page=1, pageSize=20 } = req.query;
+    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
+    let where='WHERE 1=1'; const params=[];
+    if (keyword) { where+=' AND (channel_code LIKE ? OR channel_name LIKE ?)'; params.push(`%${keyword}%`,`%${keyword}%`); }
+    if (level) { where+=' AND level=?'; params.push(parseInt(level)); }
+    if (parentCode) { where+=' AND parent_code=?'; params.push(parentCode); }
+    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
+    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_channel_info ${where}`, params);
+    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_channel_info ${where} ORDER BY level ASC, sort_order ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
+    res.json({ code: 200, msg: '获取成功', data: { total, list } });
+}));
+
+app.post('/api/master/channel', authRequired, asyncHandler(async (req, res) => {
+    const { channel_code, channel_name, level, parent_code, sort_order, status, remark } = req.body;
+    if (!channel_code || !channel_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
+    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_channel_info WHERE channel_code=?', [channel_code]);
+    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '渠道编码已存在' });
+    await mysqlPool.query('INSERT INTO cdop_master.mst_channel_info (channel_code,channel_name,level,parent_code,sort_order,status,remark) VALUES (?,?,?,?,?,?,?)',
+        [channel_code,channel_name,level||1,parent_code||null,sort_order||0,status!==undefined?status:1,remark||null]);
+    res.json({ code: 200, msg: '新增成功' });
+}));
+
+app.put('/api/master/channel/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { channel_name, sort_order, status, remark } = req.body;
+    await mysqlPool.query('UPDATE cdop_master.mst_channel_info SET channel_name=?,sort_order=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
+        [channel_name, sort_order||0, status!==undefined?status:1, remark||null, id]);
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+app.delete('/api/master/channel/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const [row] = await mysqlPool.query('SELECT channel_code FROM cdop_master.mst_channel_info WHERE id=?', [id]);
+    if (!row.length) return res.status(404).json({ code: 404, msg: '数据不存在' });
+    const code = row[0].channel_code;
+    const [children] = await mysqlPool.query('SELECT id FROM cdop_master.mst_channel_info WHERE parent_code=?', [code]);
+    if (children.length > 0) return res.status(400).json({ code: 400, msg: '请先删除下级渠道' });
+    const [resellerRef] = await mysqlPool.query('SELECT id FROM cdop_master.mst_reseller_info WHERE lv1_channel_code=? OR lv3_channel_code=?', [code, code]);
+    if (resellerRef.length > 0) return res.status(400).json({ code: 400, msg: '该渠道已有经销商绑定，不可删除' });
+    await mysqlPool.query('DELETE FROM cdop_master.mst_channel_info WHERE id=?', [id]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+// =====================================================================
+// 经销商管理
+// =====================================================================
+app.get('/api/master/reseller', authRequired, asyncHandler(async (req, res) => {
+    const { keyword='', lv1ChannelCode='', isOwn='', status='', page=1, pageSize=20 } = req.query;
+    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
+    let where='WHERE 1=1'; const params=[];
+    if (keyword) { where+=' AND (reseller_code LIKE ? OR reseller_name LIKE ?)'; params.push(`%${keyword}%`,`%${keyword}%`); }
+    if (lv1ChannelCode) { where+=' AND lv1_channel_code=?'; params.push(lv1ChannelCode); }
+    if (isOwn!=='') { where+=' AND is_own=?'; params.push(parseInt(isOwn)); }
+    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
+    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_reseller_info ${where}`, params);
+    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_reseller_info ${where} ORDER BY id ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
+    res.json({ code: 200, msg: '获取成功', data: { total, list } });
+}));
+
+app.get('/api/master/reseller/all', authRequired, asyncHandler(async (req, res) => {
+    const [list] = await mysqlPool.query('SELECT reseller_code, reseller_name, lv1_channel_code, lv1_channel_name, lv3_channel_code, lv3_channel_name FROM cdop_master.mst_reseller_info WHERE status=1 ORDER BY reseller_code ASC');
+    res.json({ code: 200, msg: '获取成功', data: list });
+}));
+
+app.post('/api/master/reseller', authRequired, asyncHandler(async (req, res) => {
+    const d = req.body;
+    if (!d.reseller_code || !d.reseller_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
+    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_reseller_info WHERE reseller_code=?', [d.reseller_code]);
+    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '经销商编码已存在' });
+    await mysqlPool.query('INSERT INTO cdop_master.mst_reseller_info (reseller_code,reseller_name,is_own,lv1_channel_code,lv1_channel_name,lv2_channel_code,lv2_channel_name,lv3_channel_code,lv3_channel_name,sale_region_code,sale_region_name,default_warehouse_code,default_warehouse_name,contract_type,contract_begin_date,contract_end_date,province_name,city_name,district_name,status,remark) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        [d.reseller_code,d.reseller_name,d.is_own||0,d.lv1_channel_code||null,d.lv1_channel_name||null,d.lv2_channel_code||null,d.lv2_channel_name||null,d.lv3_channel_code||null,d.lv3_channel_name||null,d.sale_region_code||null,d.sale_region_name||null,d.default_warehouse_code||null,d.default_warehouse_name||null,d.contract_type||null,d.contract_begin_date||null,d.contract_end_date||null,d.province_name||null,d.city_name||null,d.district_name||null,d.status!==undefined?d.status:1,d.remark||null]);
+    res.json({ code: 200, msg: '新增成功' });
+}));
+
+app.put('/api/master/reseller/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params; const d = req.body;
+    await mysqlPool.query('UPDATE cdop_master.mst_reseller_info SET reseller_name=?,is_own=?,lv1_channel_code=?,lv1_channel_name=?,lv2_channel_code=?,lv2_channel_name=?,lv3_channel_code=?,lv3_channel_name=?,sale_region_code=?,sale_region_name=?,default_warehouse_code=?,default_warehouse_name=?,contract_type=?,contract_begin_date=?,contract_end_date=?,province_name=?,city_name=?,district_name=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
+        [d.reseller_name,d.is_own||0,d.lv1_channel_code||null,d.lv1_channel_name||null,d.lv2_channel_code||null,d.lv2_channel_name||null,d.lv3_channel_code||null,d.lv3_channel_name||null,d.sale_region_code||null,d.sale_region_name||null,d.default_warehouse_code||null,d.default_warehouse_name||null,d.contract_type||null,d.contract_begin_date||null,d.contract_end_date||null,d.province_name||null,d.city_name||null,d.district_name||null,d.status!==undefined?d.status:1,d.remark||null,id]);
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+app.delete('/api/master/reseller/batch', authRequired, asyncHandler(async (req, res) => {
+    const { ids } = req.body;
+    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
+    await mysqlPool.query('UPDATE cdop_master.mst_reseller_info SET status=0,updated_time=NOW() WHERE id IN (?)', [ids]);
+    res.json({ code: 200, msg: `已停用 ${ids.length} 条` });
+}));
+
+app.delete('/api/master/reseller/:id', authRequired, asyncHandler(async (req, res) => {
+    await mysqlPool.query('DELETE FROM cdop_master.mst_reseller_info WHERE id=?', [req.params.id]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+// =====================================================================
+// 组织机构管理（树形）
+// =====================================================================
+app.get('/api/master/org/tree', authRequired, asyncHandler(async (req, res) => {
+    const [rows] = await mysqlPool.query('SELECT * FROM cdop_master.mst_org_info ORDER BY level ASC, sort_order ASC, id ASC');
+    res.json({ code: 200, msg: '获取成功', data: rows });
+}));
+
+app.get('/api/master/org', authRequired, asyncHandler(async (req, res) => {
+    const { keyword='', level='', status='', page=1, pageSize=20 } = req.query;
+    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
+    let where='WHERE 1=1'; const params=[];
+    if (keyword) { where+=' AND (org_code LIKE ? OR org_name LIKE ?)'; params.push(`%${keyword}%`,`%${keyword}%`); }
+    if (level) { where+=' AND level=?'; params.push(parseInt(level)); }
+    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
+    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_org_info ${where}`, params);
+    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_org_info ${where} ORDER BY level ASC, sort_order ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
+    res.json({ code: 200, msg: '获取成功', data: { total, list } });
+}));
+
+app.get('/api/master/org/all', authRequired, asyncHandler(async (req, res) => {
+    const [list] = await mysqlPool.query('SELECT org_code, org_name FROM cdop_master.mst_org_info WHERE status=1 ORDER BY org_code ASC');
+    res.json({ code: 200, msg: '获取成功', data: list });
+}));
+
+app.post('/api/master/org', authRequired, asyncHandler(async (req, res) => {
+    const { org_code, org_name, level, parent_code, org_type, company_code, company_name, sort_order, status, remark } = req.body;
+    if (!org_code || !org_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
+    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_org_info WHERE org_code=?', [org_code]);
+    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '组织编码已存在' });
+    await mysqlPool.query('INSERT INTO cdop_master.mst_org_info (org_code,org_name,level,parent_code,org_type,company_code,company_name,sort_order,status,remark) VALUES (?,?,?,?,?,?,?,?,?,?)',
+        [org_code,org_name,level||1,parent_code||null,org_type||null,company_code||null,company_name||null,sort_order||0,status!==undefined?status:1,remark||null]);
+    res.json({ code: 200, msg: '新增成功' });
+}));
+
+app.put('/api/master/org/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { org_name, org_type, company_code, company_name, sort_order, status, remark } = req.body;
+    await mysqlPool.query('UPDATE cdop_master.mst_org_info SET org_name=?,org_type=?,company_code=?,company_name=?,sort_order=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
+        [org_name,org_type||null,company_code||null,company_name||null,sort_order||0,status!==undefined?status:1,remark||null,id]);
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+app.delete('/api/master/org/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const [row] = await mysqlPool.query('SELECT org_code FROM cdop_master.mst_org_info WHERE id=?', [id]);
+    if (!row.length) return res.status(404).json({ code: 404, msg: '数据不存在' });
+    const code = row[0].org_code;
+    const [children] = await mysqlPool.query('SELECT id FROM cdop_master.mst_org_info WHERE parent_code=?', [code]);
+    if (children.length > 0) return res.status(400).json({ code: 400, msg: '请先删除下级组织' });
+    await mysqlPool.query('DELETE FROM cdop_master.mst_org_info WHERE id=?', [id]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+// =====================================================================
+// 业务日历
+// =====================================================================
+app.get('/api/master/calendar', authRequired, asyncHandler(async (req, res) => {
+    const { year, month, isHoliday='', isWorkday='', page=1, pageSize=50 } = req.query;
+    if (!year) return res.status(400).json({ code: 400, msg: '年份必填' });
+    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||50,400), offset=(p-1)*ps;
+    let where='WHERE YEAR(cal_date)=?'; const params=[parseInt(year)];
+    if (month) { where+=' AND MONTH(cal_date)=?'; params.push(parseInt(month)); }
+    if (isHoliday!=='') { where+=' AND is_holiday=?'; params.push(parseInt(isHoliday)); }
+    if (isWorkday!=='') { where+=' AND is_workday=?'; params.push(parseInt(isWorkday)); }
+    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_calendar_info ${where}`, params);
+    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_calendar_info ${where} ORDER BY cal_date ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
+    res.json({ code: 200, msg: '获取成功', data: { total, list } });
+}));
+
+// 月视图（返回整月数据）
+app.get('/api/master/calendar/month', authRequired, asyncHandler(async (req, res) => {
+    const { year, month } = req.query;
+    if (!year || !month) return res.status(400).json({ code: 400, msg: '年份和月份必填' });
+    const [list] = await mysqlPool.query('SELECT * FROM cdop_master.mst_calendar_info WHERE YEAR(cal_date)=? AND MONTH(cal_date)=? ORDER BY cal_date ASC', [parseInt(year), parseInt(month)]);
+    res.json({ code: 200, msg: '获取成功', data: list });
+}));
+
+// 编辑单日
+app.put('/api/master/calendar/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { is_workday, is_holiday, holiday_name, remark } = req.body;
+    await mysqlPool.query('UPDATE cdop_master.mst_calendar_info SET is_workday=?,is_holiday=?,holiday_name=?,remark=?,updated_time=NOW() WHERE id=?',
+        [is_workday!==undefined?is_workday:1, is_holiday!==undefined?is_holiday:0, holiday_name||null, remark||null, id]);
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+// 按日期编辑（前端可能没有id，用date查）
+app.put('/api/master/calendar/date/:date', authRequired, asyncHandler(async (req, res) => {
+    const { date } = req.params;
+    const { is_workday, is_holiday, holiday_name, remark } = req.body;
+    const [rows] = await mysqlPool.query('SELECT id FROM cdop_master.mst_calendar_info WHERE cal_date=?', [date]);
+    if (!rows.length) return res.status(404).json({ code: 404, msg: '该日期数据不存在，请先导入' });
+    await mysqlPool.query('UPDATE cdop_master.mst_calendar_info SET is_workday=?,is_holiday=?,holiday_name=?,remark=?,updated_time=NOW() WHERE cal_date=?',
+        [is_workday!==undefined?is_workday:1, is_holiday!==undefined?is_holiday:0, holiday_name||null, remark||null, date]);
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+// =====================================================================
+// 仓库-SKU 关系
+// =====================================================================
+app.get('/api/master/rltn/warehouse-sku', authRequired, asyncHandler(async (req, res) => {
+    const { warehouseKeyword='', skuKeyword='', dateStatus='', status='', page=1, pageSize=20 } = req.query;
+    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
+    let where='WHERE 1=1'; const params=[];
+    if (warehouseKeyword) { where+=' AND (warehouse_code LIKE ? OR warehouse_name LIKE ?)'; params.push(`%${warehouseKeyword}%`,`%${warehouseKeyword}%`); }
+    if (skuKeyword) { where+=' AND (sku_code LIKE ? OR sku_name LIKE ?)'; params.push(`%${skuKeyword}%`,`%${skuKeyword}%`); }
+    if (dateStatus==='active') { where+=' AND (begin_date IS NULL OR begin_date <= CURDATE()) AND (end_date IS NULL OR end_date >= CURDATE())'; }
+    else if (dateStatus==='expired') { where+=' AND end_date < CURDATE()'; }
+    else if (dateStatus==='pending') { where+=' AND begin_date > CURDATE()'; }
+    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
+    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_rltn_warehouse_sku ${where}`, params);
+    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_rltn_warehouse_sku ${where} ORDER BY id DESC LIMIT ? OFFSET ?`, [...params, ps, offset]);
+    res.json({ code: 200, msg: '获取成功', data: { total, list } });
+}));
+
+app.post('/api/master/rltn/warehouse-sku', authRequired, asyncHandler(async (req, res) => {
+    const { warehouse_code, sku_code, begin_date, end_date, status, remark } = req.body;
+    if (!warehouse_code || !sku_code) return res.status(400).json({ code: 400, msg: '仓库编码和SKU编码必填' });
+    // 自动回填名称
+    const [[wh]] = await mysqlPool.query('SELECT warehouse_name FROM cdop_master.mst_warehouse_info WHERE warehouse_code=?', [warehouse_code]);
+    const [[sku]] = await mysqlPool.query('SELECT sku_name FROM cdop_master.mst_sku_info WHERE sku_code=?', [sku_code]);
+    await mysqlPool.query('INSERT INTO cdop_master.mst_rltn_warehouse_sku (warehouse_code,warehouse_name,sku_code,sku_name,begin_date,end_date,status,remark) VALUES (?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE begin_date=VALUES(begin_date),end_date=VALUES(end_date),status=VALUES(status),remark=VALUES(remark),updated_time=NOW()',
+        [warehouse_code,wh?wh.warehouse_name:warehouse_code,sku_code,sku?sku.sku_name:sku_code,begin_date||null,end_date||null,status!==undefined?status:1,remark||null]);
+    res.json({ code: 200, msg: '保存成功' });
+}));
+
+app.put('/api/master/rltn/warehouse-sku/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { begin_date, end_date, status, remark } = req.body;
+    await mysqlPool.query('UPDATE cdop_master.mst_rltn_warehouse_sku SET begin_date=?,end_date=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
+        [begin_date||null,end_date||null,status!==undefined?status:1,remark||null,id]);
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+app.delete('/api/master/rltn/warehouse-sku/batch', authRequired, asyncHandler(async (req, res) => {
+    const { ids } = req.body;
+    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
+    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_warehouse_sku WHERE id IN (?)', [ids]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+app.delete('/api/master/rltn/warehouse-sku/:id', authRequired, asyncHandler(async (req, res) => {
+    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_warehouse_sku WHERE id=?', [req.params.id]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+// =====================================================================
+// 组织-经销商 关系
+// =====================================================================
+app.get('/api/master/rltn/org-reseller', authRequired, asyncHandler(async (req, res) => {
+    const { orgKeyword='', resellerKeyword='', dateStatus='', status='', page=1, pageSize=20 } = req.query;
+    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
+    let where='WHERE 1=1'; const params=[];
+    if (orgKeyword) { where+=' AND (org_code LIKE ? OR org_name LIKE ?)'; params.push(`%${orgKeyword}%`,`%${orgKeyword}%`); }
+    if (resellerKeyword) { where+=' AND (reseller_code LIKE ? OR reseller_name LIKE ?)'; params.push(`%${resellerKeyword}%`,`%${resellerKeyword}%`); }
+    if (dateStatus==='active') { where+=' AND (begin_date IS NULL OR begin_date <= CURDATE()) AND (end_date IS NULL OR end_date >= CURDATE())'; }
+    else if (dateStatus==='expired') { where+=' AND end_date < CURDATE()'; }
+    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
+    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_rltn_org_reseller ${where}`, params);
+    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_rltn_org_reseller ${where} ORDER BY id DESC LIMIT ? OFFSET ?`, [...params, ps, offset]);
+    res.json({ code: 200, msg: '获取成功', data: { total, list } });
+}));
+
+app.post('/api/master/rltn/org-reseller', authRequired, asyncHandler(async (req, res) => {
+    const { org_code, reseller_code, begin_date, end_date, status, remark } = req.body;
+    if (!org_code || !reseller_code) return res.status(400).json({ code: 400, msg: '组织编码和经销商编码必填' });
+    const [[org]] = await mysqlPool.query('SELECT org_name FROM cdop_master.mst_org_info WHERE org_code=?', [org_code]);
+    const [[rs]] = await mysqlPool.query('SELECT reseller_name, lv1_channel_code, lv1_channel_name FROM cdop_master.mst_reseller_info WHERE reseller_code=?', [reseller_code]);
+    await mysqlPool.query('INSERT INTO cdop_master.mst_rltn_org_reseller (org_code,org_name,reseller_code,reseller_name,lv1_channel_code,lv1_channel_name,begin_date,end_date,status,remark) VALUES (?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE begin_date=VALUES(begin_date),end_date=VALUES(end_date),status=VALUES(status),remark=VALUES(remark),updated_time=NOW()',
+        [org_code,org?org.org_name:org_code,reseller_code,rs?rs.reseller_name:reseller_code,rs?rs.lv1_channel_code:null,rs?rs.lv1_channel_name:null,begin_date||null,end_date||null,status!==undefined?status:1,remark||null]);
+    res.json({ code: 200, msg: '保存成功' });
+}));
+
+app.put('/api/master/rltn/org-reseller/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { begin_date, end_date, status, remark } = req.body;
+    await mysqlPool.query('UPDATE cdop_master.mst_rltn_org_reseller SET begin_date=?,end_date=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
+        [begin_date||null,end_date||null,status!==undefined?status:1,remark||null,id]);
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+app.delete('/api/master/rltn/org-reseller/batch', authRequired, asyncHandler(async (req, res) => {
+    const { ids } = req.body;
+    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
+    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_org_reseller WHERE id IN (?)', [ids]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+app.delete('/api/master/rltn/org-reseller/:id', authRequired, asyncHandler(async (req, res) => {
+    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_org_reseller WHERE id=?', [req.params.id]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+// =====================================================================
+// 产品-销售SKU 转换关系
+// =====================================================================
+app.get('/api/master/rltn/product-sku', authRequired, asyncHandler(async (req, res) => {
+    const { productKeyword='', skuKeyword='', dateStatus='', status='', page=1, pageSize=20 } = req.query;
+    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
+    let where='WHERE 1=1'; const params=[];
+    if (productKeyword) { where+=' AND (product_code LIKE ? OR product_name LIKE ?)'; params.push(`%${productKeyword}%`,`%${productKeyword}%`); }
+    if (skuKeyword) { where+=' AND (sku_code LIKE ? OR sku_name LIKE ?)'; params.push(`%${skuKeyword}%`,`%${skuKeyword}%`); }
+    if (dateStatus==='active') { where+=' AND (begin_date IS NULL OR begin_date <= CURDATE()) AND (end_date IS NULL OR end_date >= CURDATE())'; }
+    else if (dateStatus==='expired') { where+=' AND end_date < CURDATE()'; }
+    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
+    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_rltn_product_sale_sku ${where}`, params);
+    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_rltn_product_sale_sku ${where} ORDER BY id DESC LIMIT ? OFFSET ?`, [...params, ps, offset]);
+    res.json({ code: 200, msg: '获取成功', data: { total, list } });
+}));
+
+app.post('/api/master/rltn/product-sku', authRequired, asyncHandler(async (req, res) => {
+    const { product_code, product_name, sku_code, convert_ratio, begin_date, end_date, status, remark } = req.body;
+    if (!product_code || !sku_code) return res.status(400).json({ code: 400, msg: '生产产品编码和销售SKU编码必填' });
+    if (!convert_ratio || parseFloat(convert_ratio) <= 0) return res.status(400).json({ code: 400, msg: '转换系数必须为正数' });
+    const [[sku]] = await mysqlPool.query('SELECT sku_name FROM cdop_master.mst_sku_info WHERE sku_code=?', [sku_code]);
+    await mysqlPool.query('INSERT INTO cdop_master.mst_rltn_product_sale_sku (product_code,product_name,sku_code,sku_name,convert_ratio,begin_date,end_date,status,remark) VALUES (?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE product_name=VALUES(product_name),convert_ratio=VALUES(convert_ratio),begin_date=VALUES(begin_date),end_date=VALUES(end_date),status=VALUES(status),remark=VALUES(remark),updated_time=NOW()',
+        [product_code,product_name||product_code,sku_code,sku?sku.sku_name:sku_code,parseFloat(convert_ratio)||1,begin_date||null,end_date||null,status!==undefined?status:1,remark||null]);
+    res.json({ code: 200, msg: '保存成功' });
+}));
+
+app.put('/api/master/rltn/product-sku/:id', authRequired, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { product_name, convert_ratio, begin_date, end_date, status, remark } = req.body;
+    if (convert_ratio !== undefined && parseFloat(convert_ratio) <= 0) return res.status(400).json({ code: 400, msg: '转换系数必须为正数' });
+    await mysqlPool.query('UPDATE cdop_master.mst_rltn_product_sale_sku SET product_name=?,convert_ratio=?,begin_date=?,end_date=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
+        [product_name||null,parseFloat(convert_ratio)||1,begin_date||null,end_date||null,status!==undefined?status:1,remark||null,id]);
+    res.json({ code: 200, msg: '更新成功' });
+}));
+
+app.delete('/api/master/rltn/product-sku/batch', authRequired, asyncHandler(async (req, res) => {
+    const { ids } = req.body;
+    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
+    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_product_sale_sku WHERE id IN (?)', [ids]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+app.delete('/api/master/rltn/product-sku/:id', authRequired, asyncHandler(async (req, res) => {
+    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_product_sale_sku WHERE id=?', [req.params.id]);
+    res.json({ code: 200, msg: '删除成功' });
+}));
+
+// =====================================================================
+// MDM 模块 END
+// =====================================================================
 
 app.use((error, req, res, next) => {
     if (error && error.message === 'Not allowed by CORS') {

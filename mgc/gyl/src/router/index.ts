@@ -61,18 +61,6 @@ const router = createRouter({
             meta: { title: '牧场概览', icon: 'Van' }
         },
         {
-            path: '/channels',
-            name: 'ChannelManage',
-            component: () => import('@/views/ChannelManage.vue'),
-            meta: { title: '三级渠道', icon: 'DataAnalysis' }
-        },
-        {
-            path: '/categories',
-            name: 'CategoryManage',
-            component: () => import('@/views/CategoryManage.vue'),
-            meta: { title: '品类管理', icon: 'SetUp' }
-        },
-        {
             path: '/profile',
             name: 'Profile',
             component: () => import('@/views/Profile.vue'),
@@ -95,7 +83,69 @@ const router = createRouter({
             name: 'ForgotPassword',
             component: () => import('@/views/ForgotPassword.vue'),
             meta: { title: '忘记密码' }
+        },
+        // ===== 基础数据管理 (MDM) 新增路由 =====
+        {
+            path: '/mdm/category',
+            name: 'MdmCategoryTree',
+            component: () => import('@/views/MdmCategoryTree.vue'),
+            meta: { title: '品类管理', icon: 'List' }
+        },
+        {
+            path: '/mdm/warehouse',
+            name: 'MdmWarehouseList',
+            component: () => import('@/views/MdmWarehouseList.vue'),
+            meta: { title: '仓库管理', icon: 'HomeFilled' }
+        },
+        {
+            path: '/mdm/factory',
+            name: 'MdmFactoryList',
+            component: () => import('@/views/MdmFactoryList.vue'),
+            meta: { title: '工厂管理', icon: 'SetUp' }
+        },
+        {
+            path: '/mdm/channel',
+            name: 'MdmChannelTree',
+            component: () => import('@/views/MdmChannelTree.vue'),
+            meta: { title: '渠道管理', icon: 'DataAnalysis' }
+        },
+        {
+            path: '/mdm/reseller',
+            name: 'MdmResellerList',
+            component: () => import('@/views/MdmResellerList.vue'),
+            meta: { title: '经销商管理', icon: 'UserFilled' }
+        },
+        {
+            path: '/mdm/org',
+            name: 'MdmOrgTree',
+            component: () => import('@/views/MdmOrgTree.vue'),
+            meta: { title: '组织机构', icon: 'OfficeBuilding' }
+        },
+        {
+            path: '/mdm/calendar',
+            name: 'MdmCalendar',
+            component: () => import('@/views/MdmCalendar.vue'),
+            meta: { title: '业务日历', icon: 'Calendar' }
+        },
+        {
+            path: '/mdm/rltn/warehouse-sku',
+            name: 'MdmRltnWarehouseSku',
+            component: () => import('@/views/MdmRltnWarehouseSku.vue'),
+            meta: { title: '仓库-SKU关系', icon: 'Connection' }
+        },
+        {
+            path: '/mdm/rltn/org-reseller',
+            name: 'MdmRltnOrgReseller',
+            component: () => import('@/views/MdmRltnOrgReseller.vue'),
+            meta: { title: '组织-经销商关系', icon: 'Connection' }
+        },
+        {
+            path: '/mdm/rltn/product-sku',
+            name: 'MdmRltnProductSku',
+            component: () => import('@/views/MdmRltnProductSku.vue'),
+            meta: { title: '产品-SKU转换关系', icon: 'Connection' }
         }
+
     ]
 })
 

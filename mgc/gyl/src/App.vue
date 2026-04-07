@@ -39,13 +39,52 @@ const businessItems = [
   { path: '/categories', label: '品类管理', icon: 'SetUp', disabled: false }
 ]
 
-const mdmItems = [
-  { path: '/mdm/sku', label: 'SKU 管理', icon: 'Goods' },
-  { path: '/mdm/reseller-relation', label: '经销关系', icon: 'Connection' }
-]
+const mdmGroups = ref([
+  {
+    title: '商品管理', icon: 'Goods', isOpen: true,
+    children: [
+      { path: '/mdm/sku', label: 'SKU管理' },
+      { path: '/mdm/category', label: '品类管理' }
+    ]
+  },
+  {
+    title: '仓库管理', icon: 'HomeFilled', isOpen: false,
+    children: [
+      { path: '/mdm/warehouse', label: '仓库管理' },
+      { path: '/mdm/factory', label: '工厂管理' }
+    ]
+  },
+  {
+    title: '渠道管理', icon: 'DataAnalysis', isOpen: false,
+    children: [
+      { path: '/mdm/channel', label: '渠道管理' },
+      { path: '/mdm/reseller', label: '经销商管理' }
+    ]
+  },
+  {
+    title: '组织与日历', icon: 'OfficeBuilding', isOpen: false,
+    children: [
+      { path: '/mdm/org', label: '组织机构' },
+      { path: '/mdm/calendar', label: '业务日历' }
+    ]
+  },
+  {
+    title: '关系配置', icon: 'Connection', isOpen: false,
+    children: [
+      { path: '/mdm/rltn/warehouse-sku', label: '仓库-SKU关系' },
+      { path: '/mdm/reseller-relation', label: 'SKU-经销关系' },
+      { path: '/mdm/rltn/org-reseller', label: '组织-经销关系' },
+      { path: '/mdm/rltn/product-sku', label: '产品-转化关系' }
+    ]
+  }
+])
 
 const currentTitle = computed(() => {
-  const allItems = [...navItems, ...businessItems, ...mdmItems]
+  const allItems: any[] = [...navItems, ...businessItems]
+  mdmGroups.value.forEach(g => {
+    if (g.children.some(child => child.path === route.path)) g.isOpen = true
+    allItems.push(...g.children)
+  })
   const item = allItems.find(n => n.path === route.path)
   return item ? item.label : '首页'
 })
@@ -176,16 +215,25 @@ const handleLogout = () => {
         </router-link>
 
         <div class="nav-section-title" style="margin-top: 12px">主数据管理 (MDM)</div>
-        <router-link
-          v-for="item in mdmItems"
-          :key="item.path"
-          :to="item.path"
-          class="nav-item"
-          :class="{ active: route.path === item.path }"
-        >
-          <span class="nav-icon"><el-icon><component :is="item.icon" /></el-icon></span>
-          {{ item.label }}
-        </router-link>
+        <div v-for="group in mdmGroups" :key="group.title" class="nav-group">
+          <div class="nav-group-title" @click="group.isOpen = !group.isOpen" :class="{ 'is-open': group.isOpen }">
+            <span class="nav-icon"><el-icon><component :is="group.icon" /></el-icon></span>
+            <span style="flex: 1">{{ group.title }}</span>
+            <span class="nav-arrow" :class="{ 'rotate': group.isOpen }">▾</span>
+          </div>
+          <div v-show="group.isOpen" class="nav-group-content">
+            <router-link
+              v-for="item in group.children"
+              :key="item.path"
+              :to="item.path"
+              class="nav-subitem"
+              :class="{ active: route.path === item.path }"
+            >
+              <div class="nav-dot"></div>
+              {{ item.label }}
+            </router-link>
+          </div>
+        </div>
       </nav>
 
       <!-- 底部信息 -->
@@ -307,4 +355,38 @@ const handleLogout = () => {
   font-family: 'Courier New', monospace;
   user-select: all;
 }
+
+.nav-group { margin-bottom: 4px; }
+.nav-group-title {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  color: #cbd5e1;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.nav-group-title:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+.nav-group-title.is-open { color: #f8fafc; }
+.nav-arrow { font-size: 14px; transition: transform 0.2s ease; opacity: 0.6; }
+.nav-arrow.rotate { transform: rotate(180deg); }
+.nav-group-content { margin-top: 4px; padding-left: 12px; }
+.nav-subitem {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px 8px 24px;
+  color: #94a3b8;
+  font-size: 13px;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  margin-bottom: 2px;
+}
+.nav-dot { width: 4px; height: 4px; border-radius: 50%; background: #64748b; margin-right: 12px; transition: all 0.2s ease; }
+.nav-subitem:hover { color: #f8fafc; background: rgba(255,255,255,0.05); }
+.nav-subitem:hover .nav-dot { background: #cbd5e1; }
+.nav-subitem.active { color: #fff; background: rgba(59, 130, 246, 0.15); font-weight: 500; }
+.nav-subitem.active .nav-dot { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.6); }
 </style>
