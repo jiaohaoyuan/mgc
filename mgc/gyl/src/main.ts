@@ -1,20 +1,19 @@
-// 这个文件是什么作用显示的是什么：这是Vue应用的主入口文件。显示/实现的是：实例化Vue应用，挂载路由、状态管理（Pinia）和其他全局插件。
-/**
- * 供应链决策平台 - 主入口文件
- * 初始化 Vue 应用，注册 Element Plus、路由、状态管理
- */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import axios from 'axios'
 import App from './App.vue'
 import router from './router'
+import { useAppStore } from './stores/appStore'
 import './assets/main.css'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api'
+const pinia = createPinia()
+
 axios.defaults.baseURL = API_BASE
 axios.defaults.timeout = 15000
 axios.interceptors.request.use((config) => {
@@ -29,13 +28,20 @@ axios.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status
+    const data = error?.response?.data || {}
     if (status === 401) {
-      localStorage.removeItem('isAuthenticated')
+      useAppStore(pinia).clearAccessContext()
       localStorage.removeItem('currentUser')
       localStorage.removeItem('accessToken')
       if (router.currentRoute.value.path !== '/login') {
-        router.push('/login')
+        void router.replace({
+          path: '/login',
+          query: router.currentRoute.value.fullPath ? { redirect: router.currentRoute.value.fullPath } : undefined
+        })
       }
+    } else {
+      const msg = data?.msg || '请求失败，请稍后重试'
+      ElMessage.error(msg)
     }
     return Promise.reject(error)
   }
@@ -48,7 +54,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
-app.use(createPinia())
+app.use(pinia)
 app.use(router)
 app.use(ElementPlus, { locale: zhCn })
 

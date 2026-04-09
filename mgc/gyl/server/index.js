@@ -1,1996 +1,2321 @@
-// 这个文件是什么作用显示的是什么：这是后端服务的主入口文件。显示/实现的是：启动Express服务器，连接数据库，并定义所有后端API接口路由。
+﻿
 const express = require('express');
 const cors = require('cors');
-const axios = require('axios');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const rateLimit = require('express-rate-limit');
-const crypto = require('crypto');
-require('dotenv').config();
-
-const mysqlPool = require('./db/mysql');
-const redisClient = require('./db/redis');
-
 const multer = require('multer');
-const xlsx = require('xlsx');
+const XLSX = require('xlsx');
+const crypto = require('crypto');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const { DB_FILE, nowIso, readDb, updateDb, nextId } = require('./localDb');
 
 const app = express();
-const JWT_SECRET = process.env.JWT_SECRET || 'scmp-access-secret';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
-const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173').split(',').map(i => i.trim()).filter(Boolean);
-const API_LIMIT_WINDOW_MS = Number(process.env.API_LIMIT_WINDOW_MS || 60 * 1000);
-const API_LIMIT_MAX = Number(process.env.API_LIMIT_MAX || 240);
-const AUTH_LIMIT_MAX = Number(process.env.AUTH_LIMIT_MAX || 20);
+const PORT = Number(process.env.PORT || 3000);
+const JWT_SECRET = process.env.JWT_SECRET || 'local-file-jwt-secret';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '12h';
 
-const isAllowedOrigin = (origin) => {
-    if (!origin) return true;
-    return CORS_ORIGINS.includes(origin);
+const SUPER_ADMIN_LOGIN_IDS = new Set((process.env.SUPER_ADMIN_LOGIN_IDS || 'jiaohaoyuan').split(',').map(v => v.trim()).filter(Boolean));
+const SUPER_ADMIN_ROLE_IDS = new Set((process.env.SUPER_ADMIN_ROLE_IDS || '1').split(',').map(v => Number(v.trim())).filter(v => !Number.isNaN(v)));
+const SUPER_ADMIN_ROLE_NAMES = new Set((process.env.SUPER_ADMIN_ROLE_NAMES || '超级管理员').split(',').map(v => v.trim()).filter(Boolean));
+
+const OPEN_API_PATHS = new Set([
+    '/ping',
+    '/login',
+    '/register',
+    '/sms/send-code',
+    '/sms/verify-code',
+    '/admin/verify-helper-code',
+    '/reset-password'
+]);
+
+const API_PERMISSION_RULES = [
+    { matcher: /^\/departments(?:\/|$)/, permissionPath: '/department' },
+    { matcher: /^\/accounts(?:\/|$)/, permissionPath: '/user' },
+    { matcher: /^\/roles(?:\/|$)/, permissionPath: '/role' },
+    { matcher: /^\/jobtitles(?:\/|$)/, permissionPath: '/post' },
+    { matcher: /^\/permissions(?:\/|$)/, permissionPath: '/permission' },
+    { matcher: /^\/dict\/types(?:\/|$)/, permissionPath: '/dict-center' },
+    { matcher: /^\/dict\/items(?:\/|$)/, permissionPath: '/dict-center' },
+    { matcher: /^\/dict\/lookup(?:\/|$)/, permissionPath: '/dict-center' },
+    { matcher: /^\/operation-logs(?:\/|$)/, permissionPath: '/operation-log' },
+    { matcher: /^\/import-tasks(?:\/|$)/, permissionPath: '/import-task' },
+    { matcher: /^\/export-tasks(?:\/|$)/, permissionPath: '/export-task' },
+    { matcher: /^\/pasture-stats(?:\/|$)/, permissionPath: '/pasture' },
+    { matcher: /^\/products(?:\/|$)/, permissionPath: '/intelligent' },
+    { matcher: /^\/warehouses(?:\/|$)/, permissionPath: '/intelligent' },
+    { matcher: /^\/orders(?:\/|$)/, permissionPath: '/intelligent' },
+    { matcher: /^\/order-analysis(?:\/|$)/, permissionPath: '/intelligent' },
+    { matcher: /^\/inventory(?:\/|$)/, permissionPath: '/intelligent' }
+];
+
+const createTraceId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+const normalizePath = (rawPath = '') => (rawPath === '/' ? '/' : String(rawPath).replace(/\/+$/, ''));
+const extractToken = (req) => (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+const toNum = (v, fallback = 0) => {
+    const n = Number(v);
+    return Number.isNaN(n) ? fallback : n;
+};
+const ensureArray = (value) => (Array.isArray(value) ? value : []);
+const ERROR_CODE_BY_STATUS = {
+    400: 'BIZ_400',
+    401: 'AUTH_401',
+    403: 'AUTH_403',
+    404: 'BIZ_404',
+    409: 'BIZ_409',
+    429: 'SYS_429',
+    500: 'SYS_500'
 };
 
-const authLimiter = rateLimit({
-    windowMs: API_LIMIT_WINDOW_MS,
-    max: AUTH_LIMIT_MAX,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { code: 429, msg: '请求过于频繁，请稍后再试' }
-});
-
-const apiLimiter = rateLimit({
-    windowMs: API_LIMIT_WINDOW_MS,
-    max: API_LIMIT_MAX,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { code: 429, msg: '请求过于频繁，请稍后再试' }
-});
-
-const sanitizeUser = (user) => ({
-    id: user.id,
-    username: user.login_id,
-    nickname: user.nick_name,
-    role: user.login_id === 'jiaohaoyuan' ? '超级管理员' : '普通用户'
-});
-
-const createTraceId = () => {
-    if (crypto.randomUUID) return crypto.randomUUID();
-    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const contains = (text, keyword) => String(text || '').toLowerCase().includes(String(keyword || '').trim().toLowerCase());
+const normalizeDictCode = (value) => String(value || '').trim().toUpperCase();
+const isValidDictCode = (value) => /^[A-Z][A-Z0-9_]{1,63}$/.test(String(value || ''));
+const validateDictCodeOrThrow = (value, label) => {
+    if (!isValidDictCode(value)) throw new Error(`${label}仅支持大写字母、数字、下划线，且必须字母开头`);
+};
+const normalizeBinaryStatus = (value, fallback = 1) => {
+    if (value === '' || value === undefined || value === null) return fallback;
+    const status = toNum(value, fallback);
+    if (status !== 0 && status !== 1) return fallback;
+    return status;
+};
+const parseBatchIds = (ids) => {
+    if (!Array.isArray(ids)) return [];
+    return [...new Set(ids.map((id) => toNum(id, 0)).filter((id) => id > 0))];
+};
+const paginate = (rows, page, pageSize) => {
+    const p = Math.max(1, toNum(page, 1));
+    const ps = Math.max(1, toNum(pageSize, 20));
+    const start = (p - 1) * ps;
+    return { list: rows.slice(start, start + ps), total: rows.length };
 };
 
-const writeAuditLog = async ({ req, action, resource, targetId = null, detail = null }) => {
-    const actorId = req.user?.id || null;
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-    const ua = req.headers['user-agent'] || '';
+const toDateKey = (v) => {
+    if (!v) return '';
+    if (typeof v === 'number') {
+        const d = new Date((v - (25567 + 1)) * 86400 * 1000);
+        return d.toISOString().slice(0, 10);
+    }
+    return String(v).slice(0, 10);
+};
+
+const apiOk = (res, req, data, msg = '成功') => res.json({ code: 200, msg, data, traceId: req.traceId });
+const apiErr = (res, req, status, msg, extra = {}) => res.status(status).json({
+    code: status,
+    msg,
+    traceId: req.traceId,
+    errorCode: extra.errorCode || ERROR_CODE_BY_STATUS[status] || 'SYS_UNKNOWN',
+    details: extra.details || null,
+    ...extra
+});
+const getRequestIp = (req) => String(req.headers['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || '').split(',')[0].trim();
+
+const safeClone = (value) => JSON.parse(JSON.stringify(value ?? null));
+const summarizePayload = (payload) => {
+    if (payload === undefined || payload === null) return null;
+    if (Array.isArray(payload)) return payload.slice(0, 20);
+    if (typeof payload !== 'object') return payload;
+    const next = {};
+    Object.entries(payload).forEach(([key, value]) => {
+        if (/(password|token|authorization)/i.test(key)) {
+            next[key] = '***';
+            return;
+        }
+        if (Array.isArray(value) && value.length > 30) {
+            next[key] = value.slice(0, 30);
+            return;
+        }
+        next[key] = value;
+    });
+    return next;
+};
+
+const appendOperationLog = (req, payload) => {
     try {
-        await mysqlPool.query(
-            'INSERT INTO t_ryytn_audit_log (id, actor_id, action, resource, target_id, detail, trace_id, ip, user_agent, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-            [Date.now() + Math.floor(Math.random() * 1000), actorId, action, resource, targetId, detail ? JSON.stringify(detail) : null, req.traceId || null, String(ip).slice(0, 100), String(ua).slice(0, 255)]
-        );
-    } catch (err) {
-        console.warn('Audit log write failed:', err.message);
+        updateDb((db) => {
+            const rows = Array.isArray(db.platform?.operation_logs) ? db.platform.operation_logs : [];
+            if (!db.platform) db.platform = {};
+            db.platform.operation_logs = rows;
+            rows.push({
+                id: nextId(rows),
+                log_type: payload.logType || 'BUSINESS',
+                module_code: payload.moduleCode || 'system',
+                biz_object_type: payload.bizObjectType || '',
+                biz_object_id: payload.bizObjectId ?? '',
+                action_type: payload.actionType || 'VIEW',
+                operator_id: req.user?.id ?? null,
+                operator_name: req.user?.nickname || req.user?.username || 'anonymous',
+                operator_roles: safeClone(req.user?.roleNames || []),
+                operator_ip: getRequestIp(req),
+                user_agent: String(req.headers['user-agent'] || ''),
+                request_path: req.originalUrl || req.path || '',
+                request_method: req.method || '',
+                trace_id: req.traceId || '',
+                result_status: payload.resultStatus || 'SUCCESS',
+                message: payload.message || '',
+                request_summary: summarizePayload(payload.requestSummary ?? req.body ?? req.query ?? null),
+                before_snapshot: safeClone(payload.beforeSnapshot),
+                after_snapshot: safeClone(payload.afterSnapshot),
+                created_at: nowIso()
+            });
+        });
+    } catch (error) {
+        console.warn('[operation-log] append failed:', error?.message || error);
     }
 };
 
-const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+const appendTaskRecord = (taskType, payload) => {
+    let createdTask = null;
+    try {
+        updateDb((db) => {
+            if (!db.platform) db.platform = {};
+            const key = taskType === 'IMPORT' ? 'import_tasks' : 'export_tasks';
+            const rows = Array.isArray(db.platform[key]) ? db.platform[key] : [];
+            db.platform[key] = rows;
+            createdTask = {
+                id: nextId(rows),
+                task_type: taskType,
+                biz_type: payload.bizType || '',
+                task_name: payload.taskName || '',
+                file_name: payload.fileName || '',
+                operator_id: payload.operatorId ?? null,
+                operator_name: payload.operatorName || '',
+                request_path: payload.requestPath || '',
+                query_snapshot: safeClone(payload.querySnapshot),
+                status: payload.status || 'SUCCESS',
+                total_count: toNum(payload.totalCount, 0),
+                success_count: toNum(payload.successCount, 0),
+                fail_count: toNum(payload.failCount, 0),
+                result_message: payload.resultMessage || '',
+                result_payload: safeClone(payload.resultPayload),
+                created_at: nowIso(),
+                finished_at: nowIso()
+            };
+            rows.push(createdTask);
+        });
+    } catch (error) {
+        console.warn('[task-record] append failed:', error?.message || error);
+    }
+    return createdTask;
+};
 
-const authRequired = asyncHandler(async (req, res, next) => {
-    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+const appendNotification = (payload) => {
+    try {
+        updateDb((db) => {
+            if (!db.platform) db.platform = {};
+            const rows = Array.isArray(db.platform.notifications) ? db.platform.notifications : [];
+            db.platform.notifications = rows;
+            rows.push({
+                id: nextId(rows),
+                title: payload.title || '',
+                content: payload.content || '',
+                biz_type: payload.bizType || '',
+                biz_id: payload.bizId ?? '',
+                status: payload.status || 'UNREAD',
+                receiver_id: payload.receiverId ?? null,
+                receiver_name: payload.receiverName || '',
+                created_at: nowIso()
+            });
+        });
+    } catch (error) {
+        console.warn('[notification] append failed:', error?.message || error);
+    }
+};
+
+const resolveApiPermissionPath = (apiPath) => {
+    for (const rule of API_PERMISSION_RULES) {
+        if (rule.matcher.test(apiPath)) return rule.permissionPath;
+    }
+    return '';
+};
+
+const getRoleIdsByAccount = (db, accountId) =>
+    db.system.account_roles.filter(r => Number(r.account_id) === Number(accountId)).map(r => Number(r.role_id));
+
+const getPostIdsByAccount = (db, accountId) =>
+    db.system.account_posts.filter(r => Number(r.account_id) === Number(accountId)).map(r => String(r.job_id));
+
+const getRoleRows = (db, roleIds) => db.system.roles.filter(r => roleIds.includes(Number(r.id)) && Number(r.status) === 1);
+
+const buildRbacContext = (db, accountId) => {
+    const roleIds = getRoleIdsByAccount(db, accountId);
+    const roleRows = getRoleRows(db, roleIds);
+    const roleNames = roleRows.map(r => r.name);
+    const permissionPageIds = [...new Set(db.system.role_pages.filter(rp => roleIds.includes(Number(rp.role_id))).map(rp => Number(rp.page_id)))];
+    const pageRows = db.system.pages.filter(p => permissionPageIds.includes(Number(p.id)));
+    const permissionIds = pageRows.map(p => Number(p.id));
+    const permissionPaths = [...new Set(pageRows.map(p => normalizePath(p.path)).filter(Boolean))];
+    const permissionCodes = [...new Set(pageRows.map(p => p.permission).filter(Boolean))];
+    return { roleIds, roleNames, permissionIds, permissionPaths, permissionCodes };
+};
+
+const isSuperAdminUser = ({ loginId, roleIds, roleNames }) => {
+    if (SUPER_ADMIN_LOGIN_IDS.has(String(loginId))) return true;
+    if (roleIds.some(id => SUPER_ADMIN_ROLE_IDS.has(Number(id)))) return true;
+    if (roleNames.some(name => SUPER_ADMIN_ROLE_NAMES.has(String(name)))) return true;
+    return false;
+};
+
+const sanitizeUser = (account, rbac) => {
+    const isSuperAdmin = isSuperAdminUser({
+        loginId: account.login_id,
+        roleIds: rbac.roleIds,
+        roleNames: rbac.roleNames
+    });
+    return {
+        id: account.id,
+        username: account.login_id,
+        nickname: account.nick_name || account.login_id,
+        role: isSuperAdmin ? '超级管理员' : (rbac.roleNames[0] || '普通用户'),
+        roleIds: rbac.roleIds,
+        roleNames: rbac.roleNames,
+        permissionIds: rbac.permissionIds,
+        permissionPaths: rbac.permissionPaths,
+        permissionCodes: rbac.permissionCodes,
+        isSuperAdmin
+    };
+};
+
+const ensureAuthedUser = (req, res) => {
+    if (req.user?.id) return true;
+    const token = extractToken(req);
     if (!token) {
-        return res.status(401).json({ code: 401, msg: '未登录或登录已过期' });
+        apiErr(res, req, 401, '未登录或登录已过期');
+        return false;
     }
     let payload;
     try {
         payload = jwt.verify(token, JWT_SECRET);
     } catch {
-        return res.status(401).json({ code: 401, msg: '登录状态无效，请重新登录' });
+        apiErr(res, req, 401, '登录状态无效，请重新登录');
+        return false;
     }
-    const [users] = await mysqlPool.query('SELECT id, login_id, nick_name, status FROM t_ryytn_account WHERE id = ?', [payload.id]);
-    if (users.length === 0) {
-        return res.status(401).json({ code: 401, msg: '用户不存在' });
+    const db = readDb();
+    const account = db.system.accounts.find(a => Number(a.id) === Number(payload.id));
+    if (!account) {
+        apiErr(res, req, 401, '用户不存在');
+        return false;
     }
-    if (users[0].status !== 1) {
-        return res.status(403).json({ code: 403, msg: '账号已停用' });
+    if (Number(account.status) !== 1) {
+        apiErr(res, req, 403, '账号已停用');
+        return false;
     }
-    req.user = sanitizeUser(users[0]);
-    next();
-});
+    const rbac = buildRbacContext(db, account.id);
+    req.user = sanitizeUser(account, rbac);
+    return true;
+};
 
-const superAdminRequired = (req, res, next) => {
-    if (!req.user || req.user.role !== '超级管理员') {
-        return res.status(403).json({ code: 403, msg: '无权限访问' });
-    }
+const authRequired = (req, res, next) => {
+    if (!ensureAuthedUser(req, res)) return;
     next();
 };
 
+const superAdminRequired = (req, res, next) => {
+    if (!ensureAuthedUser(req, res)) return;
+    if (!req.user.isSuperAdmin) return apiErr(res, req, 403, '仅超级管理员可访问');
+    next();
+};
+
+const apiPermissionRequired = (req, res, next) => {
+    const apiPath = normalizePath(req.path || '/');
+    if (apiPath.startsWith('/profile/')) return next();
+    if (OPEN_API_PATHS.has(apiPath)) return next();
+    if (!ensureAuthedUser(req, res)) return;
+
+    if (apiPath.startsWith('/master')) {
+        if (!req.user.isSuperAdmin) return apiErr(res, req, 403, '主数据管理仅超级管理员可访问');
+        return next();
+    }
+
+    const requiredPath = resolveApiPermissionPath(apiPath);
+    if (!requiredPath || req.user.isSuperAdmin) return next();
+    const userPathSet = new Set((req.user.permissionPaths || []).map(normalizePath));
+    if (!userPathSet.has(normalizePath(requiredPath))) return apiErr(res, req, 403, '无权限访问该接口');
+    next();
+};
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
+
+app.set('trust proxy', 1);
 app.use((req, res, next) => {
     req.traceId = createTraceId();
     res.setHeader('x-trace-id', req.traceId);
     next();
 });
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
-app.use(cors({
-    origin: (origin, callback) => {
-        if (isAllowedOrigin(origin)) return callback(null, true);
-        callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true
+app.use(helmet());
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use('/api', rateLimit({
+    windowMs: Number(process.env.API_LIMIT_WINDOW_MS || 60 * 1000),
+    max: Number(process.env.API_LIMIT_MAX || 400),
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { code: 429, msg: '请求过于频繁，请稍后再试' }
 }));
-app.use(express.json({ limit: '1mb' }));
-app.use('/api', apiLimiter);
+app.use('/api', apiPermissionRequired);
 
-// -------------------------------------------------------------
-// 测试路由 - 检查服务器状态
-// -------------------------------------------------------------
-app.get('/api/ping', (req, res) => {
-    res.json({ code: 200, msg: 'pong', status: 'Backend is running' });
+app.get('/api/ping', (req, res) => apiOk(res, req, { now: nowIso(), storage: 'local-json' }, '服务可用'));
+
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body || {};
+    if (!username || !password) return apiErr(res, req, 400, '账号和密码不能为空');
+    const db = readDb();
+    const account = db.system.accounts.find(a => a.login_id === username);
+    if (!account) return apiErr(res, req, 401, '账号或密码错误');
+    const passOk = (account.password_hash && bcrypt.compareSync(String(password), String(account.password_hash))) || String(password) === String(account.password_hash);
+    if (!passOk) return apiErr(res, req, 401, '账号或密码错误');
+    if (Number(account.status) !== 1) return apiErr(res, req, 403, '该账号已被停用');
+    const rbac = buildRbacContext(db, account.id);
+    const userPayload = sanitizeUser(account, rbac);
+    const token = jwt.sign({ id: account.id, username: account.login_id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    req.user = userPayload;
+    appendOperationLog(req, {
+        moduleCode: 'auth',
+        bizObjectType: 'account',
+        bizObjectId: account.id,
+        actionType: 'LOGIN',
+        message: `用户登录 ${account.login_id}`,
+        requestSummary: { username }
+    });
+    apiOk(res, req, { ...userPayload, token }, '登录成功');
 });
 
-// -------------------------------------------------------------
-// 具体的业务接口示范 (根据你提供的供应链 SQL 脚本)
-// -------------------------------------------------------------
+app.get('/api/me', authRequired, (req, res) => apiOk(res, req, req.user, '获取成功'));
 
-// 1. 获取所有仓库的数据 (表: t_ryytn_master_warehouse) -> 不使用缓存
-app.get('/api/warehouses', authRequired, async (req, res) => {
-    try {
-        const [rows] = await mysqlPool.query('SELECT * FROM t_ryytn_master_warehouse');
-        res.json({
-            code: 200,
-            msg: '获取成功',
-            source: 'mysql',
-            data: rows
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
+app.get('/api/admin/helper-code', superAdminRequired, (req, res) => {
+    const db = readDb();
+    apiOk(res, req, {
+        helperCode: db.meta.helper_code,
+        updatedAt: db.meta.helper_code_updated_at
+    }, '获取成功');
 });
 
-// 2. 获取账号列表 (表: t_ryytn_account) -> 关联角色和岗位信息
-app.get('/api/accounts', authRequired, async (req, res) => {
-    try {
-        // 查询账号表，同时LEFT JOIN关联角色和岗位
-        const [rows] = await mysqlPool.query(`
-            SELECT 
-                a.*,
-                GROUP_CONCAT(DISTINCT ar.role_id) as role_ids,
-                GROUP_CONCAT(DISTINCT aj.job_id) as post_ids
-            FROM t_ryytn_account a
-            LEFT JOIN t_ryytn_account_role ar ON a.id = ar.account_id
-            LEFT JOIN t_ryytn_account_jobtitle aj ON a.id = aj.account_id
-            GROUP BY a.id
-        `);
-
-        res.json({
-            code: 200,
-            msg: '获取成功',
-            source: 'mysql',
-            data: rows
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
+app.post('/api/admin/refresh-helper-code', superAdminRequired, (req, res) => {
+    let helperCode = '';
+    updateDb((db) => {
+        helperCode = String(Math.floor(100000 + Math.random() * 900000));
+        db.meta.helper_code = helperCode;
+        db.meta.helper_code_updated_at = nowIso();
+    });
+    apiOk(res, req, { helperCode }, '刷新成功');
 });
 
-// 3. 获取所有产品主数据，带简单条件查询 (表: t_ryytn_master_sku)
-app.get('/api/products', authRequired, async (req, res) => {
-    try {
-        const keyword = req.query.keyword || ''; // 获取URL参数，如 /api/products?keyword=牛奶
-        let sql = 'SELECT * FROM t_ryytn_master_sku';
-        let params = [];
-        
-        // 如果有搜索词，动态拼接 WHERE 条件
-        if (keyword) {
-            sql += ' WHERE product_name LIKE ?';
-            params.push(`%${keyword}%`);
-        }
-
-        const [rows] = await mysqlPool.query(sql, params);
-        res.json({
-            code: 200,
-            msg: '获取成功',
-            source: 'mysql',
-            data: rows
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
+app.post('/api/admin/verify-helper-code', (req, res) => {
+    const { helperCode } = req.body || {};
+    if (!helperCode) return apiErr(res, req, 400, '辅助动态码不能为空');
+    const db = readDb();
+    if (String(helperCode) !== String(db.meta.helper_code)) return apiErr(res, req, 400, '辅助动态码错误');
+    apiOk(res, req, { passed: true }, '校验成功');
 });
 
-// 4. 获取牧场库存情况
-app.get('/api/inventory', authRequired, async (req, res) => {
-    try {
-        const [rows] = await mysqlPool.query('SELECT * FROM t_ryytn_inventory');
-        res.json({
-            code: 200,
-            msg: '获取成功',
-            source: 'mysql',
-            data: rows
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 5. 获取订单列表 (带分页)
-app.get('/api/orders', authRequired, async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const pageSize = Math.min(parseInt(req.query.pageSize || req.query.limit) || 20, 100);
-        const offset = (page - 1) * pageSize;
-
-        const countQuery = 'SELECT COUNT(*) as total FROM t_ryytn_order_main';
-        const dataQuery = 'SELECT * FROM t_ryytn_order_main ORDER BY create_time DESC LIMIT ? OFFSET ?';
-
-        const [[{ total }]] = await mysqlPool.query(countQuery);
-        const [rows] = await mysqlPool.query(dataQuery, [pageSize, offset]);
-
-        res.json({
-            code: 200,
-            msg: '获取成功',
-            source: 'mysql',
-            data: {
-                total,
-                page,
-                pageSize,
-                limit: pageSize,
-                list: rows
-            }
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 6. 用户注册
-app.post('/api/register', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { username, password, nickname, phone, email, deptId, deptName, roleIds, postIds, status } = req.body;
-        
-        if (!username || !password) {
-            return res.status(400).json({ code: 400, msg: '账号和密码不能为空' });
-        }
-
-        // 检查用户是否已存在
-        const [existing] = await mysqlPool.query('SELECT id FROM t_ryytn_account WHERE login_id = ?', [username]);
-        if (existing.length > 0) {
-            return res.status(400).json({ code: 400, msg: '账号已存在' });
-        }
-
-        const id = Date.now();
-        const conn = await mysqlPool.getConnection();
-        try {
-            await conn.beginTransaction();
-            const hashedPassword = await bcrypt.hash(password, 10);
-            await conn.query(
-                'INSERT INTO t_ryytn_account (id, login_id, password, nick_name, name, status, department_id, mobile, email, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-                [id, username, hashedPassword, nickname || ('用户' + username.slice(-4)), username, status !== undefined ? status : 1, deptId || '0', phone || '', email || '']
-            );
-            if (roleIds && roleIds.length > 0) {
-                for (const roleId of roleIds) {
-                    await conn.query('INSERT INTO t_ryytn_account_role (account_id, role_id) VALUES (?, ?)', [id, roleId]);
-                }
-            }
-            if (postIds && postIds.length > 0) {
-                for (const postId of postIds) {
-                    await conn.query('INSERT INTO t_ryytn_account_jobtitle (account_id, job_id) VALUES (?, ?)', [id, postId]);
-                }
-            }
-            await conn.commit();
-        } catch (e) {
-            await conn.rollback();
-            throw e;
-        } finally {
-            conn.release();
-        }
-
-        try {
-            // 清除账号缓存
-            await redisClient.del('cache:accounts');
-        } catch (redisErr) {
-            console.warn('Failed to clear redis cache:', redisErr.message);
-        }
-        await writeAuditLog({ req, action: 'CREATE', resource: 'account', targetId: id, detail: { username, deptId, roleIds, postIds } });
-
-        res.json({ code: 200, msg: '注册成功', data: { id, username } });
-    } catch (error) {
-        console.error('Register error:', error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 6.5 发送短信验证码 (国阳云接口)
-app.post('/api/sms/send-code', authLimiter, async (req, res) => {
-    try {
-        const { username, mobile } = req.body;
-        if (!username || !mobile) {
-            return res.status(400).json({ code: 400, msg: '用户名和手机号不能为空' });
-        }
-
-        // 1. 查询并比对手机号
-        const [users] = await mysqlPool.query('SELECT mobile FROM t_ryytn_account WHERE login_id = ?', [username]);
-        if (users.length === 0) return res.status(400).json({ code: 400, msg: '用户不存在' });
-        
-        const dbMobile = users[0].mobile;
-        if (!dbMobile) {
-            return res.status(400).json({ code: 400, msg: '该账号未绑定手机号，无法通过短信找回' });
-        }
-
-        if (dbMobile !== mobile) {
-            return res.status(400).json({ code: 400, msg: '注册手机号填写错误' });
-        }
-
-        // 2. 生成 6 位验证码
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
-        
-        // 3. 调用国阳云接口
-        const host = "https://gyytz.market.alicloudapi.com";
-        const path = "/sms/smsSend";
-        const appcode = process.env.SMS_APP_CODE;
-
-        if (!appcode || appcode === '你的AppCode') {
-            // 如果没配置 AppCode，在开发环境模拟发送成功并打印
-            console.log(`[SMS MOCK] To: ${mobile}, Code: ${code} (AppCode not configured)`);
-        } else {
-            try {
-                const smsRes = await axios.post(`${host}${path}`, null, {
-                    headers: { 'Authorization': `APPCODE ${appcode}` },
-                    params: {
-                        mobile: mobile,
-                        param: `**code**:${code},**minute**:5`,
-                        smsSignId: "2e65b1bb3d054466b82f0c9d125465e2",
-                        templateId: "908e94ccf08b4476ba6c876d13f084ad"
-                    }
-                });
-                console.log('[SMS API RESPONSE]:', JSON.stringify(smsRes.data));
-                if (String(smsRes.data.code) !== '0') {
-                    return res.status(500).json({ code: 500, msg: '短信发送失败: ' + (smsRes.data.msg || '接口错误') });
-                }
-            } catch (smsErr) {
-                console.error('SMS API Error:', smsErr.message);
-                return res.status(500).json({ code: 500, msg: '短信服务连接异常' });
-            }
-        }
-
-        // 4. 存入 Redis (过期时间 5 分钟)
-        await redisClient.set(`sms:code:${username}`, code, { EX: 300 });
-
-        res.json({ code: 200, msg: '验证码已发送，请注意查收' });
-    } catch (error) {
-        console.error('SMS send error:', error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 6.6 验证短信验证码
-app.post('/api/sms/verify-code', authLimiter, async (req, res) => {
-    try {
-        const { username, smsCode } = req.body;
-        if (!username || !smsCode) {
-            return res.status(400).json({ code: 400, msg: '用户名和验证码不能为空' });
-        }
-
-        const savedSmsCode = await redisClient.get(`sms:code:${username}`);
-        if (!savedSmsCode) {
-            return res.status(400).json({ code: 400, msg: '短信验证码已过期或未发送' });
-        }
-        if (savedSmsCode !== smsCode) {
-            return res.status(400).json({ code: 400, msg: '短信验证码错误' });
-        }
-
-        res.json({ code: 200, msg: '验证码正确' });
-    } catch (error) {
-        console.error('SMS verify error:', error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 7. 用户登录
-app.post('/api/login', authLimiter, async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        
-        // 从数据库统实验证，无论是不是管理员
-        const [users] = await mysqlPool.query('SELECT * FROM t_ryytn_account WHERE login_id = ?', [username]);
-        
-        if (users.length === 0) {
-            return res.status(400).json({ code: 400, msg: '账号不存在或密码错误！' });
-        }
-        
-        const user = users[0];
-        
-        const passwordOk = await bcrypt.compare(password, user.password || '');
-        if (!passwordOk) {
-            return res.status(400).json({ code: 400, msg: '账号不存在或密码错误！' });
-        }
-        
-        if (user.status !== 1) {
-            return res.status(400).json({ code: 400, msg: '该账号已被停用' });
-        }
-
-        res.json({ 
-            code: 200, 
-            msg: '登录成功',
-            data: {
-                ...sanitizeUser(user),
-                token: jwt.sign({ id: user.id, username: user.login_id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN })
-            },
-            traceId: req.traceId
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 8. 获取牧场概览带环境监测与产量
-app.get('/api/pasture-stats', authRequired, async (req, res) => {
-    try {
-        const [rows] = await mysqlPool.query('SELECT * FROM t_ryytn_master_warehouse WHERE warehouse_type = 3');
-        const statsData = rows.map(p => {
-            const aqi = Math.floor(Math.random() * 40) + 15; // 15-55 AQI (优/良)
-            const yieldDay1 = Math.floor(Math.random() * 10000) + 5000;
-            const yieldDay2 = Math.floor(Math.random() * 10000) + 5000;
-            const yieldDay3 = Math.floor(Math.random() * 10000) + 5000;
-            return {
-                id: p.id,
-                name: p.warehouse_name,
-                lat: p.latitude,
-                lng: p.longitude,
-                aqi: aqi,
-                airQuality: aqi < 35 ? '优 🍃' : '良 ☁️',
-                yields: [yieldDay3, yieldDay2, yieldDay1], // 最近三天
-                totalYield: yieldDay1 + yieldDay2 + yieldDay3
-            };
-        });
-        res.json({ code: 200, msg: '获取成功', data: statsData });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 9. 订单区域分析接口
-app.get('/api/order-analysis', authRequired, async (req, res) => {
-    try {
-        // 总出货量和订单数
-        const [[totals]] = await mysqlPool.query(`
-            SELECT 
-                COUNT(*) as total_orders,
-                COALESCE(SUM(request_liters), 0) as total_liters
-            FROM t_ryytn_order_main
-        `);
-
-        // 各大区需求量 - 根据经销商关联id匹配地址中的城市关键词分区
-        // 将仓库表中的网点进行地理分区统计
-        const [distRows] = await mysqlPool.query(`
-            SELECT 
-                o.distributor_id,
-                o.request_liters,
-                w.warehouse_name
-            FROM t_ryytn_order_main o
-            LEFT JOIN t_ryytn_master_warehouse w ON o.distributor_id = w.id
-        `);
-
-        // 包含这些关键词的城市属于各大区
-        const regionKeywords = {
-            '华东': ['上海','江苏','浙江','安徽','福建','山东','江西','苏州','杭州','南京','无锡','南昌'],
-            '华南': ['广东','广西','海南','广州','深圳','东莞','佛山','珠海','幘州'],
-            '华北': ['北京','天津','河北','山西','内蒙古','石家庄','保定','唐山'],
-            '华中': ['湖北','湖南','河南','武汉','长沙','郑州','开封','襄阳']
+app.post('/api/sms/send-code', (req, res) => {
+    const { username, mobile } = req.body || {};
+    if (!username || !mobile) return apiErr(res, req, 400, '用户名和手机号不能为空');
+    const db = readDb();
+    const account = db.system.accounts.find(a => a.login_id === username);
+    if (!account) return apiErr(res, req, 404, '账号不存在');
+    if (String(account.mobile) !== String(mobile)) return apiErr(res, req, 400, '手机号与账号不匹配');
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    updateDb((raw) => {
+        raw.meta.sms_codes[username] = {
+            code,
+            mobile: String(mobile),
+            expires_at: Date.now() + 5 * 60 * 1000,
+            verified: false,
+            updated_at: nowIso()
         };
-
-        const regionStats = { '华东': 0, '华南': 0, '华北': 0, '华中': 0 };
-
-        for (const row of distRows) {
-            const name = row.warehouse_name || '';
-            let matched = false;
-            for (const [region, keywords] of Object.entries(regionKeywords)) {
-                if (keywords.some(k => name.includes(k))) {
-                    regionStats[region] += parseFloat(row.request_liters) || 0;
-                    matched = true;
-                    break;
-                }
-            }
-        }
-
-        // 近 7 天日均出货量趋势 (用create_time进行模拟)
-        const sevenDayTrend = [];
-        for (let i = 6; i >= 0; i--) {
-            const dayLiters = Math.floor(Math.random() * 50000) + 60000; // 模拟每日
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            sevenDayTrend.push({
-                date: date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
-                liters: dayLiters
-            });
-        }
-
-        res.json({
-            code: 200,
-            msg: '获取成功',
-            data: {
-                totalOrders: totals.total_orders,
-                totalLiters: Math.round(totals.total_liters),
-                regionStats,
-                sevenDayTrend
-            }
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
+    });
+    const data = { sent: true };
+    if ((process.env.NODE_ENV || '').toLowerCase() !== 'production') data.debugCode = code;
+    apiOk(res, req, data, '验证码已发送');
 });
 
-// 10. 获取部门列表 (t_ryytn_oa_department)
-app.get('/api/departments', authRequired, async (req, res) => {
-    try {
-        const [rows] = await mysqlPool.query('SELECT * FROM t_ryytn_oa_department ORDER BY sort_no ASC');
-        res.json({ code: 200, msg: '获取成功', data: rows });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误' });
-    }
+app.post('/api/sms/verify-code', (req, res) => {
+    const { username, smsCode } = req.body || {};
+    if (!username || !smsCode) return apiErr(res, req, 400, '参数不完整');
+    const db = readDb();
+    const record = db.meta.sms_codes[username];
+    if (!record) return apiErr(res, req, 400, '请先获取验证码');
+    if (Date.now() > Number(record.expires_at || 0)) return apiErr(res, req, 400, '验证码已过期');
+    if (String(record.code) !== String(smsCode)) return apiErr(res, req, 400, '验证码错误');
+    updateDb((raw) => {
+        raw.meta.sms_codes[username] = { ...raw.meta.sms_codes[username], verified: true, verified_at: nowIso() };
+    });
+    apiOk(res, req, { verified: true }, '验证成功');
 });
 
-// 11. 获取角色列表 (t_ryytn_role)
-app.get('/api/roles', authRequired, async (req, res) => {
-    try {
-        const [rows] = await mysqlPool.query(`
-            SELECT 
-                r.*, 
-                GROUP_CONCAT(DISTINCT rj.job_id) as post_ids,
-                GROUP_CONCAT(DISTINCT rp.page_id) as perm_ids
-            FROM t_ryytn_role r
-            LEFT JOIN t_ryytn_role_jobtitle rj ON r.id = rj.role_id
-            LEFT JOIN t_ryytn_role_page rp ON r.id = rp.role_id
-            GROUP BY r.id
-            ORDER BY r.sort_no ASC
-        `);
-        const data = rows.map(r => ({
-            ...r,
-            postIds: r.post_ids ? r.post_ids.split(',') : [],
-            permissionIds: r.perm_ids ? r.perm_ids.split(',').map(Number) : []
-        }));
-        res.json({ code: 200, msg: '获取成功', data });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误' });
-    }
+app.post('/api/reset-password', (req, res) => {
+    const { username, smsCode, helperCode, newPassword } = req.body || {};
+    if (!username || !smsCode || !helperCode || !newPassword) return apiErr(res, req, 400, '参数不完整');
+    if (String(newPassword).length < 6) return apiErr(res, req, 400, '密码长度不能少于6位');
+    const db = readDb();
+    const account = db.system.accounts.find(a => a.login_id === username);
+    if (!account) return apiErr(res, req, 404, '账号不存在');
+    const sms = db.meta.sms_codes[username];
+    if (!sms || String(sms.code) !== String(smsCode) || Date.now() > Number(sms.expires_at || 0)) return apiErr(res, req, 400, '短信验证码无效');
+    if (String(helperCode) !== String(db.meta.helper_code)) return apiErr(res, req, 400, '辅助动态码错误');
+    updateDb((raw) => {
+        const target = raw.system.accounts.find(a => Number(a.id) === Number(account.id));
+        target.password_hash = bcrypt.hashSync(String(newPassword), 10);
+        delete raw.meta.sms_codes[username];
+    });
+    appendOperationLog(req, {
+        moduleCode: 'auth',
+        bizObjectType: 'account',
+        bizObjectId: account.id,
+        actionType: 'RESET_PASSWORD',
+        message: `重置密码 ${username}`,
+        requestSummary: { username, smsCode: '***', helperCode: '***' }
+    });
+    apiOk(res, req, { changed: true }, '密码重置成功');
 });
-
-// 12. 获取岗位列表 (t_ryytn_oa_jobtitle)
-app.get('/api/jobtitles', authRequired, async (req, res) => {
-    try {
-        const [rows] = await mysqlPool.query('SELECT * FROM t_ryytn_oa_jobtitle ORDER BY id ASC');
-        res.json({ code: 200, msg: '获取成功', data: rows });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误' });
-    }
-});
-
-// 13. 获取权限/页面树 (t_ryytn_page)
-app.get('/api/permissions', authRequired, async (req, res) => {
-    try {
-        const [rows] = await mysqlPool.query('SELECT * FROM t_ryytn_page ORDER BY id ASC');
-        res.json({ code: 200, msg: '获取成功', data: rows });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误' });
-    }
-});
-
-// 新增部门
-app.post('/api/departments', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id, parentId, label, type, sort, leader } = req.body;
-        const levelMap = { 'center': 1, 'department': 2, 'team': 3 };
-        const level = levelMap[type] || 3;
-        await mysqlPool.query(
-            'INSERT INTO t_ryytn_oa_department (id, department_name, sup_dep_id, level, sort_no, leader, created_time) VALUES (?, ?, ?, ?, ?, ?, NOW())',
-            [id, label, parentId || '0', level, sort || 0, leader || '']
-        );
-        res.json({ code: 200, msg: '新增成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 更新部门
-app.put('/api/departments/:id', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { label, type, sort, leader } = req.body;
-        const levelMap = { 'center': 1, 'department': 2, 'team': 3 };
-        const level = levelMap[type] || 3;
-        await mysqlPool.query(
-            'UPDATE t_ryytn_oa_department SET department_name = ?, level = ?, sort_no = ?, leader = ? WHERE id = ?',
-            [label, level, sort || 0, leader || '', id]
-        );
-        res.json({ code: 200, msg: '更新成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 删除部门
-app.delete('/api/departments/:id', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id } = req.params;
-        // 检查是否有子部门
-        const [children] = await mysqlPool.query('SELECT id FROM t_ryytn_oa_department WHERE sup_dep_id = ?', [id]);
-        if (children.length > 0) {
-            return res.status(400).json({ code: 400, msg: '该部门下存在子部门，请先删除子部门' });
-        }
-        // 检查是否有在该部门的用户
-        const [users] = await mysqlPool.query('SELECT id FROM t_ryytn_account WHERE department_id = ?', [id]);
-        if (users.length > 0) {
-            return res.status(400).json({ code: 400, msg: '该部门下存在关联用户，无法删除' });
-        }
-        await mysqlPool.query('DELETE FROM t_ryytn_oa_department WHERE id = ?', [id]);
-        res.json({ code: 200, msg: '删除成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误' });
-    }
-});
-
-
-// 新增角色
-app.post('/api/roles', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id, name, code, sort, status, remark, permissionIds, postIds } = req.body;
-        await mysqlPool.query(
-            'INSERT INTO t_ryytn_role (id, name, sort_no, status, description, created_time) VALUES (?, ?, ?, ?, ?, NOW())',
-            [id, name, sort || 0, status !== undefined ? status : 1, remark || '']
-        );
-        if (permissionIds && permissionIds.length > 0) {
-            for (const pid of permissionIds) {
-                await mysqlPool.query('INSERT INTO t_ryytn_role_page (role_id, page_id) VALUES (?, ?)', [id, pid]);
-            }
-        }
-        if (postIds && postIds.length > 0) {
-            for (const pid of postIds) {
-                await mysqlPool.query('INSERT INTO t_ryytn_role_jobtitle (role_id, job_id) VALUES (?, ?)', [id, pid]);
-            }
-        }
-        res.json({ code: 200, msg: '新增成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 更新角色
-app.put('/api/roles/:id', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, code, sort, status, remark, permissionIds, postIds } = req.body;
-        const conn = await mysqlPool.getConnection();
-        try {
-            await conn.beginTransaction();
-            await conn.query(
-                'UPDATE t_ryytn_role SET name = ?, sort_no = ?, status = ?, description = ? WHERE id = ?',
-                [name, sort || 0, status !== undefined ? status : 1, remark || '', id]
-            );
-            if (permissionIds !== undefined) {
-                await conn.query('DELETE FROM t_ryytn_role_page WHERE role_id = ?', [id]);
-                for (const pid of permissionIds) {
-                    await conn.query('INSERT INTO t_ryytn_role_page (role_id, page_id) VALUES (?, ?)', [id, pid]);
-                }
-            }
-            if (postIds !== undefined) {
-                await conn.query('DELETE FROM t_ryytn_role_jobtitle WHERE role_id = ?', [id]);
-                for (const pid of postIds) {
-                    await conn.query('INSERT INTO t_ryytn_role_jobtitle (role_id, job_id) VALUES (?, ?)', [id, pid]);
-                }
-            }
-            await conn.commit();
-        } catch (e) {
-            await conn.rollback();
-            throw e;
-        } finally {
-            conn.release();
-        }
-        res.json({ code: 200, msg: '更新成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 删除角色
-app.delete('/api/roles/:id', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id } = req.params;
-        if (id == '1') return res.status(400).json({ code: 400, msg: '超级管理员角色不可删除' });
-        const conn = await mysqlPool.getConnection();
-        try {
-            await conn.beginTransaction();
-            await conn.query('DELETE FROM t_ryytn_role_page WHERE role_id = ?', [id]);
-            await conn.query('DELETE FROM t_ryytn_role_jobtitle WHERE role_id = ?', [id]);
-            await conn.query('DELETE FROM t_ryytn_account_role WHERE role_id = ?', [id]);
-            await conn.query('DELETE FROM t_ryytn_role WHERE id = ?', [id]);
-            await conn.commit();
-        } catch (e) {
-            await conn.rollback();
-            throw e;
-        } finally {
-            conn.release();
-        }
-        res.json({ code: 200, msg: '删除成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误' });
-    }
-});
-
-// 新增岗位
-app.post('/api/jobtitles', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id, name, code, deptId, remark } = req.body;
-        await mysqlPool.query(
-            'INSERT INTO t_ryytn_oa_jobtitle (id, job_title_mark, job_title_name, job_department_id, job_title_remark, created_time) VALUES (?, ?, ?, ?, ?, NOW())',
-            [id, code, name, deptId, remark || '']
-        );
-        res.json({ code: 200, msg: '新增成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 更新岗位
-app.put('/api/jobtitles/:id', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, code, deptId, remark } = req.body;
-        await mysqlPool.query(
-            'UPDATE t_ryytn_oa_jobtitle SET job_title_mark = ?, job_title_name = ?, job_department_id = ?, job_title_remark = ? WHERE id = ?',
-            [code, name, deptId, remark || '', id]
-        );
-        res.json({ code: 200, msg: '更新成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 删除岗位
-app.delete('/api/jobtitles/:id', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id } = req.params;
-        // 检查是否有在该岗位的用户
-        const [users] = await mysqlPool.query('SELECT account_id FROM t_ryytn_account_jobtitle WHERE job_id = ?', [id]);
-        if (users.length > 0) {
-            return res.status(400).json({ code: 400, msg: '该岗位下存在关联用户，无法删除' });
-        }
-        await mysqlPool.query('DELETE FROM t_ryytn_role_jobtitle WHERE job_id = ?', [id]);
-        await mysqlPool.query('DELETE FROM t_ryytn_oa_jobtitle WHERE id = ?', [id]);
-        res.json({ code: 200, msg: '删除成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误' });
-    }
-});
-
-
-// 14. 更新用户状态
-app.put('/api/accounts/:id/status', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status } = req.body;
-        await mysqlPool.query('UPDATE t_ryytn_account SET status = ? WHERE id = ?', [status, id]);
-        await redisClient.del('cache:accounts');
-        await writeAuditLog({ req, action: 'UPDATE_STATUS', resource: 'account', targetId: id, detail: { status } });
-        res.json({ code: 200, msg: '更新成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误' });
-    }
-});
-
-// 15. 删除用户
-app.delete('/api/accounts/:id', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const conn = await mysqlPool.getConnection();
-        try {
-            await conn.beginTransaction();
-            await conn.query('DELETE FROM t_ryytn_account_role WHERE account_id = ?', [id]);
-            await conn.query('DELETE FROM t_ryytn_account_jobtitle WHERE account_id = ?', [id]);
-            await conn.query('DELETE FROM t_ryytn_account WHERE id = ?', [id]);
-            await conn.commit();
-        } catch (e) {
-            await conn.rollback();
-            throw e;
-        } finally {
-            conn.release();
-        }
-        await redisClient.del('cache:accounts');
-        await writeAuditLog({ req, action: 'DELETE', resource: 'account', targetId: id });
-        res.json({ code: 200, msg: '删除成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误' });
-    }
-});
-
-// 16. 编辑用户
-app.put('/api/accounts/:id', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { nickname, phone, email, status, deptId, roleIds, postIds } = req.body;
-        const conn = await mysqlPool.getConnection();
-        try {
-            await conn.beginTransaction();
-            await conn.query(
-                'UPDATE t_ryytn_account SET nick_name = ?, mobile = ?, email = ?, status = ?, department_id = ? WHERE id = ?',
-                [nickname, phone, email, status, deptId, id]
-            );
-            if (roleIds !== undefined) {
-                await conn.query('DELETE FROM t_ryytn_account_role WHERE account_id = ?', [id]);
-                if (roleIds.length > 0) {
-                    for (const rid of roleIds) {
-                        await conn.query('INSERT INTO t_ryytn_account_role (account_id, role_id) VALUES (?, ?)', [id, rid]);
-                    }
-                }
-            }
-            if (postIds !== undefined) {
-                await conn.query('DELETE FROM t_ryytn_account_jobtitle WHERE account_id = ?', [id]);
-                if (postIds.length > 0) {
-                    for (const pid of postIds) {
-                        await conn.query('INSERT INTO t_ryytn_account_jobtitle (account_id, job_id) VALUES (?, ?)', [id, pid]);
-                    }
-                }
-            }
-            await conn.commit();
-        } catch (e) {
-            await conn.rollback();
-            throw e;
-        } finally {
-            conn.release();
-        }
-        
-        await redisClient.del('cache:accounts');
-        await writeAuditLog({ req, action: 'UPDATE', resource: 'account', targetId: id, detail: { nickname, phone, email, status, deptId, roleIds, postIds } });
-        res.json({ code: 200, msg: '更新成功' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 500, msg: '服务器错误' });
-    }
-});
-
-// 17. 获取超级管理员辅助动态码（仅超管可调用）
-app.get('/api/admin/helper-code', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const [rows] = await mysqlPool.query('SELECT helper_code FROM t_ryytn_account WHERE login_id = ?', ['jiaohaoyuan']);
-        if (rows.length === 0) {
-            return res.status(404).json({ code: 404, msg: '超级管理员账号不存在' });
-        }
-        res.json({ code: 200, msg: '获取成功', data: { helperCode: rows[0].helper_code } });
-    } catch (error) {
-        console.error('Get helper code error:', error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 18. 刷新超级管理员辅助动态码
-app.post('/api/admin/refresh-helper-code', authRequired, superAdminRequired, async (req, res) => {
-    try {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let code = '';
-        for (let i = 0; i < 6; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        await mysqlPool.query('UPDATE t_ryytn_account SET helper_code = ? WHERE login_id = ?', [code, 'jiaohaoyuan']);
-        await writeAuditLog({ req, action: 'REFRESH', resource: 'helper_code', targetId: 'jiaohaoyuan' });
-        res.json({ code: 200, msg: '辅助动态码已更新', data: { helperCode: code } });
-    } catch (error) {
-        console.error('Refresh helper code error:', error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 18.5 验证超管辅助动态码
-app.post('/api/admin/verify-helper-code', authLimiter, async (req, res) => {
-    try {
-        const { helperCode } = req.body;
-        if (!helperCode) {
-            return res.status(400).json({ code: 400, msg: '辅助动态码不能为空' });
-        }
-        const [adminRows] = await mysqlPool.query('SELECT helper_code FROM t_ryytn_account WHERE login_id = ?', ['jiaohaoyuan']);
-        if (adminRows.length === 0 || adminRows[0].helper_code !== helperCode) {
-            return res.status(400).json({ code: 400, msg: '超级管理员辅助码错误' });
-        }
-        res.json({ code: 200, msg: '辅助码校验通过' });
-    } catch (error) {
-        console.error('Verify helper code error:', error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 19. 忘记密码 - 用户名 + 短信验证码 + 超管辅助码 三重校验后重置密码
-app.post('/api/reset-password', authLimiter, async (req, res) => {
-    try {
-        const { username, smsCode, helperCode, newPassword } = req.body;
-
-        if (!username || !smsCode || !helperCode || !newPassword) {
-            return res.status(400).json({ code: 400, msg: '参数不完整' });
-        }
-
-        // 1. 验证短信验证码 (从 Redis 取)
-        const savedSmsCode = await redisClient.get(`sms:code:${username}`);
-        if (!savedSmsCode) {
-            return res.status(400).json({ code: 400, msg: '短信验证码已过期或未发送' });
-        }
-        if (savedSmsCode !== smsCode) {
-            return res.status(400).json({ code: 400, msg: '短信验证码错误' });
-        }
-
-        // 2. 验证目标用户名是否存在
-        const [users] = await mysqlPool.query('SELECT id FROM t_ryytn_account WHERE login_id = ?', [username]);
-        if (users.length === 0) {
-            return res.status(400).json({ code: 400, msg: '该用户名不存在' });
-        }
-
-        // 3. 验证超管辅助码是否正确（以 jiaohaoyuan 为准）
-        const [adminRows] = await mysqlPool.query('SELECT helper_code FROM t_ryytn_account WHERE login_id = ?', ['jiaohaoyuan']);
-        if (adminRows.length === 0 || adminRows[0].helper_code !== helperCode) {
-            return res.status(400).json({ code: 400, msg: '超级管理员辅助码错误' });
-        }
-
-        // 4. 重置密码
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await mysqlPool.query('UPDATE t_ryytn_account SET password = ? WHERE login_id = ?', [hashedPassword, username]);
-
-        // 5. 清理 Redis 中的短信码
-        await redisClient.del(`sms:code:${username}`);
-
-        try {
-            await redisClient.del('cache:accounts');
-        } catch (redisErr) {
-            console.warn('Failed to clear redis cache:', redisErr.message);
-        }
-
-        res.json({ code: 200, msg: '密码重置成功，请重新登录' });
-    } catch (error) {
-        console.error('Reset password error:', error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-// 20. 获取当前用户个人中心信息（含部门、角色、岗位）
-app.get('/api/profile/:username', authRequired, async (req, res) => {
-    try {
-        const { username } = req.params;
-        if (req.user.username !== username && req.user.role !== '超级管理员') {
-            return res.status(403).json({ code: 403, msg: '无权限访问该用户信息' });
-        }
-
-        // 获取账号基本信息 + 部门名称
-        const [users] = await mysqlPool.query(`
-            SELECT 
-                a.id, a.login_id, a.nick_name, a.name, a.mobile, a.email,
-                a.status, a.created_time, a.department_id, a.helper_code,
-                d.department_name AS department_name
-            FROM t_ryytn_account a
-            LEFT JOIN t_ryytn_oa_department d ON a.department_id = d.id
-            WHERE a.login_id = ?
-        `, [username]);
-
-        if (users.length === 0) {
-            return res.status(404).json({ code: 404, msg: '用户不存在' });
-        }
-
-        const user = users[0];
-
-        // 获取关联角色
-        const [roleRows] = await mysqlPool.query(`
-            SELECT r.id, r.name, r.id AS code
-            FROM t_ryytn_account_role ar
-            JOIN t_ryytn_role r ON ar.role_id = r.id
-            WHERE ar.account_id = ?
-        `, [user.id]);
-
-        // 获取关联岗位
-        const [postRows] = await mysqlPool.query(`
-            SELECT DISTINCT j.id, j.job_title_name AS name, j.job_title_mark AS code
-            FROM t_ryytn_account_jobtitle aj
-            JOIN t_ryytn_oa_jobtitle j ON aj.job_id = j.id
-            WHERE aj.account_id = ?
-        `, [user.id]);
-
-        res.json({
-            code: 200,
-            msg: '获取成功',
-            data: {
-                id: user.id,
-                username: user.login_id,
-                nickname: user.nick_name || user.name,
-                name: user.name,
-                mobile: user.mobile,
-                email: user.email,
-                status: user.status,
-                createdTime: user.created_time,
-                departmentId: user.department_id,
-                departmentName: user.department_name || '暂无部门',
-                roles: roleRows,
-                posts: postRows,
-                isSuperAdmin: user.login_id === 'jiaohaoyuan'
-            }
-        });
-    } catch (error) {
-        console.error('Profile error:', error);
-        res.status(500).json({ code: 500, msg: '服务器错误: ' + error.message });
-    }
-});
-
-app.get('/api/me', authRequired, async (req, res) => {
-    res.json({ code: 200, msg: '获取成功', data: req.user, traceId: req.traceId });
-});
-
-// ==========================================
-// 基础数据管理模块 (MDM) - Excel 上传与查改删
-// ==========================================
-
-const getAdapterByTableType = (tableType) => {
-    if (tableType === 'SKU') {
-        return {
-            processRow: async (row, conn) => {
-                const skuCode = row.sku_code || row['SKU编码'] || row['编码'];
-                const skuName = row.sku_name || row['SKU名称'] || row['名称'];
-                const barCode = row.bar_code || row['69码'] || '';
-                const categoryCode = row.category_code || row['品类编码'] || '';
-                const lifecycle = row.lifecycle_status || row['生命周期'] || 'ACTIVE';
-                const shelfLife = row.shelf_life_days || row['保质期'] || 0;
-                const unitRatio = row.unit_ratio || row['单位换算'] || 1.0;
-                const volume = row.volume_m3 || row['规格体积'] || 0;
-
-                if (!skuCode || !skuName) throw new Error('缺少必填字段: sku_code 或 sku_name');
-
-                await conn.query(`
-                    INSERT INTO cdop_master.mst_sku_info 
-                    (sku_code, sku_name, bar_code, category_code, lifecycle_status, shelf_life_days, unit_ratio, volume_m3)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ON DUPLICATE KEY UPDATE
-                    sku_name=VALUES(sku_name), bar_code=VALUES(bar_code), category_code=VALUES(category_code),
-                    lifecycle_status=VALUES(lifecycle_status), shelf_life_days=VALUES(shelf_life_days),
-                    unit_ratio=VALUES(unit_ratio), volume_m3=VALUES(volume_m3), updated_time=NOW()
-                `, [String(skuCode), String(skuName), String(barCode), String(categoryCode), String(lifecycle), Number(shelfLife), Number(unitRatio), Number(volume)]);
-            }
-        };
-    } else if (tableType === 'RESELLER_RLTN') {
-        return {
-            processRow: async (row, conn) => {
-                const skuCode = row.sku_code || row['SKU编码'] || '';
-                const resellerCode = row.reseller_code || row['经销商编码'] || '';
-                let beginDate = row.begin_date || row['生效开始日期'] || row['开始日期'];
-                let endDate = row.end_date || row['生效结束日期'] || row['结束日期'];
-
-                if (!skuCode || !resellerCode) throw new Error('缺少必填字段: sku_code 或 reseller_code');
-                
-                // Excel numeric dates support
-                if(typeof beginDate === 'number') {
-                    const d = new Date((beginDate - (25567 + 1)) * 86400 * 1000);
-                    beginDate = d.toISOString().split('T')[0];
-                }
-                if(typeof endDate === 'number') {
-                    const d = new Date((endDate - (25567 + 1)) * 86400 * 1000);
-                    endDate = d.toISOString().split('T')[0];
-                }
-                if (!beginDate || !endDate) throw new Error('缺少日期字段');
-                
-                if (new Date(beginDate) > new Date(endDate)) {
-                    throw new Error(`开始日期 (${beginDate}) 大于 结束日期 (${endDate})`);
-                }
-
-                const resellerName = row.reseller_name || row['经销商名称'] || '';
-                const region = row.region || row['所属大区'] || '';
-                const channelType = row.channel_type || row['渠道类型'] || 'DIST';
-                const priceGrade = row.price_grade || row['价格等级'] || 'A';
-                const quotaCases = row.quota_cases || row['月度配额(箱)'] || null;
-
-                await conn.query(`
-                    INSERT INTO cdop_master.mst_rltn_sku_reseller 
-                    (sku_code, reseller_code, reseller_name, region, channel_type, begin_date, end_date, price_grade, quota_cases)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ON DUPLICATE KEY UPDATE
-                    reseller_name=VALUES(reseller_name), region=VALUES(region),
-                    channel_type=VALUES(channel_type), begin_date=VALUES(begin_date),
-                    end_date=VALUES(end_date), price_grade=VALUES(price_grade),
-                    quota_cases=VALUES(quota_cases), updated_time=NOW()
-                `, [String(skuCode), String(resellerCode), String(resellerName), String(region),
-                    String(channelType), String(beginDate), String(endDate),
-                    String(priceGrade), quotaCases ? Number(quotaCases) : null]);
-            }
-        };
-    }
-    throw new Error('未知的表类型: ' + tableType);
+const accountToListRow = (db, account) => {
+    const roleIds = getRoleIdsByAccount(db, account.id);
+    const postIds = getPostIdsByAccount(db, account.id);
+    return {
+        ...account,
+        role_ids: roleIds.join(','),
+        post_ids: postIds.join(',')
+    };
 };
 
-app.post('/api/master/import', authRequired, upload.single('file'), async (req, res) => {
+app.get('/api/accounts', authRequired, (req, res) => {
+    const db = readDb();
+    const list = db.system.accounts.map(a => accountToListRow(db, a)).sort((a, b) => Number(a.id) - Number(b.id));
+    apiOk(res, req, list, '获取成功');
+});
+
+app.post('/api/register', (req, res) => {
+    const { username, password, nickname, phone, email, deptId, status, roleIds, postIds } = req.body || {};
+    if (!username || !password) return apiErr(res, req, 400, '用户名和密码不能为空');
+    let created = null;
     try {
-        if (!req.file) return res.status(400).json({ code: 400, msg: '无文件上传' });
-        const { tableType } = req.body;
-        if (!tableType) return res.status(400).json({ code: 400, msg: '缺少表类型 tableType' });
-        
-        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-        const sheetName = workbook.SheetNames[0];
-        const jsonData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+        updateDb((db) => {
+            if (db.system.accounts.some(a => a.login_id === username)) throw new Error('用户名已存在');
+            const id = nextId(db.system.accounts);
+            created = {
+                id,
+                login_id: String(username),
+                nick_name: String(nickname || username),
+                password_hash: bcrypt.hashSync(String(password), 10),
+                mobile: String(phone || ''),
+                email: String(email || ''),
+                department_id: String(deptId || '100'),
+                status: toNum(status, 1),
+                created_time: nowIso()
+            };
+            db.system.accounts.push(created);
+            (Array.isArray(roleIds) ? roleIds : []).map(Number).filter(v => !Number.isNaN(v)).forEach(roleId => {
+                db.system.account_roles.push({ account_id: id, role_id: roleId });
+            });
+            (Array.isArray(postIds) ? postIds : []).forEach(jobId => {
+                db.system.account_posts.push({ account_id: id, job_id: String(jobId) });
+            });
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '创建失败');
+    }
+    if (!created) return apiErr(res, req, 500, '创建失败');
+    appendOperationLog(req, {
+        moduleCode: 'account',
+        bizObjectType: 'account',
+        bizObjectId: created.id,
+        actionType: 'CREATE',
+        message: `注册用户 ${created.login_id}`,
+        requestSummary: { username, nickname, phone, deptId, roleIds, postIds },
+        afterSnapshot: created
+    });
+    apiOk(res, req, { id: created.id }, '注册成功');
+});
 
-        if (jsonData.length > 10000) return res.status(400).json({ code: 400, msg: '最大支持单次1万行' });
-        if (jsonData.length === 0) return res.status(400).json({ code: 400, msg: 'Excel文件没有数据' });
+app.put('/api/accounts/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const payload = req.body || {};
+    let updated = false;
+    let beforeSnapshot = null;
+    let afterSnapshot = null;
+    try {
+        updateDb((db) => {
+            const account = db.system.accounts.find(a => Number(a.id) === id);
+            if (!account) throw new Error('用户不存在');
+            beforeSnapshot = safeClone(account);
+            account.login_id = payload.username ? String(payload.username) : account.login_id;
+            account.nick_name = payload.nickname ? String(payload.nickname) : account.nick_name;
+            account.mobile = payload.phone !== undefined ? String(payload.phone) : account.mobile;
+            account.email = payload.email !== undefined ? String(payload.email) : account.email;
+            account.department_id = payload.deptId !== undefined ? String(payload.deptId) : account.department_id;
+            account.status = payload.status !== undefined ? toNum(payload.status, 1) : account.status;
+            if (payload.password) account.password_hash = bcrypt.hashSync(String(payload.password), 10);
+            if (Array.isArray(payload.roleIds)) {
+                db.system.account_roles = db.system.account_roles.filter(r => Number(r.account_id) !== id);
+                payload.roleIds.map(Number).filter(v => !Number.isNaN(v)).forEach(roleId => {
+                    db.system.account_roles.push({ account_id: id, role_id: roleId });
+                });
+            }
+            if (Array.isArray(payload.postIds)) {
+                db.system.account_posts = db.system.account_posts.filter(r => Number(r.account_id) !== id);
+                payload.postIds.forEach(jobId => db.system.account_posts.push({ account_id: id, job_id: String(jobId) }));
+            }
+            afterSnapshot = safeClone(account);
+            updated = true;
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '更新失败');
+    }
+    if (!updated) return apiErr(res, req, 500, '更新失败');
+    appendOperationLog(req, {
+        moduleCode: 'account',
+        bizObjectType: 'account',
+        bizObjectId: id,
+        actionType: 'UPDATE',
+        message: `更新用户 ${afterSnapshot?.login_id || id}`,
+        requestSummary: payload,
+        beforeSnapshot,
+        afterSnapshot
+    });
+    apiOk(res, req, true, '更新成功');
+});
 
-        const adapter = getAdapterByTableType(tableType); 
-        const results = [];
-        const errors = [];
-        
-        const conn = await mysqlPool.getConnection();
-        try {
-            await conn.beginTransaction();
-            for (let i = 0; i < jsonData.length; i++) {
-                const row = jsonData[i];
-                const rowNumber = i + 2; 
-                try {
-                    await adapter.processRow(row, conn);
-                    results.push({ rowNumber, status: 'success' });
-                } catch (err) {
-                    errors.push({ rowNumber, error: err.message, rawData: row });
+app.put('/api/accounts/:id/status', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const { status } = req.body || {};
+    let found = false;
+    let beforeSnapshot = null;
+    let afterSnapshot = null;
+    updateDb((db) => {
+        const account = db.system.accounts.find(a => Number(a.id) === id);
+        if (!account) return;
+        beforeSnapshot = safeClone(account);
+        account.status = toNum(status, account.status);
+        afterSnapshot = safeClone(account);
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '用户不存在');
+    appendOperationLog(req, {
+        moduleCode: 'account',
+        bizObjectType: 'account',
+        bizObjectId: id,
+        actionType: 'STATUS_CHANGE',
+        message: `变更用户状态 ${afterSnapshot?.login_id || id}`,
+        requestSummary: { status },
+        beforeSnapshot,
+        afterSnapshot
+    });
+    apiOk(res, req, true, '状态更新成功');
+});
+
+app.delete('/api/accounts/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const db = readDb();
+    const account = db.system.accounts.find(a => Number(a.id) === id);
+    if (!account) return apiErr(res, req, 404, '用户不存在');
+    if (SUPER_ADMIN_LOGIN_IDS.has(account.login_id)) return apiErr(res, req, 400, '超级管理员账号不可删除');
+    updateDb((raw) => {
+        raw.system.accounts = raw.system.accounts.filter(a => Number(a.id) !== id);
+        raw.system.account_roles = raw.system.account_roles.filter(a => Number(a.account_id) !== id);
+        raw.system.account_posts = raw.system.account_posts.filter(a => Number(a.account_id) !== id);
+    });
+    appendOperationLog(req, {
+        moduleCode: 'account',
+        bizObjectType: 'account',
+        bizObjectId: id,
+        actionType: 'DELETE',
+        message: `删除用户 ${account.login_id}`,
+        beforeSnapshot: account
+    });
+    apiOk(res, req, true, '删除成功');
+});
+
+app.get('/api/departments', authRequired, (req, res) => {
+    const db = readDb();
+    const rows = [...db.system.departments].sort((a, b) => toNum(a.level) - toNum(b.level) || toNum(a.sort_no) - toNum(b.sort_no));
+    apiOk(res, req, rows, '获取成功');
+});
+
+app.post('/api/departments', authRequired, (req, res) => {
+    const body = req.body || {};
+    if (!body.label) return apiErr(res, req, 400, '部门名称不能为空');
+    let createdRow = null;
+    updateDb((db) => {
+        const id = String(body.id || nextId(db.system.departments));
+        const parent = String(body.parentId || '0');
+        const levelMap = { center: 1, department: 2, team: 3 };
+        const level = levelMap[body.type] || 3;
+        createdRow = {
+            id,
+            department_mark: `DEP-${id}`,
+            department_name: String(body.label),
+            department_code: `CODE-${id}`,
+            sub_company_id: '1',
+            sup_dep_id: parent,
+            sup_dep_ids: parent === '0' ? '0' : `0,${parent}`,
+            level,
+            sort_no: toNum(body.sort, 0),
+            leader: String(body.leader || ''),
+            phone: String(body.phone || ''),
+            email: String(body.email || ''),
+            created_time: nowIso()
+        };
+        db.system.departments.push(createdRow);
+    });
+    appendOperationLog(req, {
+        moduleCode: 'department',
+        bizObjectType: 'department',
+        bizObjectId: createdRow?.id,
+        actionType: 'CREATE',
+        message: `新增部门 ${createdRow?.department_name || ''}`,
+        requestSummary: body,
+        afterSnapshot: createdRow
+    });
+    apiOk(res, req, true, '新增成功');
+});
+
+app.put('/api/departments/:id', authRequired, (req, res) => {
+    const id = String(req.params.id);
+    const body = req.body || {};
+    let found = false;
+    let beforeSnapshot = null;
+    let afterSnapshot = null;
+    updateDb((db) => {
+        const row = db.system.departments.find(d => String(d.id) === id);
+        if (!row) return;
+        const levelMap = { center: 1, department: 2, team: 3 };
+        beforeSnapshot = safeClone(row);
+        row.department_name = body.label !== undefined ? String(body.label) : row.department_name;
+        row.level = body.type ? (levelMap[body.type] || row.level) : row.level;
+        row.sort_no = body.sort !== undefined ? toNum(body.sort, row.sort_no) : row.sort_no;
+        row.leader = body.leader !== undefined ? String(body.leader) : row.leader;
+        row.phone = body.phone !== undefined ? String(body.phone) : row.phone;
+        row.email = body.email !== undefined ? String(body.email) : row.email;
+        afterSnapshot = safeClone(row);
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '部门不存在');
+    appendOperationLog(req, {
+        moduleCode: 'department',
+        bizObjectType: 'department',
+        bizObjectId: id,
+        actionType: 'UPDATE',
+        message: `更新部门 ${afterSnapshot?.department_name || id}`,
+        requestSummary: body,
+        beforeSnapshot,
+        afterSnapshot
+    });
+    apiOk(res, req, true, '更新成功');
+});
+
+app.delete('/api/departments/:id', authRequired, (req, res) => {
+    const id = String(req.params.id);
+    const db = readDb();
+    const target = db.system.departments.find(d => String(d.id) === id);
+    if (!target) return apiErr(res, req, 404, '部门不存在');
+    if (db.system.departments.some(d => String(d.sup_dep_id) === id)) return apiErr(res, req, 400, '该部门下存在子部门，请先删除子部门');
+    if (db.system.accounts.some(a => String(a.department_id) === id)) return apiErr(res, req, 400, '该部门下仍有关联用户，无法删除');
+    updateDb((raw) => {
+        raw.system.departments = raw.system.departments.filter(d => String(d.id) !== id);
+    });
+    appendOperationLog(req, {
+        moduleCode: 'department',
+        bizObjectType: 'department',
+        bizObjectId: id,
+        actionType: 'DELETE',
+        message: `删除部门 ${target.department_name || id}`,
+        beforeSnapshot: target
+    });
+    apiOk(res, req, true, '删除成功');
+});
+
+app.get('/api/jobtitles', authRequired, (req, res) => {
+    const db = readDb();
+    const rows = [...db.system.jobtitles].sort((a, b) => toNum(a.sort_no) - toNum(b.sort_no));
+    apiOk(res, req, rows, '获取成功');
+});
+
+app.post('/api/jobtitles', authRequired, (req, res) => {
+    const body = req.body || {};
+    if (!body.name || !body.code || !body.deptId) return apiErr(res, req, 400, '岗位名称、编码、部门不能为空');
+    let createdRow = null;
+    updateDb((db) => {
+        const id = String(body.id || `J${Date.now()}`);
+        createdRow = {
+            id,
+            job_title_mark: String(body.code),
+            job_title_name: String(body.name),
+            job_department_id: String(body.deptId),
+            status: toNum(body.status, 1),
+            sort_no: toNum(body.sort, 0),
+            remark: String(body.remark || ''),
+            created_time: nowIso()
+        };
+        db.system.jobtitles.push(createdRow);
+    });
+    appendOperationLog(req, {
+        moduleCode: 'jobtitle',
+        bizObjectType: 'jobtitle',
+        bizObjectId: createdRow?.id,
+        actionType: 'CREATE',
+        message: `新增岗位 ${createdRow?.job_title_name || ''}`,
+        requestSummary: body,
+        afterSnapshot: createdRow
+    });
+    apiOk(res, req, true, '新增成功');
+});
+
+app.put('/api/jobtitles/:id', authRequired, (req, res) => {
+    const id = String(req.params.id);
+    const body = req.body || {};
+    let found = false;
+    let beforeSnapshot = null;
+    let afterSnapshot = null;
+    updateDb((db) => {
+        const row = db.system.jobtitles.find(j => String(j.id) === id);
+        if (!row) return;
+        beforeSnapshot = safeClone(row);
+        row.job_title_mark = body.code !== undefined ? String(body.code) : row.job_title_mark;
+        row.job_title_name = body.name !== undefined ? String(body.name) : row.job_title_name;
+        row.job_department_id = body.deptId !== undefined ? String(body.deptId) : row.job_department_id;
+        row.status = body.status !== undefined ? toNum(body.status, row.status) : row.status;
+        row.sort_no = body.sort !== undefined ? toNum(body.sort, row.sort_no) : row.sort_no;
+        row.remark = body.remark !== undefined ? String(body.remark) : row.remark;
+        afterSnapshot = safeClone(row);
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '岗位不存在');
+    appendOperationLog(req, {
+        moduleCode: 'jobtitle',
+        bizObjectType: 'jobtitle',
+        bizObjectId: id,
+        actionType: 'UPDATE',
+        message: `更新岗位 ${afterSnapshot?.job_title_name || id}`,
+        requestSummary: body,
+        beforeSnapshot,
+        afterSnapshot
+    });
+    apiOk(res, req, true, '更新成功');
+});
+
+app.delete('/api/jobtitles/:id', authRequired, (req, res) => {
+    const id = String(req.params.id);
+    const db = readDb();
+    const target = db.system.jobtitles.find(j => String(j.id) === id);
+    if (!target) return apiErr(res, req, 404, '岗位不存在');
+    if (db.system.account_posts.some(ap => String(ap.job_id) === id)) return apiErr(res, req, 400, '该岗位已被用户关联，无法删除');
+    updateDb((raw) => {
+        raw.system.jobtitles = raw.system.jobtitles.filter(j => String(j.id) !== id);
+        raw.system.role_jobs = raw.system.role_jobs.filter(j => String(j.job_id) !== id);
+    });
+    appendOperationLog(req, {
+        moduleCode: 'jobtitle',
+        bizObjectType: 'jobtitle',
+        bizObjectId: id,
+        actionType: 'DELETE',
+        message: `删除岗位 ${target.job_title_name || id}`,
+        beforeSnapshot: target
+    });
+    apiOk(res, req, true, '删除成功');
+});
+
+app.get('/api/permissions', authRequired, (req, res) => {
+    const db = readDb();
+    apiOk(res, req, [...db.system.pages].sort((a, b) => toNum(a.sort_no) - toNum(b.sort_no)), '获取成功');
+});
+
+app.get('/api/dict/types', authRequired, (req, res) => {
+    const { keyword = '', status = '' } = req.query || {};
+    let rows = ensureArray(readDb().platform?.dict_types);
+    if (keyword) rows = rows.filter((row) => contains(row.dict_type_code, keyword) || contains(row.dict_type_name, keyword));
+    if (status !== '' && status !== undefined) rows = rows.filter((row) => String(row.status) === String(status));
+    rows = [...rows].sort((a, b) => toNum(a.sort_order) - toNum(b.sort_order) || toNum(a.id) - toNum(b.id));
+    apiOk(res, req, rows, '获取成功');
+});
+
+app.post('/api/dict/types', authRequired, (req, res) => {
+    const body = req.body || {};
+    const dictTypeCode = normalizeDictCode(body.dict_type_code);
+    const dictTypeName = String(body.dict_type_name || '').trim();
+    if (!dictTypeCode || !dictTypeName) return apiErr(res, req, 400, '字典类型编码和名称不能为空');
+    try {
+        validateDictCodeOrThrow(dictTypeCode, '字典类型编码');
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '字典类型编码格式不正确');
+    }
+    let createdRow = null;
+    try {
+        updateDb((db) => {
+            if (!db.platform) db.platform = {};
+            const rows = ensureArray(db.platform.dict_types);
+            db.platform.dict_types = rows;
+            if (rows.some((row) => normalizeDictCode(row.dict_type_code) === dictTypeCode)) throw new Error('字典类型编码已存在');
+            createdRow = {
+                id: nextId(rows),
+                dict_type_code: dictTypeCode,
+                dict_type_name: dictTypeName,
+                status: normalizeBinaryStatus(body.status, 1),
+                sort_order: Math.max(1, toNum(body.sort_order, rows.length + 1)),
+                remark: String(body.remark || ''),
+                system_flag: 0,
+                created_at: nowIso(),
+                updated_at: nowIso()
+            };
+            rows.push(createdRow);
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '新增失败');
+    }
+    appendOperationLog(req, {
+        moduleCode: 'dict',
+        bizObjectType: 'dict_type',
+        bizObjectId: createdRow?.id,
+        actionType: 'CREATE',
+        message: `新增字典类型 ${createdRow?.dict_type_code || ''}`,
+        afterSnapshot: createdRow
+    });
+    apiOk(res, req, createdRow, '新增成功');
+});
+
+app.put('/api/dict/types/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const body = req.body || {};
+    let beforeSnapshot = null;
+    let afterSnapshot = null;
+    let linkedItemCount = 0;
+    try {
+        updateDb((db) => {
+            if (!db.platform) db.platform = {};
+            const typeRows = ensureArray(db.platform.dict_types);
+            const itemRows = ensureArray(db.platform.dict_items);
+            db.platform.dict_types = typeRows;
+            db.platform.dict_items = itemRows;
+            const row = typeRows.find((item) => Number(item.id) === id);
+            if (!row) throw new Error('字典类型不存在');
+            beforeSnapshot = safeClone(row);
+            const currentDictTypeCode = normalizeDictCode(row.dict_type_code);
+            let nextDictTypeCode = currentDictTypeCode;
+            if (body.dict_type_code !== undefined) {
+                nextDictTypeCode = normalizeDictCode(body.dict_type_code);
+                if (!nextDictTypeCode) throw new Error('字典类型编码不能为空');
+                validateDictCodeOrThrow(nextDictTypeCode, '字典类型编码');
+                if (
+                    nextDictTypeCode !== currentDictTypeCode &&
+                    typeRows.some((item) => Number(item.id) !== id && normalizeDictCode(item.dict_type_code) === nextDictTypeCode)
+                ) {
+                    throw new Error('字典类型编码已存在');
+                }
+                if (toNum(row.system_flag, 0) === 1 && nextDictTypeCode !== currentDictTypeCode) {
+                    throw new Error('系统内置字典类型不允许修改编码');
                 }
             }
-            await conn.commit();
-        } catch(err) {
-            await conn.rollback();
-            console.error(err);
-            return res.status(500).json({ code: 500, msg: '导入过程严重系统异常，全部回滚' });
-        } finally {
-            conn.release();
-        }
-        
-        res.json({
-             code: 200,
-             msg: `验证与处理完成`,
-             data: {
-                totalCount: jsonData.length,
-                successCount: results.length,
-                errorCount: errors.length,
-                errors: errors
-             }
+            if (body.dict_type_name !== undefined && !String(body.dict_type_name).trim()) throw new Error('字典类型名称不能为空');
+            if (nextDictTypeCode !== currentDictTypeCode) {
+                itemRows.forEach((item) => {
+                    if (normalizeDictCode(item.dict_type_code) !== currentDictTypeCode) return;
+                    item.dict_type_code = nextDictTypeCode;
+                    item.updated_at = nowIso();
+                    linkedItemCount += 1;
+                });
+            }
+            row.dict_type_code = nextDictTypeCode;
+            row.dict_type_name = body.dict_type_name !== undefined ? String(body.dict_type_name).trim() : row.dict_type_name;
+            row.status = body.status !== undefined ? normalizeBinaryStatus(body.status, row.status) : row.status;
+            row.sort_order = body.sort_order !== undefined ? Math.max(1, toNum(body.sort_order, row.sort_order)) : row.sort_order;
+            row.remark = body.remark !== undefined ? String(body.remark) : row.remark;
+            row.updated_at = nowIso();
+            afterSnapshot = safeClone(row);
         });
-    } catch (e) {
-        console.error('Import excel error:', e);
-        res.status(500).json({ code: 500, msg: '服务器异常: ' + e.message });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '更新失败');
     }
+    appendOperationLog(req, {
+        moduleCode: 'dict',
+        bizObjectType: 'dict_type',
+        bizObjectId: id,
+        actionType: 'UPDATE',
+        message: `更新字典类型 ${afterSnapshot?.dict_type_code || ''}${linkedItemCount ? `，级联更新${linkedItemCount}个字典项` : ''}`,
+        beforeSnapshot,
+        afterSnapshot
+    });
+    apiOk(res, req, afterSnapshot, '更新成功');
 });
 
-app.get('/api/master/:tableType/list', authRequired, async (req, res) => {
+app.delete('/api/dict/types/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    let beforeSnapshot = null;
     try {
-        const { tableType } = req.params;
-        const page = parseInt(req.query.page) || 1;
-        const pageSize = Math.min(parseInt(req.query.pageSize) || 20, 200);
-        const keyword = req.query.keyword || '';
-        const lifecycleStatus = req.query.lifecycleStatus || '';
-        const offset = (page - 1) * pageSize;
-        
-        let queryStr = '';
-        let countQueryStr = '';
-        let queryParams = [];
-
-        if (tableType === 'SKU') {
-            queryStr = 'SELECT * FROM cdop_master.mst_sku_info WHERE status=1';
-            countQueryStr = 'SELECT count(*) as total FROM cdop_master.mst_sku_info WHERE status=1';
-            if (keyword) {
-                queryStr += ' AND (sku_code LIKE ? OR sku_name LIKE ?)';
-                countQueryStr += ' AND (sku_code LIKE ? OR sku_name LIKE ?)';
-                queryParams.push(`%${keyword}%`, `%${keyword}%`);
-            }
-            if (lifecycleStatus) {
-                queryStr += ' AND lifecycle_status = ?';
-                countQueryStr += ' AND lifecycle_status = ?';
-                queryParams.push(lifecycleStatus);
-            }
-        } else if (tableType === 'RESELLER_RLTN') {
-            const region = req.query.region || '';
-            const channelType = req.query.channelType || '';
-            const validity = req.query.validity || ''; // 'valid' | 'expired' | ''
-            queryStr = 'SELECT * FROM cdop_master.mst_rltn_sku_reseller WHERE status=1';
-            countQueryStr = 'SELECT count(*) as total FROM cdop_master.mst_rltn_sku_reseller WHERE status=1';
-            if (keyword) {
-                queryStr += ' AND (sku_code LIKE ? OR reseller_code LIKE ? OR reseller_name LIKE ?)';
-                countQueryStr += ' AND (sku_code LIKE ? OR reseller_code LIKE ? OR reseller_name LIKE ?)';
-                queryParams.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
-            }
-            if (region) {
-                queryStr += ' AND region = ?';
-                countQueryStr += ' AND region = ?';
-                queryParams.push(region);
-            }
-            if (channelType) {
-                queryStr += ' AND channel_type = ?';
-                countQueryStr += ' AND channel_type = ?';
-                queryParams.push(channelType);
-            }
-            if (validity === 'valid') {
-                queryStr += ' AND begin_date <= CURDATE() AND end_date >= CURDATE()';
-                countQueryStr += ' AND begin_date <= CURDATE() AND end_date >= CURDATE()';
-            } else if (validity === 'expired') {
-                queryStr += ' AND end_date < CURDATE()';
-                countQueryStr += ' AND end_date < CURDATE()';
-            }
-        } else {
-            return res.status(400).json({ code: 400, msg: '未知的TableType' });
-        }
-
-        queryStr += ' ORDER BY created_time DESC LIMIT ? OFFSET ?';
-        
-        const countParams = [...queryParams];
-        queryParams.push(pageSize, offset);
-
-        const [[{ total }]] = await mysqlPool.query(countQueryStr, countParams);
-        const [rows] = await mysqlPool.query(queryStr, queryParams);
-
-        res.json({
-            code: 200,
-            msg: '获取成功',
-            data: { list: rows, total, page, pageSize }
+        updateDb((db) => {
+            if (!db.platform) db.platform = {};
+            const typeRows = ensureArray(db.platform.dict_types);
+            const itemRows = ensureArray(db.platform.dict_items);
+            db.platform.dict_types = typeRows;
+            db.platform.dict_items = itemRows;
+            const row = typeRows.find((item) => Number(item.id) === id);
+            if (!row) throw new Error('字典类型不存在');
+            if (toNum(row.system_flag, 0) === 1) throw new Error('系统内置字典类型不可删除');
+            const typeCode = normalizeDictCode(row.dict_type_code);
+            if (itemRows.some((item) => normalizeDictCode(item.dict_type_code) === typeCode)) throw new Error('该字典类型下仍有字典项，无法删除');
+            beforeSnapshot = safeClone(row);
+            db.platform.dict_types = typeRows.filter((item) => Number(item.id) !== id);
         });
-    } catch (e) {
-        console.error('List master data error:', e);
-        res.status(500).json({ code: 500, msg: '服务器异常: ' + e.message });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '删除失败');
     }
+    appendOperationLog(req, {
+        moduleCode: 'dict',
+        bizObjectType: 'dict_type',
+        bizObjectId: id,
+        actionType: 'DELETE',
+        message: `删除字典类型 ${beforeSnapshot?.dict_type_code || ''}`,
+        beforeSnapshot
+    });
+    apiOk(res, req, true, '删除成功');
 });
 
-// 新增 SKU
-app.post('/api/master/SKU', authRequired, asyncHandler(async (req, res) => {
-    const { sku_code, sku_name, bar_code, category_code, lifecycle_status, shelf_life_days, unit_ratio, volume_m3 } = req.body;
-    if (!sku_code || !sku_name) return res.status(400).json({ code: 400, msg: 'SKU编码和名称不能为空' });
-    const [exist] = await mysqlPool.query('SELECT id FROM cdop_master.mst_sku_info WHERE sku_code = ? AND status = 1', [sku_code]);
-    if (exist.length > 0) return res.status(400).json({ code: 400, msg: 'SKU编码已存在' });
-    await mysqlPool.query(
-        'INSERT INTO cdop_master.mst_sku_info (sku_code, sku_name, bar_code, category_code, lifecycle_status, shelf_life_days, unit_ratio, volume_m3) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [sku_code, sku_name, bar_code || '', category_code || '', lifecycle_status || 'ACTIVE', Number(shelf_life_days) || 0, Number(unit_ratio) || 1, Number(volume_m3) || 0]
-    );
-    await writeAuditLog({ req, action: 'CREATE', resource: 'sku', detail: { sku_code, sku_name } });
-    res.json({ code: 200, msg: '新增成功' });
-}));
+app.patch('/api/dict/types/batch-status', authRequired, (req, res) => {
+    const body = req.body || {};
+    const ids = parseBatchIds(body.ids);
+    if (!ids.length) return apiErr(res, req, 400, '请至少选择一条字典类型记录');
+    if (body.status === '' || body.status === undefined || body.status === null) return apiErr(res, req, 400, '状态参数不能为空');
+    const targetStatus = normalizeBinaryStatus(body.status, -1);
+    if (targetStatus !== 0 && targetStatus !== 1) return apiErr(res, req, 400, '状态参数仅支持0或1');
 
-// 编辑 SKU
-app.put('/api/master/SKU/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { sku_name, bar_code, category_code, lifecycle_status, shelf_life_days, unit_ratio, volume_m3 } = req.body;
-    if (!sku_name) return res.status(400).json({ code: 400, msg: 'SKU名称不能为空' });
-    await mysqlPool.query(
-        'UPDATE cdop_master.mst_sku_info SET sku_name=?, bar_code=?, category_code=?, lifecycle_status=?, shelf_life_days=?, unit_ratio=?, volume_m3=?, updated_time=NOW() WHERE id=?',
-        [sku_name, bar_code || '', category_code || '', lifecycle_status || 'ACTIVE', Number(shelf_life_days) || 0, Number(unit_ratio) || 1, Number(volume_m3) || 0, id]
-    );
-    await writeAuditLog({ req, action: 'UPDATE', resource: 'sku', targetId: id, detail: { sku_name, lifecycle_status } });
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-// 批量逻辑删除 SKU（必须在 /:id 之前注册，避免 'batch' 被当作 id）
-app.delete('/api/master/SKU/batch', authRequired, asyncHandler(async (req, res) => {
-    const { ids } = req.body;
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-        return res.status(400).json({ code: 400, msg: '请传入有效的 ids 数组' });
-    }
-    await mysqlPool.query('UPDATE cdop_master.mst_sku_info SET status=0, updated_time=NOW() WHERE id IN (?)', [ids]);
-    await writeAuditLog({ req, action: 'BATCH_DELETE', resource: 'sku', detail: { ids, count: ids.length } });
-    res.json({ code: 200, msg: `成功删除 ${ids.length} 条 SKU` });
-}));
-
-// 单条逻辑删除 SKU
-app.delete('/api/master/SKU/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    await mysqlPool.query('UPDATE cdop_master.mst_sku_info SET status=0, updated_time=NOW() WHERE id=?', [id]);
-    await writeAuditLog({ req, action: 'DELETE', resource: 'sku', targetId: id });
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-// 批量启用/停用 SKU（lifecycle_status: ACTIVE / INACTIVE）
-app.patch('/api/master/SKU/batch-status', authRequired, asyncHandler(async (req, res) => {
-    const { ids, lifecycleStatus } = req.body;
-    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '请选择要操作的数据' });
-    if (!['ACTIVE', 'INACTIVE'].includes(lifecycleStatus)) return res.status(400).json({ code: 400, msg: '无效的状态值' });
-    await mysqlPool.query('UPDATE cdop_master.mst_sku_info SET lifecycle_status=?, updated_time=NOW() WHERE id IN (?)', [lifecycleStatus, ids]);
-    await writeAuditLog({ req, action: 'BATCH_STATUS', resource: 'sku', detail: { ids, lifecycleStatus } });
-    res.json({ code: 200, msg: '操作成功' });
-}));
-
-// 按条件导出 SKU 列表（返回完整数据，前端处理为Excel）
-app.get('/api/master/SKU/export', authRequired, asyncHandler(async (req, res) => {
-    const keyword = req.query.keyword || '';
-    const lifecycleStatus = req.query.lifecycleStatus || '';
-    let sql = 'SELECT sku_code, sku_name, bar_code, category_code, lifecycle_status, shelf_life_days, unit_ratio, volume_m3, created_time, updated_time FROM cdop_master.mst_sku_info WHERE status=1';
-    const params = [];
-    if (keyword) { sql += ' AND (sku_code LIKE ? OR sku_name LIKE ?)'; params.push(`%${keyword}%`, `%${keyword}%`); }
-    if (lifecycleStatus) { sql += ' AND lifecycle_status = ?'; params.push(lifecycleStatus); }
-    sql += ' ORDER BY created_time DESC';
-    const [rows] = await mysqlPool.query(sql, params);
-    res.json({ code: 200, msg: '获取成功', data: rows });
-}));
-
-// ═══════════════════════════════════════════════════════
-// 经销关系授权 CRUD
-// ═══════════════════════════════════════════════════════
-
-// 新增 经销关系
-app.post('/api/master/RESELLER_RLTN', authRequired, asyncHandler(async (req, res) => {
-    const { sku_code, reseller_code, reseller_name, region, channel_type, begin_date, end_date, price_grade, quota_cases } = req.body;
-    if (!sku_code || !reseller_code || !begin_date || !end_date) {
-        return res.status(400).json({ code: 400, msg: 'SKU编码、经销商编码、生效日期均为必填' });
-    }
-    if (new Date(begin_date) > new Date(end_date)) {
-        return res.status(400).json({ code: 400, msg: '开始日期不能晚于结束日期' });
-    }
-    const [exist] = await mysqlPool.query(
-        'SELECT id FROM cdop_master.mst_rltn_sku_reseller WHERE sku_code=? AND reseller_code=? AND status=1',
-        [sku_code, reseller_code]
-    );
-    if (exist.length > 0) return res.status(400).json({ code: 400, msg: '该 SKU + 经销商 授权关系已存在，请直接编辑' });
-    await mysqlPool.query(
-        'INSERT INTO cdop_master.mst_rltn_sku_reseller (sku_code, reseller_code, reseller_name, region, channel_type, begin_date, end_date, price_grade, quota_cases) VALUES (?,?,?,?,?,?,?,?,?)',
-        [sku_code, reseller_code, reseller_name||'', region||'', channel_type||'DIST', begin_date, end_date, price_grade||'A', quota_cases ? Number(quota_cases) : null]
-    );
-    await writeAuditLog({ req, action: 'CREATE', resource: 'reseller_rltn', detail: { sku_code, reseller_code } });
-    res.json({ code: 200, msg: '新增成功' });
-}));
-
-// 编辑 经销关系
-app.put('/api/master/RESELLER_RLTN/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { reseller_name, region, channel_type, begin_date, end_date, price_grade, quota_cases } = req.body;
-    if (!begin_date || !end_date) return res.status(400).json({ code: 400, msg: '生效日期不能为空' });
-    if (new Date(begin_date) > new Date(end_date)) return res.status(400).json({ code: 400, msg: '开始日期不能晚于结束日期' });
-    await mysqlPool.query(
-        'UPDATE cdop_master.mst_rltn_sku_reseller SET reseller_name=?, region=?, channel_type=?, begin_date=?, end_date=?, price_grade=?, quota_cases=?, updated_time=NOW() WHERE id=?',
-        [reseller_name||'', region||'', channel_type||'DIST', begin_date, end_date, price_grade||'A', quota_cases ? Number(quota_cases) : null, id]
-    );
-    await writeAuditLog({ req, action: 'UPDATE', resource: 'reseller_rltn', targetId: id });
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-// 批量逻辑删除 经销关系（必须在 /:id 之前注册）
-app.delete('/api/master/RESELLER_RLTN/batch', authRequired, asyncHandler(async (req, res) => {
-    const { ids } = req.body;
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-        return res.status(400).json({ code: 400, msg: '请传入有效的 ids 数组' });
-    }
-    await mysqlPool.query('UPDATE cdop_master.mst_rltn_sku_reseller SET status=0, updated_time=NOW() WHERE id IN (?)', [ids]);
-    await writeAuditLog({ req, action: 'BATCH_DELETE', resource: 'reseller_rltn', detail: { ids, count: ids.length } });
-    res.json({ code: 200, msg: `成功撤销 ${ids.length} 条授权关系` });
-}));
-
-// 单条逻辑删除 经销关系
-app.delete('/api/master/RESELLER_RLTN/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    await mysqlPool.query('UPDATE cdop_master.mst_rltn_sku_reseller SET status=0, updated_time=NOW() WHERE id=?', [id]);
-    await writeAuditLog({ req, action: 'DELETE', resource: 'reseller_rltn', targetId: id });
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-// 按条件导出 经销关系
-app.get('/api/master/RESELLER_RLTN/export', authRequired, asyncHandler(async (req, res) => {
-    const keyword = req.query.keyword || '';
-    const region = req.query.region || '';
-    const channelType = req.query.channelType || '';
-    const validity = req.query.validity || '';
-    let sql = 'SELECT sku_code, reseller_code, reseller_name, region, channel_type, begin_date, end_date, price_grade, quota_cases, created_time, updated_time FROM cdop_master.mst_rltn_sku_reseller WHERE status=1';
-    const params = [];
-    if (keyword) { sql += ' AND (sku_code LIKE ? OR reseller_code LIKE ? OR reseller_name LIKE ?)'; params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`); }
-    if (region) { sql += ' AND region = ?'; params.push(region); }
-    if (channelType) { sql += ' AND channel_type = ?'; params.push(channelType); }
-    if (validity === 'valid') sql += ' AND begin_date <= CURDATE() AND end_date >= CURDATE()';
-    else if (validity === 'expired') sql += ' AND end_date < CURDATE()';
-    sql += ' ORDER BY region, reseller_code, sku_code';
-    const [rows] = await mysqlPool.query(sql, params);
-    res.json({ code: 200, msg: '获取成功', data: rows });
-}));
-
-
-// 兼容旧路由（保留但降级为仅需 authRequired）
-app.delete('/api/master/:tableType', authRequired, async (req, res) => {
+    const beforeSnapshots = [];
+    const afterSnapshots = [];
+    const skipped = [];
     try {
-        const { tableType } = req.params;
-        const { ids } = req.body;
-        if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
-
-        let table = '';
-        if (tableType === 'SKU') table = 'cdop_master.mst_sku_info';
-        else if (tableType === 'RESELLER_RLTN') table = 'cdop_master.mst_rltn_sku_reseller';
-        else return res.status(400).json({ code: 400, msg: '未知的TableType' });
-
-        await mysqlPool.query(`UPDATE ${table} SET status=0, updated_time=NOW() WHERE id IN (?)`, [ids]);
-        res.json({ code: 200, msg: '删除成功' });
-    } catch (e) {
-        console.error('Batch delete error:', e);
-        res.status(500).json({ code: 500, msg: '服务器异常' });
+        updateDb((db) => {
+            if (!db.platform) db.platform = {};
+            const rows = ensureArray(db.platform.dict_types);
+            db.platform.dict_types = rows;
+            ids.forEach((id) => {
+                const row = rows.find((item) => Number(item.id) === id);
+                if (!row) {
+                    skipped.push({ id, reason: 'NOT_FOUND' });
+                    return;
+                }
+                if (toNum(row.system_flag, 0) === 1 && targetStatus === 0) {
+                    skipped.push({ id, reason: 'SYSTEM_BUILTIN' });
+                    return;
+                }
+                if (toNum(row.status, 1) === targetStatus) {
+                    skipped.push({ id, reason: 'UNCHANGED' });
+                    return;
+                }
+                beforeSnapshots.push(safeClone(row));
+                row.status = targetStatus;
+                row.updated_at = nowIso();
+                afterSnapshots.push(safeClone(row));
+            });
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '批量更新失败');
     }
+
+    if (afterSnapshots.length) {
+        appendOperationLog(req, {
+            moduleCode: 'dict',
+            bizObjectType: 'dict_type',
+            bizObjectId: ids.join(','),
+            actionType: 'UPDATE',
+            message: `批量${targetStatus === 1 ? '启用' : '停用'}字典类型，成功${afterSnapshots.length}条`,
+            requestSummary: { ids, status: targetStatus, skipped },
+            beforeSnapshot: beforeSnapshots,
+            afterSnapshot: afterSnapshots
+        });
+    }
+
+    apiOk(res, req, {
+        updatedCount: afterSnapshots.length,
+        skippedCount: skipped.length,
+        skipped,
+        updatedIds: afterSnapshots.map((row) => row.id)
+    }, `批量处理完成，成功${afterSnapshots.length}条`);
 });
 
-
-// =====================================================================
-// 基础数据管理 (MDM) 模块 API - 品类管理
-// =====================================================================
-
-// 品类树
-app.get('/api/master/category/tree', authRequired, asyncHandler(async (req, res) => {
-    const [rows] = await mysqlPool.query('SELECT * FROM cdop_master.mst_category_info ORDER BY level ASC, sort_order ASC, id ASC');
-    res.json({ code: 200, msg: '获取成功', data: rows });
-}));
-
-// 品类列表（分页）
-app.get('/api/master/category', authRequired, asyncHandler(async (req, res) => {
-    const { keyword = '', level = '', parentCode = '', status = '', page = 1, pageSize = 20 } = req.query;
-    const p = parseInt(page), ps = Math.min(parseInt(pageSize) || 20, 200);
-    const offset = (p - 1) * ps;
-    let where = 'WHERE 1=1';
-    const params = [];
-    if (keyword) { where += ' AND (category_code LIKE ? OR category_name LIKE ?)'; params.push(`%${keyword}%`, `%${keyword}%`); }
-    if (level) { where += ' AND level = ?'; params.push(parseInt(level)); }
-    if (parentCode) { where += ' AND parent_code = ?'; params.push(parentCode); }
-    if (status !== '') { where += ' AND status = ?'; params.push(parseInt(status)); }
-    const [[{ total }]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_category_info ${where}`, params);
-    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_category_info ${where} ORDER BY level ASC, sort_order ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
-    res.json({ code: 200, msg: '获取成功', data: { total, list } });
-}));
-
-// 新增品类
-app.post('/api/master/category', authRequired, asyncHandler(async (req, res) => {
-    const { category_code, category_name, level, parent_code, sort_order, status, remark } = req.body;
-    if (!category_code || !category_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
-    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_category_info WHERE category_code = ?', [category_code]);
-    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '品类编码已存在' });
-    await mysqlPool.query('INSERT INTO cdop_master.mst_category_info (category_code, category_name, level, parent_code, sort_order, status, remark) VALUES (?,?,?,?,?,?,?)',
-        [category_code, category_name, level || 1, parent_code || null, sort_order || 0, status !== undefined ? status : 1, remark || null]);
-    res.json({ code: 200, msg: '新增成功' });
-}));
-
-// 编辑品类
-app.put('/api/master/category/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { category_name, sort_order, status, remark } = req.body;
-    await mysqlPool.query('UPDATE cdop_master.mst_category_info SET category_name=?, sort_order=?, status=?, remark=?, updated_time=NOW() WHERE id=?',
-        [category_name, sort_order || 0, status !== undefined ? status : 1, remark || null, id]);
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-// 删除品类
-app.delete('/api/master/category/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const [row] = await mysqlPool.query('SELECT category_code FROM cdop_master.mst_category_info WHERE id=?', [id]);
-    if (!row.length) return res.status(404).json({ code: 404, msg: '数据不存在' });
-    const code = row[0].category_code;
-    const [children] = await mysqlPool.query('SELECT id FROM cdop_master.mst_category_info WHERE parent_code=?', [code]);
-    if (children.length > 0) return res.status(400).json({ code: 400, msg: '请先删除下级品类' });
-    await mysqlPool.query('DELETE FROM cdop_master.mst_category_info WHERE id=?', [id]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-// =====================================================================
-// 工厂管理
-// =====================================================================
-app.get('/api/master/factory', authRequired, asyncHandler(async (req, res) => {
-    const { keyword = '', typeName = '', isOwn = '', status = '', page = 1, pageSize = 20 } = req.query;
-    const p = parseInt(page), ps = Math.min(parseInt(pageSize) || 20, 200), offset = (p - 1) * ps;
-    let where = 'WHERE 1=1'; const params = [];
-    if (keyword) { where += ' AND (factory_code LIKE ? OR factory_name LIKE ?)'; params.push(`%${keyword}%`, `%${keyword}%`); }
-    if (typeName) { where += ' AND type_name = ?'; params.push(typeName); }
-    if (isOwn !== '') { where += ' AND is_own = ?'; params.push(parseInt(isOwn)); }
-    if (status !== '') { where += ' AND status = ?'; params.push(parseInt(status)); }
-    const [[{ total }]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_factory_info ${where}`, params);
-    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_factory_info ${where} ORDER BY id ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
-    res.json({ code: 200, msg: '获取成功', data: { total, list } });
-}));
-
-app.post('/api/master/factory', authRequired, asyncHandler(async (req, res) => {
-    const { factory_code, factory_name, company_code, company_name, type_code, type_name, is_own, province_name, city_name, district_name, address, longitude, latitude, status, remark } = req.body;
-    if (!factory_code || !factory_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
-    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_factory_info WHERE factory_code=?', [factory_code]);
-    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '工厂编码已存在' });
-    await mysqlPool.query('INSERT INTO cdop_master.mst_factory_info (factory_code,factory_name,company_code,company_name,type_code,type_name,is_own,province_name,city_name,district_name,address,longitude,latitude,status,remark) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [factory_code, factory_name, company_code||null, company_name||null, type_code||null, type_name||null, is_own!==undefined?is_own:1, province_name||null, city_name||null, district_name||null, address||null, longitude||null, latitude||null, status!==undefined?status:1, remark||null]);
-    res.json({ code: 200, msg: '新增成功' });
-}));
-
-app.put('/api/master/factory/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { factory_name, company_code, company_name, type_code, type_name, is_own, province_name, city_name, district_name, address, longitude, latitude, status, remark } = req.body;
-    await mysqlPool.query('UPDATE cdop_master.mst_factory_info SET factory_name=?,company_code=?,company_name=?,type_code=?,type_name=?,is_own=?,province_name=?,city_name=?,district_name=?,address=?,longitude=?,latitude=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
-        [factory_name, company_code||null, company_name||null, type_code||null, type_name||null, is_own!==undefined?is_own:1, province_name||null, city_name||null, district_name||null, address||null, longitude||null, latitude||null, status!==undefined?status:1, remark||null, id]);
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-app.delete('/api/master/factory/batch', authRequired, asyncHandler(async (req, res) => {
-    const { ids } = req.body;
-    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
-    await mysqlPool.query('UPDATE cdop_master.mst_factory_info SET status=0,updated_time=NOW() WHERE id IN (?)', [ids]);
-    res.json({ code: 200, msg: `已停用 ${ids.length} 条` });
-}));
-
-app.delete('/api/master/factory/:id', authRequired, asyncHandler(async (req, res) => {
-    await mysqlPool.query('DELETE FROM cdop_master.mst_factory_info WHERE id=?', [req.params.id]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-// =====================================================================
-// 仓库管理
-// =====================================================================
-app.get('/api/master/warehouse', authRequired, asyncHandler(async (req, res) => {
-    const { keyword = '', lv1TypeName = '', factoryCode = '', isOwn = '', status = '', page = 1, pageSize = 20 } = req.query;
-    const p = parseInt(page), ps = Math.min(parseInt(pageSize)||20,200), offset = (p-1)*ps;
-    let where = 'WHERE 1=1'; const params = [];
-    if (keyword) { where += ' AND (warehouse_code LIKE ? OR warehouse_name LIKE ?)'; params.push(`%${keyword}%`,`%${keyword}%`); }
-    if (lv1TypeName) { where += ' AND lv1_type_name=?'; params.push(lv1TypeName); }
-    if (factoryCode) { where += ' AND factory_code=?'; params.push(factoryCode); }
-    if (isOwn !== '') { where += ' AND is_own=?'; params.push(parseInt(isOwn)); }
-    if (status !== '') { where += ' AND status=?'; params.push(parseInt(status)); }
-    const [[{ total }]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_warehouse_info ${where}`, params);
-    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_warehouse_info ${where} ORDER BY id ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
-    res.json({ code: 200, msg: '获取成功', data: { total, list } });
-}));
-
-app.get('/api/master/warehouse/all', authRequired, asyncHandler(async (req, res) => {
-    const [list] = await mysqlPool.query('SELECT warehouse_code, warehouse_name FROM cdop_master.mst_warehouse_info WHERE status=1 ORDER BY warehouse_code ASC');
-    res.json({ code: 200, msg: '获取成功', data: list });
-}));
-
-app.post('/api/master/warehouse', authRequired, asyncHandler(async (req, res) => {
-    const { warehouse_code, warehouse_name, biz_warehouse_code, biz_warehouse_name, lv1_type_code, lv1_type_name, lv2_type_name, factory_code, factory_name, warehouse_type_code, is_own, province_name, city_name, district_name, address, longitude, latitude, status, remark } = req.body;
-    if (!warehouse_code || !warehouse_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
-    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_warehouse_info WHERE warehouse_code=?', [warehouse_code]);
-    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '仓库编码已存在' });
-    await mysqlPool.query('INSERT INTO cdop_master.mst_warehouse_info (warehouse_code,warehouse_name,biz_warehouse_code,biz_warehouse_name,lv1_type_code,lv1_type_name,lv2_type_name,factory_code,factory_name,warehouse_type_code,is_own,province_name,city_name,district_name,address,longitude,latitude,status,remark) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [warehouse_code,warehouse_name,biz_warehouse_code||null,biz_warehouse_name||null,lv1_type_code||null,lv1_type_name||null,lv2_type_name||null,factory_code||null,factory_name||null,warehouse_type_code||null,is_own!==undefined?is_own:1,province_name||null,city_name||null,district_name||null,address||null,longitude||null,latitude||null,status!==undefined?status:1,remark||null]);
-    res.json({ code: 200, msg: '新增成功' });
-}));
-
-app.put('/api/master/warehouse/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { warehouse_name, biz_warehouse_code, biz_warehouse_name, lv1_type_code, lv1_type_name, lv2_type_name, factory_code, factory_name, warehouse_type_code, is_own, province_name, city_name, district_name, address, longitude, latitude, status, remark } = req.body;
-    await mysqlPool.query('UPDATE cdop_master.mst_warehouse_info SET warehouse_name=?,biz_warehouse_code=?,biz_warehouse_name=?,lv1_type_code=?,lv1_type_name=?,lv2_type_name=?,factory_code=?,factory_name=?,warehouse_type_code=?,is_own=?,province_name=?,city_name=?,district_name=?,address=?,longitude=?,latitude=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
-        [warehouse_name,biz_warehouse_code||null,biz_warehouse_name||null,lv1_type_code||null,lv1_type_name||null,lv2_type_name||null,factory_code||null,factory_name||null,warehouse_type_code||null,is_own!==undefined?is_own:1,province_name||null,city_name||null,district_name||null,address||null,longitude||null,latitude||null,status!==undefined?status:1,remark||null,id]);
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-app.delete('/api/master/warehouse/batch', authRequired, asyncHandler(async (req, res) => {
-    const { ids } = req.body;
-    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
-    await mysqlPool.query('UPDATE cdop_master.mst_warehouse_info SET status=0,updated_time=NOW() WHERE id IN (?)', [ids]);
-    res.json({ code: 200, msg: `已停用 ${ids.length} 条` });
-}));
-
-app.delete('/api/master/warehouse/:id', authRequired, asyncHandler(async (req, res) => {
-    await mysqlPool.query('DELETE FROM cdop_master.mst_warehouse_info WHERE id=?', [req.params.id]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-// =====================================================================
-// 渠道管理（树形）
-// =====================================================================
-app.get('/api/master/channel/tree', authRequired, asyncHandler(async (req, res) => {
-    const [rows] = await mysqlPool.query('SELECT * FROM cdop_master.mst_channel_info ORDER BY level ASC, sort_order ASC, id ASC');
-    res.json({ code: 200, msg: '获取成功', data: rows });
-}));
-
-app.get('/api/master/channel', authRequired, asyncHandler(async (req, res) => {
-    const { keyword='', level='', parentCode='', status='', page=1, pageSize=20 } = req.query;
-    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
-    let where='WHERE 1=1'; const params=[];
-    if (keyword) { where+=' AND (channel_code LIKE ? OR channel_name LIKE ?)'; params.push(`%${keyword}%`,`%${keyword}%`); }
-    if (level) { where+=' AND level=?'; params.push(parseInt(level)); }
-    if (parentCode) { where+=' AND parent_code=?'; params.push(parentCode); }
-    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
-    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_channel_info ${where}`, params);
-    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_channel_info ${where} ORDER BY level ASC, sort_order ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
-    res.json({ code: 200, msg: '获取成功', data: { total, list } });
-}));
-
-app.post('/api/master/channel', authRequired, asyncHandler(async (req, res) => {
-    const { channel_code, channel_name, level, parent_code, sort_order, status, remark } = req.body;
-    if (!channel_code || !channel_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
-    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_channel_info WHERE channel_code=?', [channel_code]);
-    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '渠道编码已存在' });
-    await mysqlPool.query('INSERT INTO cdop_master.mst_channel_info (channel_code,channel_name,level,parent_code,sort_order,status,remark) VALUES (?,?,?,?,?,?,?)',
-        [channel_code,channel_name,level||1,parent_code||null,sort_order||0,status!==undefined?status:1,remark||null]);
-    res.json({ code: 200, msg: '新增成功' });
-}));
-
-app.put('/api/master/channel/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { channel_name, sort_order, status, remark } = req.body;
-    await mysqlPool.query('UPDATE cdop_master.mst_channel_info SET channel_name=?,sort_order=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
-        [channel_name, sort_order||0, status!==undefined?status:1, remark||null, id]);
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-app.delete('/api/master/channel/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const [row] = await mysqlPool.query('SELECT channel_code FROM cdop_master.mst_channel_info WHERE id=?', [id]);
-    if (!row.length) return res.status(404).json({ code: 404, msg: '数据不存在' });
-    const code = row[0].channel_code;
-    const [children] = await mysqlPool.query('SELECT id FROM cdop_master.mst_channel_info WHERE parent_code=?', [code]);
-    if (children.length > 0) return res.status(400).json({ code: 400, msg: '请先删除下级渠道' });
-    const [resellerRef] = await mysqlPool.query('SELECT id FROM cdop_master.mst_reseller_info WHERE lv1_channel_code=? OR lv3_channel_code=?', [code, code]);
-    if (resellerRef.length > 0) return res.status(400).json({ code: 400, msg: '该渠道已有经销商绑定，不可删除' });
-    await mysqlPool.query('DELETE FROM cdop_master.mst_channel_info WHERE id=?', [id]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-// =====================================================================
-// 经销商管理
-// =====================================================================
-app.get('/api/master/reseller', authRequired, asyncHandler(async (req, res) => {
-    const { keyword='', lv1ChannelCode='', isOwn='', status='', page=1, pageSize=20 } = req.query;
-    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
-    let where='WHERE 1=1'; const params=[];
-    if (keyword) { where+=' AND (reseller_code LIKE ? OR reseller_name LIKE ?)'; params.push(`%${keyword}%`,`%${keyword}%`); }
-    if (lv1ChannelCode) { where+=' AND lv1_channel_code=?'; params.push(lv1ChannelCode); }
-    if (isOwn!=='') { where+=' AND is_own=?'; params.push(parseInt(isOwn)); }
-    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
-    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_reseller_info ${where}`, params);
-    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_reseller_info ${where} ORDER BY id ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
-    res.json({ code: 200, msg: '获取成功', data: { total, list } });
-}));
-
-app.get('/api/master/reseller/all', authRequired, asyncHandler(async (req, res) => {
-    const [list] = await mysqlPool.query('SELECT reseller_code, reseller_name, lv1_channel_code, lv1_channel_name, lv3_channel_code, lv3_channel_name FROM cdop_master.mst_reseller_info WHERE status=1 ORDER BY reseller_code ASC');
-    res.json({ code: 200, msg: '获取成功', data: list });
-}));
-
-app.post('/api/master/reseller', authRequired, asyncHandler(async (req, res) => {
-    const d = req.body;
-    if (!d.reseller_code || !d.reseller_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
-    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_reseller_info WHERE reseller_code=?', [d.reseller_code]);
-    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '经销商编码已存在' });
-    await mysqlPool.query('INSERT INTO cdop_master.mst_reseller_info (reseller_code,reseller_name,is_own,lv1_channel_code,lv1_channel_name,lv2_channel_code,lv2_channel_name,lv3_channel_code,lv3_channel_name,sale_region_code,sale_region_name,default_warehouse_code,default_warehouse_name,contract_type,contract_begin_date,contract_end_date,province_name,city_name,district_name,status,remark) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [d.reseller_code,d.reseller_name,d.is_own||0,d.lv1_channel_code||null,d.lv1_channel_name||null,d.lv2_channel_code||null,d.lv2_channel_name||null,d.lv3_channel_code||null,d.lv3_channel_name||null,d.sale_region_code||null,d.sale_region_name||null,d.default_warehouse_code||null,d.default_warehouse_name||null,d.contract_type||null,d.contract_begin_date||null,d.contract_end_date||null,d.province_name||null,d.city_name||null,d.district_name||null,d.status!==undefined?d.status:1,d.remark||null]);
-    res.json({ code: 200, msg: '新增成功' });
-}));
-
-app.put('/api/master/reseller/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params; const d = req.body;
-    await mysqlPool.query('UPDATE cdop_master.mst_reseller_info SET reseller_name=?,is_own=?,lv1_channel_code=?,lv1_channel_name=?,lv2_channel_code=?,lv2_channel_name=?,lv3_channel_code=?,lv3_channel_name=?,sale_region_code=?,sale_region_name=?,default_warehouse_code=?,default_warehouse_name=?,contract_type=?,contract_begin_date=?,contract_end_date=?,province_name=?,city_name=?,district_name=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
-        [d.reseller_name,d.is_own||0,d.lv1_channel_code||null,d.lv1_channel_name||null,d.lv2_channel_code||null,d.lv2_channel_name||null,d.lv3_channel_code||null,d.lv3_channel_name||null,d.sale_region_code||null,d.sale_region_name||null,d.default_warehouse_code||null,d.default_warehouse_name||null,d.contract_type||null,d.contract_begin_date||null,d.contract_end_date||null,d.province_name||null,d.city_name||null,d.district_name||null,d.status!==undefined?d.status:1,d.remark||null,id]);
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-app.delete('/api/master/reseller/batch', authRequired, asyncHandler(async (req, res) => {
-    const { ids } = req.body;
-    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
-    await mysqlPool.query('UPDATE cdop_master.mst_reseller_info SET status=0,updated_time=NOW() WHERE id IN (?)', [ids]);
-    res.json({ code: 200, msg: `已停用 ${ids.length} 条` });
-}));
-
-app.delete('/api/master/reseller/:id', authRequired, asyncHandler(async (req, res) => {
-    await mysqlPool.query('DELETE FROM cdop_master.mst_reseller_info WHERE id=?', [req.params.id]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-// =====================================================================
-// 组织机构管理（树形）
-// =====================================================================
-app.get('/api/master/org/tree', authRequired, asyncHandler(async (req, res) => {
-    const [rows] = await mysqlPool.query('SELECT * FROM cdop_master.mst_org_info ORDER BY level ASC, sort_order ASC, id ASC');
-    res.json({ code: 200, msg: '获取成功', data: rows });
-}));
-
-app.get('/api/master/org', authRequired, asyncHandler(async (req, res) => {
-    const { keyword='', level='', status='', page=1, pageSize=20 } = req.query;
-    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
-    let where='WHERE 1=1'; const params=[];
-    if (keyword) { where+=' AND (org_code LIKE ? OR org_name LIKE ?)'; params.push(`%${keyword}%`,`%${keyword}%`); }
-    if (level) { where+=' AND level=?'; params.push(parseInt(level)); }
-    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
-    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_org_info ${where}`, params);
-    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_org_info ${where} ORDER BY level ASC, sort_order ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
-    res.json({ code: 200, msg: '获取成功', data: { total, list } });
-}));
-
-app.get('/api/master/org/all', authRequired, asyncHandler(async (req, res) => {
-    const [list] = await mysqlPool.query('SELECT org_code, org_name FROM cdop_master.mst_org_info WHERE status=1 ORDER BY org_code ASC');
-    res.json({ code: 200, msg: '获取成功', data: list });
-}));
-
-app.post('/api/master/org', authRequired, asyncHandler(async (req, res) => {
-    const { org_code, org_name, level, parent_code, org_type, company_code, company_name, sort_order, status, remark } = req.body;
-    if (!org_code || !org_name) return res.status(400).json({ code: 400, msg: '编码和名称必填' });
-    const [exists] = await mysqlPool.query('SELECT id FROM cdop_master.mst_org_info WHERE org_code=?', [org_code]);
-    if (exists.length > 0) return res.status(400).json({ code: 400, msg: '组织编码已存在' });
-    await mysqlPool.query('INSERT INTO cdop_master.mst_org_info (org_code,org_name,level,parent_code,org_type,company_code,company_name,sort_order,status,remark) VALUES (?,?,?,?,?,?,?,?,?,?)',
-        [org_code,org_name,level||1,parent_code||null,org_type||null,company_code||null,company_name||null,sort_order||0,status!==undefined?status:1,remark||null]);
-    res.json({ code: 200, msg: '新增成功' });
-}));
-
-app.put('/api/master/org/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { org_name, org_type, company_code, company_name, sort_order, status, remark } = req.body;
-    await mysqlPool.query('UPDATE cdop_master.mst_org_info SET org_name=?,org_type=?,company_code=?,company_name=?,sort_order=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
-        [org_name,org_type||null,company_code||null,company_name||null,sort_order||0,status!==undefined?status:1,remark||null,id]);
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-app.delete('/api/master/org/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const [row] = await mysqlPool.query('SELECT org_code FROM cdop_master.mst_org_info WHERE id=?', [id]);
-    if (!row.length) return res.status(404).json({ code: 404, msg: '数据不存在' });
-    const code = row[0].org_code;
-    const [children] = await mysqlPool.query('SELECT id FROM cdop_master.mst_org_info WHERE parent_code=?', [code]);
-    if (children.length > 0) return res.status(400).json({ code: 400, msg: '请先删除下级组织' });
-    await mysqlPool.query('DELETE FROM cdop_master.mst_org_info WHERE id=?', [id]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-// =====================================================================
-// 业务日历
-// =====================================================================
-app.get('/api/master/calendar', authRequired, asyncHandler(async (req, res) => {
-    const { year, month, isHoliday='', isWorkday='', page=1, pageSize=50 } = req.query;
-    if (!year) return res.status(400).json({ code: 400, msg: '年份必填' });
-    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||50,400), offset=(p-1)*ps;
-    let where='WHERE YEAR(cal_date)=?'; const params=[parseInt(year)];
-    if (month) { where+=' AND MONTH(cal_date)=?'; params.push(parseInt(month)); }
-    if (isHoliday!=='') { where+=' AND is_holiday=?'; params.push(parseInt(isHoliday)); }
-    if (isWorkday!=='') { where+=' AND is_workday=?'; params.push(parseInt(isWorkday)); }
-    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_calendar_info ${where}`, params);
-    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_calendar_info ${where} ORDER BY cal_date ASC LIMIT ? OFFSET ?`, [...params, ps, offset]);
-    res.json({ code: 200, msg: '获取成功', data: { total, list } });
-}));
-
-// 月视图（返回整月数据）
-app.get('/api/master/calendar/month', authRequired, asyncHandler(async (req, res) => {
-    const { year, month } = req.query;
-    if (!year || !month) return res.status(400).json({ code: 400, msg: '年份和月份必填' });
-    const [list] = await mysqlPool.query('SELECT * FROM cdop_master.mst_calendar_info WHERE YEAR(cal_date)=? AND MONTH(cal_date)=? ORDER BY cal_date ASC', [parseInt(year), parseInt(month)]);
-    res.json({ code: 200, msg: '获取成功', data: list });
-}));
-
-// 编辑单日
-app.put('/api/master/calendar/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { is_workday, is_holiday, holiday_name, remark } = req.body;
-    await mysqlPool.query('UPDATE cdop_master.mst_calendar_info SET is_workday=?,is_holiday=?,holiday_name=?,remark=?,updated_time=NOW() WHERE id=?',
-        [is_workday!==undefined?is_workday:1, is_holiday!==undefined?is_holiday:0, holiday_name||null, remark||null, id]);
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-// 按日期编辑（前端可能没有id，用date查）
-app.put('/api/master/calendar/date/:date', authRequired, asyncHandler(async (req, res) => {
-    const { date } = req.params;
-    const { is_workday, is_holiday, holiday_name, remark } = req.body;
-    const [rows] = await mysqlPool.query('SELECT id FROM cdop_master.mst_calendar_info WHERE cal_date=?', [date]);
-    if (!rows.length) return res.status(404).json({ code: 404, msg: '该日期数据不存在，请先导入' });
-    await mysqlPool.query('UPDATE cdop_master.mst_calendar_info SET is_workday=?,is_holiday=?,holiday_name=?,remark=?,updated_time=NOW() WHERE cal_date=?',
-        [is_workday!==undefined?is_workday:1, is_holiday!==undefined?is_holiday:0, holiday_name||null, remark||null, date]);
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-// =====================================================================
-// 仓库-SKU 关系
-// =====================================================================
-app.get('/api/master/rltn/warehouse-sku', authRequired, asyncHandler(async (req, res) => {
-    const { warehouseKeyword='', skuKeyword='', dateStatus='', status='', page=1, pageSize=20 } = req.query;
-    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
-    let where='WHERE 1=1'; const params=[];
-    if (warehouseKeyword) { where+=' AND (warehouse_code LIKE ? OR warehouse_name LIKE ?)'; params.push(`%${warehouseKeyword}%`,`%${warehouseKeyword}%`); }
-    if (skuKeyword) { where+=' AND (sku_code LIKE ? OR sku_name LIKE ?)'; params.push(`%${skuKeyword}%`,`%${skuKeyword}%`); }
-    if (dateStatus==='active') { where+=' AND (begin_date IS NULL OR begin_date <= CURDATE()) AND (end_date IS NULL OR end_date >= CURDATE())'; }
-    else if (dateStatus==='expired') { where+=' AND end_date < CURDATE()'; }
-    else if (dateStatus==='pending') { where+=' AND begin_date > CURDATE()'; }
-    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
-    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_rltn_warehouse_sku ${where}`, params);
-    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_rltn_warehouse_sku ${where} ORDER BY id DESC LIMIT ? OFFSET ?`, [...params, ps, offset]);
-    res.json({ code: 200, msg: '获取成功', data: { total, list } });
-}));
-
-app.post('/api/master/rltn/warehouse-sku', authRequired, asyncHandler(async (req, res) => {
-    const { warehouse_code, sku_code, begin_date, end_date, status, remark } = req.body;
-    if (!warehouse_code || !sku_code) return res.status(400).json({ code: 400, msg: '仓库编码和SKU编码必填' });
-    // 自动回填名称
-    const [[wh]] = await mysqlPool.query('SELECT warehouse_name FROM cdop_master.mst_warehouse_info WHERE warehouse_code=?', [warehouse_code]);
-    const [[sku]] = await mysqlPool.query('SELECT sku_name FROM cdop_master.mst_sku_info WHERE sku_code=?', [sku_code]);
-    await mysqlPool.query('INSERT INTO cdop_master.mst_rltn_warehouse_sku (warehouse_code,warehouse_name,sku_code,sku_name,begin_date,end_date,status,remark) VALUES (?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE begin_date=VALUES(begin_date),end_date=VALUES(end_date),status=VALUES(status),remark=VALUES(remark),updated_time=NOW()',
-        [warehouse_code,wh?wh.warehouse_name:warehouse_code,sku_code,sku?sku.sku_name:sku_code,begin_date||null,end_date||null,status!==undefined?status:1,remark||null]);
-    res.json({ code: 200, msg: '保存成功' });
-}));
-
-app.put('/api/master/rltn/warehouse-sku/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { begin_date, end_date, status, remark } = req.body;
-    await mysqlPool.query('UPDATE cdop_master.mst_rltn_warehouse_sku SET begin_date=?,end_date=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
-        [begin_date||null,end_date||null,status!==undefined?status:1,remark||null,id]);
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-app.delete('/api/master/rltn/warehouse-sku/batch', authRequired, asyncHandler(async (req, res) => {
-    const { ids } = req.body;
-    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
-    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_warehouse_sku WHERE id IN (?)', [ids]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-app.delete('/api/master/rltn/warehouse-sku/:id', authRequired, asyncHandler(async (req, res) => {
-    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_warehouse_sku WHERE id=?', [req.params.id]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-// =====================================================================
-// 组织-经销商 关系
-// =====================================================================
-app.get('/api/master/rltn/org-reseller', authRequired, asyncHandler(async (req, res) => {
-    const { orgKeyword='', resellerKeyword='', dateStatus='', status='', page=1, pageSize=20 } = req.query;
-    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
-    let where='WHERE 1=1'; const params=[];
-    if (orgKeyword) { where+=' AND (org_code LIKE ? OR org_name LIKE ?)'; params.push(`%${orgKeyword}%`,`%${orgKeyword}%`); }
-    if (resellerKeyword) { where+=' AND (reseller_code LIKE ? OR reseller_name LIKE ?)'; params.push(`%${resellerKeyword}%`,`%${resellerKeyword}%`); }
-    if (dateStatus==='active') { where+=' AND (begin_date IS NULL OR begin_date <= CURDATE()) AND (end_date IS NULL OR end_date >= CURDATE())'; }
-    else if (dateStatus==='expired') { where+=' AND end_date < CURDATE()'; }
-    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
-    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_rltn_org_reseller ${where}`, params);
-    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_rltn_org_reseller ${where} ORDER BY id DESC LIMIT ? OFFSET ?`, [...params, ps, offset]);
-    res.json({ code: 200, msg: '获取成功', data: { total, list } });
-}));
-
-app.post('/api/master/rltn/org-reseller', authRequired, asyncHandler(async (req, res) => {
-    const { org_code, reseller_code, begin_date, end_date, status, remark } = req.body;
-    if (!org_code || !reseller_code) return res.status(400).json({ code: 400, msg: '组织编码和经销商编码必填' });
-    const [[org]] = await mysqlPool.query('SELECT org_name FROM cdop_master.mst_org_info WHERE org_code=?', [org_code]);
-    const [[rs]] = await mysqlPool.query('SELECT reseller_name, lv1_channel_code, lv1_channel_name FROM cdop_master.mst_reseller_info WHERE reseller_code=?', [reseller_code]);
-    await mysqlPool.query('INSERT INTO cdop_master.mst_rltn_org_reseller (org_code,org_name,reseller_code,reseller_name,lv1_channel_code,lv1_channel_name,begin_date,end_date,status,remark) VALUES (?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE begin_date=VALUES(begin_date),end_date=VALUES(end_date),status=VALUES(status),remark=VALUES(remark),updated_time=NOW()',
-        [org_code,org?org.org_name:org_code,reseller_code,rs?rs.reseller_name:reseller_code,rs?rs.lv1_channel_code:null,rs?rs.lv1_channel_name:null,begin_date||null,end_date||null,status!==undefined?status:1,remark||null]);
-    res.json({ code: 200, msg: '保存成功' });
-}));
-
-app.put('/api/master/rltn/org-reseller/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { begin_date, end_date, status, remark } = req.body;
-    await mysqlPool.query('UPDATE cdop_master.mst_rltn_org_reseller SET begin_date=?,end_date=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
-        [begin_date||null,end_date||null,status!==undefined?status:1,remark||null,id]);
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-app.delete('/api/master/rltn/org-reseller/batch', authRequired, asyncHandler(async (req, res) => {
-    const { ids } = req.body;
-    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
-    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_org_reseller WHERE id IN (?)', [ids]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-app.delete('/api/master/rltn/org-reseller/:id', authRequired, asyncHandler(async (req, res) => {
-    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_org_reseller WHERE id=?', [req.params.id]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-// =====================================================================
-// 产品-销售SKU 转换关系
-// =====================================================================
-app.get('/api/master/rltn/product-sku', authRequired, asyncHandler(async (req, res) => {
-    const { productKeyword='', skuKeyword='', dateStatus='', status='', page=1, pageSize=20 } = req.query;
-    const p=parseInt(page), ps=Math.min(parseInt(pageSize)||20,200), offset=(p-1)*ps;
-    let where='WHERE 1=1'; const params=[];
-    if (productKeyword) { where+=' AND (product_code LIKE ? OR product_name LIKE ?)'; params.push(`%${productKeyword}%`,`%${productKeyword}%`); }
-    if (skuKeyword) { where+=' AND (sku_code LIKE ? OR sku_name LIKE ?)'; params.push(`%${skuKeyword}%`,`%${skuKeyword}%`); }
-    if (dateStatus==='active') { where+=' AND (begin_date IS NULL OR begin_date <= CURDATE()) AND (end_date IS NULL OR end_date >= CURDATE())'; }
-    else if (dateStatus==='expired') { where+=' AND end_date < CURDATE()'; }
-    if (status!=='') { where+=' AND status=?'; params.push(parseInt(status)); }
-    const [[{total}]] = await mysqlPool.query(`SELECT COUNT(*) as total FROM cdop_master.mst_rltn_product_sale_sku ${where}`, params);
-    const [list] = await mysqlPool.query(`SELECT * FROM cdop_master.mst_rltn_product_sale_sku ${where} ORDER BY id DESC LIMIT ? OFFSET ?`, [...params, ps, offset]);
-    res.json({ code: 200, msg: '获取成功', data: { total, list } });
-}));
-
-app.post('/api/master/rltn/product-sku', authRequired, asyncHandler(async (req, res) => {
-    const { product_code, product_name, sku_code, convert_ratio, begin_date, end_date, status, remark } = req.body;
-    if (!product_code || !sku_code) return res.status(400).json({ code: 400, msg: '生产产品编码和销售SKU编码必填' });
-    if (!convert_ratio || parseFloat(convert_ratio) <= 0) return res.status(400).json({ code: 400, msg: '转换系数必须为正数' });
-    const [[sku]] = await mysqlPool.query('SELECT sku_name FROM cdop_master.mst_sku_info WHERE sku_code=?', [sku_code]);
-    await mysqlPool.query('INSERT INTO cdop_master.mst_rltn_product_sale_sku (product_code,product_name,sku_code,sku_name,convert_ratio,begin_date,end_date,status,remark) VALUES (?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE product_name=VALUES(product_name),convert_ratio=VALUES(convert_ratio),begin_date=VALUES(begin_date),end_date=VALUES(end_date),status=VALUES(status),remark=VALUES(remark),updated_time=NOW()',
-        [product_code,product_name||product_code,sku_code,sku?sku.sku_name:sku_code,parseFloat(convert_ratio)||1,begin_date||null,end_date||null,status!==undefined?status:1,remark||null]);
-    res.json({ code: 200, msg: '保存成功' });
-}));
-
-app.put('/api/master/rltn/product-sku/:id', authRequired, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { product_name, convert_ratio, begin_date, end_date, status, remark } = req.body;
-    if (convert_ratio !== undefined && parseFloat(convert_ratio) <= 0) return res.status(400).json({ code: 400, msg: '转换系数必须为正数' });
-    await mysqlPool.query('UPDATE cdop_master.mst_rltn_product_sale_sku SET product_name=?,convert_ratio=?,begin_date=?,end_date=?,status=?,remark=?,updated_time=NOW() WHERE id=?',
-        [product_name||null,parseFloat(convert_ratio)||1,begin_date||null,end_date||null,status!==undefined?status:1,remark||null,id]);
-    res.json({ code: 200, msg: '更新成功' });
-}));
-
-app.delete('/api/master/rltn/product-sku/batch', authRequired, asyncHandler(async (req, res) => {
-    const { ids } = req.body;
-    if (!ids || !ids.length) return res.status(400).json({ code: 400, msg: '缺少ids' });
-    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_product_sale_sku WHERE id IN (?)', [ids]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-app.delete('/api/master/rltn/product-sku/:id', authRequired, asyncHandler(async (req, res) => {
-    await mysqlPool.query('DELETE FROM cdop_master.mst_rltn_product_sale_sku WHERE id=?', [req.params.id]);
-    res.json({ code: 200, msg: '删除成功' });
-}));
-
-// =====================================================================
-// MDM 模块 END
-// =====================================================================
-
-app.use((error, req, res, next) => {
-    if (error && error.message === 'Not allowed by CORS') {
-        return res.status(403).json({ code: 403, msg: '跨域请求被拒绝', traceId: req.traceId });
+app.get('/api/dict/items', authRequired, (req, res) => {
+    const { dictTypeCode = '', keyword = '', status = '' } = req.query || {};
+    let rows = ensureArray(readDb().platform?.dict_items);
+    if (dictTypeCode) {
+        const normalizedTypeCode = normalizeDictCode(dictTypeCode);
+        rows = rows.filter((row) => normalizeDictCode(row.dict_type_code) === normalizedTypeCode);
     }
-    console.error('Unhandled error:', error);
-    if (res.headersSent) return next(error);
-    res.status(500).json({ code: 500, msg: '服务器错误', traceId: req.traceId });
+    if (keyword) rows = rows.filter((row) => contains(row.item_code, keyword) || contains(row.item_name, keyword) || contains(row.item_value, keyword));
+    if (status !== '' && status !== undefined) rows = rows.filter((row) => String(row.status) === String(status));
+    rows = [...rows].sort((a, b) => toNum(a.sort_order) - toNum(b.sort_order) || toNum(a.id) - toNum(b.id));
+    apiOk(res, req, rows, '获取成功');
 });
 
-// 启动服务器
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-    console.log(`[Backend API] Server is running on http://localhost:${PORT}`);
+app.post('/api/dict/items', authRequired, (req, res) => {
+    const body = req.body || {};
+    const dictTypeCode = normalizeDictCode(body.dict_type_code);
+    const itemCode = normalizeDictCode(body.item_code);
+    const itemName = String(body.item_name || '').trim();
+    if (!dictTypeCode || !itemCode || !itemName) return apiErr(res, req, 400, '字典类型、字典项编码、字典项名称不能为空');
+    try {
+        validateDictCodeOrThrow(dictTypeCode, '字典类型编码');
+        validateDictCodeOrThrow(itemCode, '字典项编码');
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '编码格式不正确');
+    }
+    let createdRow = null;
+    try {
+        updateDb((db) => {
+            if (!db.platform) db.platform = {};
+            const typeRows = ensureArray(db.platform.dict_types);
+            const itemRows = ensureArray(db.platform.dict_items);
+            db.platform.dict_types = typeRows;
+            db.platform.dict_items = itemRows;
+            const dictTypeRow = typeRows.find((row) => normalizeDictCode(row.dict_type_code) === dictTypeCode);
+            if (!dictTypeRow) throw new Error('字典类型不存在');
+            if (itemRows.some((row) => normalizeDictCode(row.dict_type_code) === dictTypeCode && normalizeDictCode(row.item_code) === itemCode)) {
+                throw new Error('字典项编码已存在');
+            }
+            createdRow = {
+                id: nextId(itemRows),
+                dict_type_code: String(dictTypeRow.dict_type_code || dictTypeCode),
+                item_code: itemCode,
+                item_name: itemName,
+                item_value: String(body.item_value || itemCode).trim(),
+                item_color: String(body.item_color || ''),
+                sort_order: Math.max(1, toNum(body.sort_order, itemRows.length + 1)),
+                status: normalizeBinaryStatus(body.status, 1),
+                remark: String(body.remark || ''),
+                system_flag: 0,
+                created_at: nowIso(),
+                updated_at: nowIso()
+            };
+            itemRows.push(createdRow);
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '新增失败');
+    }
+    appendOperationLog(req, {
+        moduleCode: 'dict',
+        bizObjectType: 'dict_item',
+        bizObjectId: createdRow?.id,
+        actionType: 'CREATE',
+        message: `新增字典项 ${createdRow?.dict_type_code || ''}:${createdRow?.item_code || ''}`,
+        afterSnapshot: createdRow
+    });
+    apiOk(res, req, createdRow, '新增成功');
+});
 
-    // 初始化超级管理员的辅助动态码（若为空则自动生成）
+app.put('/api/dict/items/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const body = req.body || {};
+    let beforeSnapshot = null;
+    let afterSnapshot = null;
     try {
-        await mysqlPool.query(`
-            CREATE TABLE IF NOT EXISTS t_ryytn_audit_log (
-                id BIGINT PRIMARY KEY,
-                actor_id BIGINT NULL,
-                action VARCHAR(64) NOT NULL,
-                resource VARCHAR(128) NOT NULL,
-                target_id VARCHAR(64) NULL,
-                detail JSON NULL,
-                trace_id VARCHAR(64) NULL,
-                ip VARCHAR(100) NULL,
-                user_agent VARCHAR(255) NULL,
-                created_time DATETIME NOT NULL
-            )
-        `);
-        await mysqlPool.query('CREATE UNIQUE INDEX idx_account_login_id ON t_ryytn_account (login_id)');
-    } catch (e) {}
+        updateDb((db) => {
+            if (!db.platform) db.platform = {};
+            const typeRows = ensureArray(db.platform.dict_types);
+            const itemRows = ensureArray(db.platform.dict_items);
+            db.platform.dict_types = typeRows;
+            db.platform.dict_items = itemRows;
+            const row = itemRows.find((item) => Number(item.id) === id);
+            if (!row) throw new Error('字典项不存在');
+            const currentDictTypeCode = normalizeDictCode(row.dict_type_code);
+            const currentItemCode = normalizeDictCode(row.item_code);
+            let nextDictTypeCode = currentDictTypeCode;
+            let nextItemCode = currentItemCode;
+
+            if (body.dict_type_code !== undefined) {
+                nextDictTypeCode = normalizeDictCode(body.dict_type_code);
+                if (!nextDictTypeCode) throw new Error('字典类型不能为空');
+                validateDictCodeOrThrow(nextDictTypeCode, '字典类型编码');
+            }
+            if (body.item_code !== undefined) {
+                nextItemCode = normalizeDictCode(body.item_code);
+                if (!nextItemCode) throw new Error('字典项编码不能为空');
+                validateDictCodeOrThrow(nextItemCode, '字典项编码');
+                if (toNum(row.system_flag, 0) === 1 && nextItemCode !== currentItemCode) {
+                    throw new Error('系统内置字典项不允许修改编码');
+                }
+            }
+            const targetTypeRow = typeRows.find((item) => normalizeDictCode(item.dict_type_code) === nextDictTypeCode);
+            if (!targetTypeRow) throw new Error('字典类型不存在');
+            if (itemRows.some((item) => Number(item.id) !== id && normalizeDictCode(item.dict_type_code) === nextDictTypeCode && normalizeDictCode(item.item_code) === nextItemCode)) {
+                throw new Error('字典项编码已存在');
+            }
+            if (body.item_name !== undefined && !String(body.item_name).trim()) throw new Error('字典项名称不能为空');
+            beforeSnapshot = safeClone(row);
+            row.dict_type_code = String(targetTypeRow.dict_type_code || nextDictTypeCode);
+            row.item_code = nextItemCode;
+            row.item_name = body.item_name !== undefined ? String(body.item_name).trim() : row.item_name;
+            row.item_value = body.item_value !== undefined ? String(body.item_value).trim() || nextItemCode : row.item_value;
+            row.item_color = body.item_color !== undefined ? String(body.item_color).trim() : row.item_color;
+            row.sort_order = body.sort_order !== undefined ? Math.max(1, toNum(body.sort_order, row.sort_order)) : row.sort_order;
+            row.status = body.status !== undefined ? normalizeBinaryStatus(body.status, row.status) : row.status;
+            row.remark = body.remark !== undefined ? String(body.remark) : row.remark;
+            row.updated_at = nowIso();
+            afterSnapshot = safeClone(row);
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '更新失败');
+    }
+    appendOperationLog(req, {
+        moduleCode: 'dict',
+        bizObjectType: 'dict_item',
+        bizObjectId: id,
+        actionType: 'UPDATE',
+        message: `更新字典项 ${afterSnapshot?.dict_type_code || ''}:${afterSnapshot?.item_code || ''}`,
+        beforeSnapshot,
+        afterSnapshot
+    });
+    apiOk(res, req, afterSnapshot, '更新成功');
+});
+
+app.delete('/api/dict/items/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    let beforeSnapshot = null;
     try {
-        await mysqlPool.query('CREATE INDEX idx_order_main_create_time ON t_ryytn_order_main (create_time)');
-    } catch (e) {}
+        updateDb((db) => {
+            const itemRows = ensureArray(db.platform?.dict_items);
+            db.platform.dict_items = itemRows;
+            const row = itemRows.find((item) => Number(item.id) === id);
+            if (!row) throw new Error('字典项不存在');
+            if (toNum(row.system_flag, 0) === 1) throw new Error('系统内置字典项不可删除');
+            beforeSnapshot = safeClone(row);
+            db.platform.dict_items = itemRows.filter((item) => Number(item.id) !== id);
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '删除失败');
+    }
+    appendOperationLog(req, {
+        moduleCode: 'dict',
+        bizObjectType: 'dict_item',
+        bizObjectId: id,
+        actionType: 'DELETE',
+        message: `删除字典项 ${beforeSnapshot?.dict_type_code || ''}:${beforeSnapshot?.item_code || ''}`,
+        beforeSnapshot
+    });
+    apiOk(res, req, true, '删除成功');
+});
+
+app.patch('/api/dict/items/batch-status', authRequired, (req, res) => {
+    const body = req.body || {};
+    const ids = parseBatchIds(body.ids);
+    if (!ids.length) return apiErr(res, req, 400, '请至少选择一条字典项记录');
+    if (body.status === '' || body.status === undefined || body.status === null) return apiErr(res, req, 400, '状态参数不能为空');
+    const targetStatus = normalizeBinaryStatus(body.status, -1);
+    if (targetStatus !== 0 && targetStatus !== 1) return apiErr(res, req, 400, '状态参数仅支持0或1');
+
+    const beforeSnapshots = [];
+    const afterSnapshots = [];
+    const skipped = [];
     try {
-        await mysqlPool.query('CREATE INDEX idx_order_main_distributor_id ON t_ryytn_order_main (distributor_id)');
-    } catch (e) {}
+        updateDb((db) => {
+            if (!db.platform) db.platform = {};
+            const rows = ensureArray(db.platform.dict_items);
+            db.platform.dict_items = rows;
+            ids.forEach((id) => {
+                const row = rows.find((item) => Number(item.id) === id);
+                if (!row) {
+                    skipped.push({ id, reason: 'NOT_FOUND' });
+                    return;
+                }
+                if (toNum(row.system_flag, 0) === 1 && targetStatus === 0) {
+                    skipped.push({ id, reason: 'SYSTEM_BUILTIN' });
+                    return;
+                }
+                if (toNum(row.status, 1) === targetStatus) {
+                    skipped.push({ id, reason: 'UNCHANGED' });
+                    return;
+                }
+                beforeSnapshots.push(safeClone(row));
+                row.status = targetStatus;
+                row.updated_at = nowIso();
+                afterSnapshots.push(safeClone(row));
+            });
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '批量更新失败');
+    }
+
+    if (afterSnapshots.length) {
+        appendOperationLog(req, {
+            moduleCode: 'dict',
+            bizObjectType: 'dict_item',
+            bizObjectId: ids.join(','),
+            actionType: 'UPDATE',
+            message: `批量${targetStatus === 1 ? '启用' : '停用'}字典项，成功${afterSnapshots.length}条`,
+            requestSummary: { ids, status: targetStatus, skipped },
+            beforeSnapshot: beforeSnapshots,
+            afterSnapshot: afterSnapshots
+        });
+    }
+
+    apiOk(res, req, {
+        updatedCount: afterSnapshots.length,
+        skippedCount: skipped.length,
+        skipped,
+        updatedIds: afterSnapshots.map((row) => row.id)
+    }, `批量处理完成，成功${afterSnapshots.length}条`);
+});
+
+app.get('/api/dict/lookup', authRequired, (req, res) => {
+    const { dictTypeCode = '' } = req.query || {};
+    const normalizedTypeCode = normalizeDictCode(dictTypeCode);
+    const db = readDb();
+    const typeRows = ensureArray(db.platform?.dict_types)
+        .filter((row) => toNum(row.status, 1) === 1)
+        .filter((row) => !normalizedTypeCode || normalizeDictCode(row.dict_type_code) === normalizedTypeCode)
+        .sort((a, b) => toNum(a.sort_order) - toNum(b.sort_order) || toNum(a.id) - toNum(b.id));
+    const itemRows = ensureArray(db.platform?.dict_items)
+        .filter((row) => toNum(row.status, 1) === 1)
+        .sort((a, b) => toNum(a.sort_order) - toNum(b.sort_order) || toNum(a.id) - toNum(b.id));
+    const list = typeRows.map((typeRow) => {
+        const typeCode = normalizeDictCode(typeRow.dict_type_code);
+        const options = itemRows
+            .filter((itemRow) => normalizeDictCode(itemRow.dict_type_code) === typeCode)
+            .map((itemRow) => ({
+                id: itemRow.id,
+                itemCode: itemRow.item_code,
+                itemName: itemRow.item_name,
+                itemValue: itemRow.item_value,
+                itemColor: itemRow.item_color,
+                sortOrder: itemRow.sort_order,
+                remark: itemRow.remark || ''
+            }));
+        return {
+            dictTypeCode: typeRow.dict_type_code,
+            dictTypeName: typeRow.dict_type_name,
+            options
+        };
+    });
+    const map = {};
+    list.forEach((group) => {
+        map[group.dictTypeCode] = group.options;
+    });
+    apiOk(res, req, { list, map }, '获取成功');
+});
+
+app.get('/api/operation-logs', authRequired, (req, res) => {
+    const { page = 1, pageSize = 20, keyword = '', moduleCode = '', actionType = '', resultStatus = '', operatorName = '', dateFrom = '', dateTo = '' } = req.query || {};
+    let rows = ensureArray(readDb().platform?.operation_logs);
+    if (keyword) rows = rows.filter((row) => contains(row.message, keyword) || contains(row.biz_object_type, keyword) || contains(row.biz_object_id, keyword));
+    if (moduleCode) rows = rows.filter((row) => String(row.module_code) === String(moduleCode));
+    if (actionType) rows = rows.filter((row) => String(row.action_type) === String(actionType));
+    if (resultStatus) rows = rows.filter((row) => String(row.result_status) === String(resultStatus));
+    if (operatorName) rows = rows.filter((row) => contains(row.operator_name, operatorName));
+    if (dateFrom) rows = rows.filter((row) => String(row.created_at).slice(0, 10) >= String(dateFrom));
+    if (dateTo) rows = rows.filter((row) => String(row.created_at).slice(0, 10) <= String(dateTo));
+    rows = [...rows].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    apiOk(res, req, paginate(rows, page, pageSize), '获取成功');
+});
+
+app.get('/api/operation-logs/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const row = ensureArray(readDb().platform?.operation_logs).find((item) => Number(item.id) === id);
+    if (!row) return apiErr(res, req, 404, '日志不存在');
+    apiOk(res, req, row, '获取成功');
+});
+
+app.get('/api/import-tasks', authRequired, (req, res) => {
+    const { page = 1, pageSize = 20, bizType = '', status = '', keyword = '' } = req.query || {};
+    let rows = ensureArray(readDb().platform?.import_tasks);
+    if (bizType) rows = rows.filter((row) => String(row.biz_type) === String(bizType));
+    if (status) rows = rows.filter((row) => String(row.status) === String(status));
+    if (keyword) rows = rows.filter((row) => contains(row.task_name, keyword) || contains(row.file_name, keyword) || contains(row.operator_name, keyword));
+    rows = [...rows].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    apiOk(res, req, paginate(rows, page, pageSize), '获取成功');
+});
+
+app.get('/api/import-tasks/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const row = ensureArray(readDb().platform?.import_tasks).find((item) => Number(item.id) === id);
+    if (!row) return apiErr(res, req, 404, '导入任务不存在');
+    apiOk(res, req, row, '获取成功');
+});
+
+app.get('/api/export-tasks', authRequired, (req, res) => {
+    const { page = 1, pageSize = 20, bizType = '', status = '', keyword = '' } = req.query || {};
+    let rows = ensureArray(readDb().platform?.export_tasks);
+    if (bizType) rows = rows.filter((row) => String(row.biz_type) === String(bizType));
+    if (status) rows = rows.filter((row) => String(row.status) === String(status));
+    if (keyword) rows = rows.filter((row) => contains(row.task_name, keyword) || contains(row.file_name, keyword) || contains(row.operator_name, keyword));
+    rows = [...rows].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    apiOk(res, req, paginate(rows, page, pageSize), '获取成功');
+});
+
+app.get('/api/export-tasks/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const row = ensureArray(readDb().platform?.export_tasks).find((item) => Number(item.id) === id);
+    if (!row) return apiErr(res, req, 404, '导出任务不存在');
+    apiOk(res, req, row, '获取成功');
+});
+
+app.get('/api/export-tasks/:id/download', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const row = ensureArray(readDb().platform?.export_tasks).find((item) => Number(item.id) === id);
+    if (!row) return apiErr(res, req, 404, '导出任务不存在');
+    const bizType = String(row.biz_type || '');
+    const querySnapshot = row.query_snapshot && typeof row.query_snapshot === 'object' ? row.query_snapshot : {};
+    const rows = buildExportRowsByBizType(bizType, querySnapshot);
+    apiOk(res, req, {
+        taskId: row.id,
+        bizType,
+        fileName: row.file_name || '',
+        list: rows
+    }, '获取成功');
+});
+
+app.get('/api/import-tasks/:id/errors', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const row = ensureArray(readDb().platform?.import_tasks).find((item) => Number(item.id) === id);
+    if (!row) return apiErr(res, req, 404, '导入任务不存在');
+    const errors = ensureArray(row?.result_payload?.errors);
+    const lines = ['rowNumber,error', ...errors.map((item) => `${toNum(item?.rowNumber || 0, 0)},"${String(item?.error || '').replace(/"/g, '""')}"`)];
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=import_task_${id}_errors.csv`);
+    res.send(`\uFEFF${lines.join('\n')}`);
+});
+
+app.get('/api/notifications', authRequired, (req, res) => {
+    const { status = '' } = req.query || {};
+    let rows = ensureArray(readDb().platform?.notifications).filter((row) => Number(row.receiver_id) === Number(req.user?.id));
+    if (status) rows = rows.filter((row) => String(row.status) === String(status));
+    rows = [...rows].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    apiOk(res, req, rows, '获取成功');
+});
+
+app.patch('/api/notifications/:id/read', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    let found = false;
+    updateDb((db) => {
+        const rows = ensureArray(db.platform?.notifications);
+        db.platform.notifications = rows;
+        const row = rows.find((item) => Number(item.id) === id && Number(item.receiver_id) === Number(req.user?.id));
+        if (!row) return;
+        row.status = 'READ';
+        row.read_at = nowIso();
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '通知不存在');
+    apiOk(res, req, true, '已读成功');
+});
+
+app.get('/api/roles', authRequired, (req, res) => {
+    const db = readDb();
+    const list = db.system.roles.map((role) => {
+        const permissionIds = db.system.role_pages.filter(rp => Number(rp.role_id) === Number(role.id)).map(rp => Number(rp.page_id));
+        const postIds = db.system.role_jobs.filter(rj => Number(rj.role_id) === Number(role.id)).map(rj => String(rj.job_id));
+        return {
+            ...role,
+            permissionIds,
+            postIds,
+            dataScopeType: role.data_scope_type || 'ALL',
+            dataScopeConfig: role.data_scope_config || {}
+        };
+    }).sort((a, b) => toNum(a.sort_no) - toNum(b.sort_no));
+    apiOk(res, req, list, '获取成功');
+});
+
+app.post('/api/roles', authRequired, (req, res) => {
+    const body = req.body || {};
+    if (!body.name || !body.code) return apiErr(res, req, 400, '角色名称和编码不能为空');
+    let createdRole = null;
     try {
-        await mysqlPool.query('CREATE INDEX idx_order_main_sku_id ON t_ryytn_order_main (sku_id)');
-    } catch (e) {}
+        updateDb((db) => {
+            if (db.system.roles.some((role) => String(role.code) === String(body.code))) throw new Error('角色编码已存在');
+            const id = nextId(db.system.roles);
+            createdRole = {
+                id,
+                name: String(body.name),
+                code: String(body.code),
+                status: toNum(body.status, 1),
+                sort_no: toNum(body.sort, db.system.roles.length + 1),
+                data_type: 2,
+                data_scope_type: String(body.dataScopeType || 'ALL'),
+                data_scope_config: body.dataScopeConfig && typeof body.dataScopeConfig === 'object' ? safeClone(body.dataScopeConfig) : {},
+                description: String(body.remark || ''),
+                created_time: nowIso()
+            };
+            db.system.roles.push(createdRole);
+            (Array.isArray(body.permissionIds) ? body.permissionIds : []).forEach(pid => db.system.role_pages.push({ role_id: id, page_id: toNum(pid) }));
+            (Array.isArray(body.postIds) ? body.postIds : []).forEach(jid => db.system.role_jobs.push({ role_id: id, job_id: String(jid) }));
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '新增失败');
+    }
+    appendOperationLog(req, {
+        moduleCode: 'role',
+        bizObjectType: 'role',
+        bizObjectId: createdRole?.id,
+        actionType: 'CREATE',
+        message: `新增角色 ${createdRole?.name || ''}`,
+        requestSummary: body,
+        afterSnapshot: createdRole
+    });
+    apiOk(res, req, true, '新增成功');
+});
+
+app.put('/api/roles/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const body = req.body || {};
+    let found = false;
+    let beforeSnapshot = null;
+    let afterSnapshot = null;
     try {
-        // 先确保 helper_code 字段存在（兼容旧数据库）
+        updateDb((db) => {
+            const role = db.system.roles.find(r => Number(r.id) === id);
+            if (!role) return;
+            if (body.code !== undefined && db.system.roles.some((row) => Number(row.id) !== id && String(row.code) === String(body.code))) {
+                throw new Error('角色编码已存在');
+            }
+            beforeSnapshot = safeClone(role);
+            role.name = body.name !== undefined ? String(body.name) : role.name;
+            role.code = body.code !== undefined ? String(body.code) : role.code;
+            role.status = body.status !== undefined ? toNum(body.status, role.status) : role.status;
+            role.sort_no = body.sort !== undefined ? toNum(body.sort, role.sort_no) : role.sort_no;
+            role.data_scope_type = body.dataScopeType !== undefined ? String(body.dataScopeType || 'ALL') : (role.data_scope_type || 'ALL');
+            if (body.dataScopeConfig !== undefined) {
+                role.data_scope_config = body.dataScopeConfig && typeof body.dataScopeConfig === 'object' ? safeClone(body.dataScopeConfig) : {};
+            } else if (!role.data_scope_config || typeof role.data_scope_config !== 'object') {
+                role.data_scope_config = {};
+            }
+            role.description = body.remark !== undefined ? String(body.remark) : role.description;
+            if (Array.isArray(body.permissionIds)) {
+                db.system.role_pages = db.system.role_pages.filter(rp => Number(rp.role_id) !== id);
+                body.permissionIds.forEach(pid => db.system.role_pages.push({ role_id: id, page_id: toNum(pid) }));
+            }
+            if (Array.isArray(body.postIds)) {
+                db.system.role_jobs = db.system.role_jobs.filter(rj => Number(rj.role_id) !== id);
+                body.postIds.forEach(jid => db.system.role_jobs.push({ role_id: id, job_id: String(jid) }));
+            }
+            afterSnapshot = safeClone(role);
+            found = true;
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '更新失败');
+    }
+    if (!found) return apiErr(res, req, 404, '角色不存在');
+    appendOperationLog(req, {
+        moduleCode: 'role',
+        bizObjectType: 'role',
+        bizObjectId: id,
+        actionType: 'UPDATE',
+        message: `更新角色 ${afterSnapshot?.name || id}`,
+        requestSummary: body,
+        beforeSnapshot,
+        afterSnapshot
+    });
+    apiOk(res, req, true, '更新成功');
+});
+
+app.delete('/api/roles/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    if (id === 1) return apiErr(res, req, 400, '超级管理员角色不可删除');
+    const db = readDb();
+    const target = db.system.roles.find(r => Number(r.id) === id);
+    if (!target) return apiErr(res, req, 404, '角色不存在');
+    if (db.system.account_roles.some(ar => Number(ar.role_id) === id)) return apiErr(res, req, 400, '角色已关联用户，无法删除');
+    updateDb((raw) => {
+        raw.system.roles = raw.system.roles.filter(r => Number(r.id) !== id);
+        raw.system.role_pages = raw.system.role_pages.filter(rp => Number(rp.role_id) !== id);
+        raw.system.role_jobs = raw.system.role_jobs.filter(rj => Number(rj.role_id) !== id);
+    });
+    appendOperationLog(req, {
+        moduleCode: 'role',
+        bizObjectType: 'role',
+        bizObjectId: id,
+        actionType: 'DELETE',
+        message: `删除角色 ${target.name || id}`,
+        beforeSnapshot: target
+    });
+    apiOk(res, req, true, '删除成功');
+});
+
+app.get('/api/profile/:username', (req, res) => {
+    const { username } = req.params;
+    const db = readDb();
+    const account = db.system.accounts.find(a => a.login_id === username);
+    if (!account) return apiErr(res, req, 404, '用户不存在');
+    const roleIds = getRoleIdsByAccount(db, account.id);
+    const postIds = getPostIdsByAccount(db, account.id);
+    const roleRows = db.system.roles.filter(r => roleIds.includes(Number(r.id))).map(r => ({ id: r.id, name: r.name, code: r.code }));
+    const postRows = db.system.jobtitles.filter(j => postIds.includes(String(j.id))).map(j => ({ id: j.id, name: j.job_title_name, code: j.job_title_mark }));
+    const dept = db.system.departments.find(d => String(d.id) === String(account.department_id));
+    const isSuperAdmin = isSuperAdminUser({ loginId: account.login_id, roleIds, roleNames: roleRows.map(r => r.name) });
+    apiOk(res, req, {
+        id: account.id,
+        username: account.login_id,
+        nickname: account.nick_name,
+        mobile: account.mobile,
+        email: account.email,
+        status: account.status,
+        createdTime: account.created_time,
+        departmentId: account.department_id,
+        departmentName: dept?.department_name || '暂无部门',
+        roles: roleRows,
+        posts: postRows,
+        isSuperAdmin
+    }, '获取成功');
+});
+
+app.get('/api/pasture-stats', authRequired, (req, res) => apiOk(res, req, readDb().biz.pasture_stats, '获取成功'));
+app.get('/api/products', authRequired, (req, res) => apiOk(res, req, readDb().biz.products, '获取成功'));
+app.get('/api/warehouses', authRequired, (req, res) => apiOk(res, req, readDb().master.warehouse, '获取成功'));
+
+app.get('/api/orders', authRequired, (req, res) => {
+    const db = readDb();
+    const { page = 1, limit = 15 } = req.query || {};
+    const rows = [...db.biz.orders].sort((a, b) => String(b.create_time).localeCompare(String(a.create_time)));
+    const { list, total } = paginate(rows, page, limit);
+    apiOk(res, req, { list, total }, '获取成功');
+});
+
+app.get('/api/order-analysis', authRequired, (req, res) => {
+    const rows = readDb().biz.orders;
+    const regionStats = rows.reduce((acc, row) => {
+        const key = row.region || '其他';
+        acc[key] = (acc[key] || 0) + toNum(row.request_liters, 0);
+        return acc;
+    }, {});
+    const sevenDayTrend = [];
+    for (let i = 6; i >= 0; i -= 1) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = toDateKey(d);
+        const liters = rows.filter(r => String(r.create_time).slice(0, 10) === key).reduce((sum, r) => sum + toNum(r.request_liters, 0), 0);
+        sevenDayTrend.push({ date: key, liters });
+    }
+    apiOk(res, req, { regionStats, sevenDayTrend }, '获取成功');
+});
+const withMasterFilter = (rows, { keyword = '', status = '' }, fields) => {
+    let list = [...rows];
+    if (keyword) list = list.filter(r => fields.some(f => contains(r[f], keyword)));
+    if (status !== '' && status !== undefined) list = list.filter(r => String(r.status) === String(status));
+    return list;
+};
+
+const formatSkuRow = (row) => ({
+    ...row,
+    created_time: row.created_time || nowIso(),
+    updated_time: row.updated_time || nowIso(),
+    status: row.status === undefined ? 1 : row.status
+});
+
+app.get('/api/master/SKU/list', superAdminRequired, (req, res) => {
+    const { page = 1, pageSize = 20, keyword = '', lifecycleStatus = '' } = req.query || {};
+    let list = withMasterFilter(readDb().master.sku, { keyword }, ['sku_code', 'sku_name', 'bar_code', 'category_code']);
+    if (lifecycleStatus) list = list.filter(r => String(r.lifecycle_status) === String(lifecycleStatus));
+    list = list.filter(r => Number(r.status) !== 0).sort((a, b) => toNum(b.id) - toNum(a.id));
+    const paged = paginate(list, page, pageSize);
+    apiOk(res, req, paged, '获取成功');
+});
+
+app.post('/api/master/SKU', superAdminRequired, (req, res) => {
+    const body = req.body || {};
+    if (!body.sku_code || !body.sku_name) return apiErr(res, req, 400, 'SKU编码和名称不能为空');
+    try {
+        updateDb((db) => {
+            if (db.master.sku.some(s => s.sku_code === body.sku_code)) throw new Error('SKU编码已存在');
+            db.master.sku.push(formatSkuRow({
+                id: nextId(db.master.sku),
+                sku_code: String(body.sku_code),
+                sku_name: String(body.sku_name),
+                bar_code: String(body.bar_code || ''),
+                category_code: String(body.category_code || ''),
+                lifecycle_status: String(body.lifecycle_status || 'ACTIVE'),
+                shelf_life_days: toNum(body.shelf_life_days, 0),
+                unit_ratio: toNum(body.unit_ratio, 1),
+                volume_m3: Number(body.volume_m3 || 0),
+                status: 1,
+                created_time: nowIso(),
+                updated_time: nowIso()
+            }));
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '新增失败');
+    }
+    apiOk(res, req, true, '新增成功');
+});
+
+app.put('/api/master/SKU/:id', superAdminRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const body = req.body || {};
+    let found = false;
+    updateDb((db) => {
+        const row = db.master.sku.find(s => Number(s.id) === id);
+        if (!row) return;
+        Object.assign(row, {
+            sku_name: body.sku_name !== undefined ? String(body.sku_name) : row.sku_name,
+            bar_code: body.bar_code !== undefined ? String(body.bar_code) : row.bar_code,
+            category_code: body.category_code !== undefined ? String(body.category_code) : row.category_code,
+            lifecycle_status: body.lifecycle_status !== undefined ? String(body.lifecycle_status) : row.lifecycle_status,
+            shelf_life_days: body.shelf_life_days !== undefined ? toNum(body.shelf_life_days, row.shelf_life_days) : row.shelf_life_days,
+            unit_ratio: body.unit_ratio !== undefined ? Number(body.unit_ratio) : row.unit_ratio,
+            volume_m3: body.volume_m3 !== undefined ? Number(body.volume_m3) : row.volume_m3,
+            updated_time: nowIso()
+        });
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '数据不存在');
+    apiOk(res, req, true, '编辑成功');
+});
+
+app.delete('/api/master/SKU/:id', superAdminRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    let found = false;
+    updateDb((db) => {
+        const row = db.master.sku.find(s => Number(s.id) === id);
+        if (!row) return;
+        row.status = 0;
+        row.lifecycle_status = 'INACTIVE';
+        row.updated_time = nowIso();
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '数据不存在');
+    apiOk(res, req, true, '删除成功');
+});
+
+app.delete('/api/master/SKU/batch', superAdminRequired, (req, res) => {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(v => toNum(v)).filter(v => !Number.isNaN(v)) : [];
+    if (!ids.length) return apiErr(res, req, 400, '请选择要删除的数据');
+    updateDb((db) => {
+        db.master.sku.forEach(row => {
+            if (ids.includes(Number(row.id))) {
+                row.status = 0;
+                row.lifecycle_status = 'INACTIVE';
+                row.updated_time = nowIso();
+            }
+        });
+    });
+    apiOk(res, req, true, `已处理 ${ids.length} 条数据`);
+});
+
+app.patch('/api/master/SKU/batch-status', superAdminRequired, (req, res) => {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(v => toNum(v)).filter(v => !Number.isNaN(v)) : [];
+    const lifecycleStatus = String(req.body?.lifecycleStatus || '').toUpperCase();
+    if (!ids.length || !lifecycleStatus) return apiErr(res, req, 400, '参数错误');
+    updateDb((db) => {
+        db.master.sku.forEach(row => {
+            if (ids.includes(Number(row.id))) {
+                row.lifecycle_status = lifecycleStatus;
+                row.updated_time = nowIso();
+            }
+        });
+    });
+    apiOk(res, req, true, '批量状态更新成功');
+});
+
+const buildSkuExportRows = (query = {}) => {
+    const { keyword = '', lifecycleStatus = '' } = query || {};
+    let list = withMasterFilter(readDb().master.sku, { keyword }, ['sku_code', 'sku_name', 'bar_code', 'category_code']);
+    if (lifecycleStatus) list = list.filter(r => String(r.lifecycle_status) === String(lifecycleStatus));
+    return list.filter(r => Number(r.status) !== 0);
+};
+
+const relationValidity = (row) => {
+    const today = toDateKey(new Date());
+    const begin = toDateKey(row.begin_date);
+    const end = toDateKey(row.end_date);
+    if (!begin || !end) return 'invalid';
+    if (today < begin) return 'upcoming';
+    if (today > end) return 'expired';
+    return 'active';
+};
+
+const filterResellerRelation = (rows, query) => {
+    const { keyword = '', region = '', channelType = '', validity = '' } = query || {};
+    let list = [...rows].filter(r => Number(r.status) !== 0);
+    if (keyword) list = list.filter(r => ['sku_code', 'reseller_code', 'reseller_name', 'region'].some(k => contains(r[k], keyword)));
+    if (region) list = list.filter(r => String(r.region) === String(region));
+    if (channelType) list = list.filter(r => String(r.channel_type) === String(channelType));
+    if (validity) list = list.filter(r => relationValidity(r) === String(validity));
+    return list;
+};
+
+const buildResellerRelationExportRows = (query = {}) => filterResellerRelation(readDb().master.reseller_relation, query);
+
+const buildExportRowsByBizType = (bizType, querySnapshot) => {
+    if (bizType === 'SKU') return buildSkuExportRows(querySnapshot);
+    if (bizType === 'RESELLER_RLTN') return buildResellerRelationExportRows(querySnapshot);
+    return [];
+};
+
+const createExportTaskRecord = (req, payload) => {
+    const task = appendTaskRecord('EXPORT', {
+        bizType: payload.bizType,
+        taskName: payload.taskName,
+        fileName: payload.fileName,
+        operatorId: req.user?.id,
+        operatorName: req.user?.nickname || req.user?.username || '',
+        requestPath: req.originalUrl || req.path || '',
+        querySnapshot: payload.querySnapshot,
+        status: payload.status || 'SUCCESS',
+        totalCount: payload.totalCount,
+        successCount: payload.successCount,
+        failCount: payload.failCount,
+        resultMessage: payload.resultMessage,
+        resultPayload: payload.resultPayload
+    });
+    if (task) {
+        appendNotification({
+            title: '导出任务完成',
+            content: `${payload.taskName || payload.bizType} 导出完成，共 ${toNum(payload.totalCount, 0)} 条`,
+            bizType: 'EXPORT_TASK',
+            bizId: task.id,
+            receiverId: req.user?.id,
+            receiverName: req.user?.nickname || req.user?.username || ''
+        });
+    }
+    appendOperationLog(req, {
+        moduleCode: 'export_task',
+        bizObjectType: 'export_task',
+        bizObjectId: task?.id || '',
+        actionType: 'EXPORT',
+        resultStatus: payload.status || 'SUCCESS',
+        message: `导出 ${payload.bizType} 数据，共 ${toNum(payload.totalCount, 0)} 条`,
+        requestSummary: payload.querySnapshot,
+        afterSnapshot: task
+    });
+    return task;
+};
+
+app.get('/api/master/SKU/export', superAdminRequired, (req, res) => {
+    const list = buildSkuExportRows(req.query || {});
+    const now = new Date();
+    const fileName = `sku_export_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}.xlsx`;
+    const task = createExportTaskRecord(req, {
+        bizType: 'SKU',
+        taskName: 'SKU导出',
+        fileName,
+        querySnapshot: req.query || {},
+        totalCount: list.length,
+        successCount: list.length,
+        failCount: 0,
+        resultMessage: `导出完成，共 ${list.length} 条`,
+        resultPayload: { previewRows: list.slice(0, 100), totalRows: list.length }
+    });
+    apiOk(res, req, { list, taskId: task?.id || null }, '获取成功');
+});
+
+app.get('/api/master/RESELLER_RLTN/list', superAdminRequired, (req, res) => {
+    const { page = 1, pageSize = 20 } = req.query || {};
+    const list = filterResellerRelation(readDb().master.reseller_relation, req.query).sort((a, b) => toNum(b.id) - toNum(a.id));
+    apiOk(res, req, paginate(list, page, pageSize), '获取成功');
+});
+
+app.post('/api/master/RESELLER_RLTN', superAdminRequired, (req, res) => {
+    const body = req.body || {};
+    if (!body.sku_code || !body.reseller_code || !body.begin_date || !body.end_date) return apiErr(res, req, 400, '关键字段不能为空');
+    if (toDateKey(body.begin_date) > toDateKey(body.end_date)) return apiErr(res, req, 400, '开始日期不能晚于结束日期');
+    try {
+        updateDb((db) => {
+            const exists = db.master.reseller_relation.find(r => r.sku_code === body.sku_code && r.reseller_code === body.reseller_code);
+            if (exists) throw new Error('同一SKU与经销商关系已存在');
+            db.master.reseller_relation.push({
+                id: nextId(db.master.reseller_relation),
+                sku_code: String(body.sku_code),
+                reseller_code: String(body.reseller_code),
+                reseller_name: String(body.reseller_name || ''),
+                region: String(body.region || ''),
+                channel_type: String(body.channel_type || 'DIST'),
+                begin_date: toDateKey(body.begin_date),
+                end_date: toDateKey(body.end_date),
+                price_grade: String(body.price_grade || 'A'),
+                quota_cases: toNum(body.quota_cases, 0),
+                status: 1,
+                created_time: nowIso(),
+                updated_time: nowIso()
+            });
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '新增失败');
+    }
+    apiOk(res, req, true, '新增成功');
+});
+
+app.put('/api/master/RESELLER_RLTN/:id', superAdminRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const body = req.body || {};
+    if (body.begin_date && body.end_date && toDateKey(body.begin_date) > toDateKey(body.end_date)) return apiErr(res, req, 400, '开始日期不能晚于结束日期');
+    let found = false;
+    updateDb((db) => {
+        const row = db.master.reseller_relation.find(r => Number(r.id) === id);
+        if (!row) return;
+        Object.assign(row, {
+            reseller_name: body.reseller_name !== undefined ? String(body.reseller_name) : row.reseller_name,
+            region: body.region !== undefined ? String(body.region) : row.region,
+            channel_type: body.channel_type !== undefined ? String(body.channel_type) : row.channel_type,
+            begin_date: body.begin_date !== undefined ? toDateKey(body.begin_date) : row.begin_date,
+            end_date: body.end_date !== undefined ? toDateKey(body.end_date) : row.end_date,
+            price_grade: body.price_grade !== undefined ? String(body.price_grade) : row.price_grade,
+            quota_cases: body.quota_cases !== undefined ? toNum(body.quota_cases, row.quota_cases) : row.quota_cases,
+            updated_time: nowIso()
+        });
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '数据不存在');
+    apiOk(res, req, true, '编辑成功');
+});
+
+app.delete('/api/master/RESELLER_RLTN/:id', superAdminRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    let found = false;
+    updateDb((db) => {
+        const row = db.master.reseller_relation.find(r => Number(r.id) === id);
+        if (!row) return;
+        row.status = 0;
+        row.updated_time = nowIso();
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '数据不存在');
+    apiOk(res, req, true, '撤销成功');
+});
+
+app.delete('/api/master/RESELLER_RLTN/batch', superAdminRequired, (req, res) => {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(v => toNum(v)).filter(v => !Number.isNaN(v)) : [];
+    if (!ids.length) return apiErr(res, req, 400, '请选择要撤销的数据');
+    updateDb((db) => {
+        db.master.reseller_relation.forEach(row => {
+            if (ids.includes(Number(row.id))) {
+                row.status = 0;
+                row.updated_time = nowIso();
+            }
+        });
+    });
+    apiOk(res, req, true, `已处理 ${ids.length} 条数据`);
+});
+
+app.get('/api/master/RESELLER_RLTN/export', superAdminRequired, (req, res) => {
+    const list = buildResellerRelationExportRows(req.query || {});
+    const now = new Date();
+    const fileName = `reseller_relation_export_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}.xlsx`;
+    const task = createExportTaskRecord(req, {
+        bizType: 'RESELLER_RLTN',
+        taskName: '经销关系导出',
+        fileName,
+        querySnapshot: req.query || {},
+        totalCount: list.length,
+        successCount: list.length,
+        failCount: 0,
+        resultMessage: `导出完成，共 ${list.length} 条`,
+        resultPayload: { previewRows: list.slice(0, 100), totalRows: list.length }
+    });
+    apiOk(res, req, { list, taskId: task?.id || null }, '获取成功');
+});
+const genericListConfigs = [
+    {
+        route: 'warehouse',
+        table: 'warehouse',
+        codeField: 'warehouse_code',
+        keywordFields: ['warehouse_code', 'warehouse_name', 'factory_name', 'city_name'],
+        extraFilter: (rows, q) => rows.filter(r =>
+            (!q.lv1TypeName || contains(r.lv1_type_name, q.lv1TypeName)) &&
+            (!q.factoryCode || contains(r.factory_code, q.factoryCode)) &&
+            (q.isOwn === undefined || q.isOwn === '' || String(r.is_own) === String(q.isOwn))
+        )
+    },
+    {
+        route: 'factory',
+        table: 'factory',
+        codeField: 'factory_code',
+        keywordFields: ['factory_code', 'factory_name', 'company_name', 'city_name'],
+        extraFilter: (rows, q) => rows.filter(r => (q.isOwn === undefined || q.isOwn === '' || String(r.is_own) === String(q.isOwn)))
+    },
+    {
+        route: 'reseller',
+        table: 'reseller',
+        codeField: 'reseller_code',
+        keywordFields: ['reseller_code', 'reseller_name', 'sale_region_name', 'city_name'],
+        extraFilter: (rows, q) => rows.filter(r =>
+            (!q.lv1ChannelCode || contains(r.lv1_channel_code, q.lv1ChannelCode)) &&
+            (q.isOwn === undefined || q.isOwn === '' || String(r.is_own) === String(q.isOwn))
+        )
+    }
+];
+
+genericListConfigs.forEach((cfg) => {
+    app.get(`/api/master/${cfg.route}`, superAdminRequired, (req, res) => {
+        const { page = 1, pageSize = 20, keyword = '', status = '' } = req.query || {};
+        let rows = withMasterFilter(readDb().master[cfg.table], { keyword, status }, cfg.keywordFields);
+        rows = cfg.extraFilter(rows, req.query || {});
+        rows.sort((a, b) => toNum(b.id) - toNum(a.id));
+        apiOk(res, req, paginate(rows, page, pageSize), '获取成功');
+    });
+
+    app.post(`/api/master/${cfg.route}`, superAdminRequired, (req, res) => {
+        const body = req.body || {};
+        if (!body[cfg.codeField]) return apiErr(res, req, 400, '编码不能为空');
         try {
-            await mysqlPool.query('ALTER TABLE t_ryytn_account ADD COLUMN IF NOT EXISTS helper_code VARCHAR(20) DEFAULT NULL');
-        } catch (e) {
-            // MySQL 不支持 IF NOT EXISTS，尝试检查后添加
-            try {
-                await mysqlPool.query('ALTER TABLE t_ryytn_account ADD COLUMN helper_code VARCHAR(20) DEFAULT NULL');
-            } catch (e2) {
-                // 字段可能已存在，忽略
-            }
+            updateDb((db) => {
+                const rows = db.master[cfg.table];
+                if (rows.some(r => String(r[cfg.codeField]) === String(body[cfg.codeField]))) throw new Error('编码已存在');
+                rows.push({ id: nextId(rows), ...body, status: toNum(body.status, 1), created_time: nowIso(), updated_time: nowIso() });
+            });
+        } catch (error) {
+            return apiErr(res, req, 400, error.message || '新增失败');
         }
+        apiOk(res, req, true, '新增成功');
+    });
 
-        const [rows] = await mysqlPool.query('SELECT helper_code FROM t_ryytn_account WHERE login_id = ?', ['jiaohaoyuan']);
-        if (rows.length > 0 && !rows[0].helper_code) {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = '';
-            for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-            await mysqlPool.query('UPDATE t_ryytn_account SET helper_code = ? WHERE login_id = ?', [code, 'jiaohaoyuan']);
-            console.log(`[Init] 超级管理员辅助码已初始化: ${code}`);
+    app.put(`/api/master/${cfg.route}/:id`, superAdminRequired, (req, res) => {
+        const id = toNum(req.params.id);
+        let found = false;
+        updateDb((db) => {
+            const row = db.master[cfg.table].find(r => Number(r.id) === id);
+            if (!row) return;
+            Object.assign(row, { ...req.body, updated_time: nowIso() });
+            found = true;
+        });
+        if (!found) return apiErr(res, req, 404, '数据不存在');
+        apiOk(res, req, true, '编辑成功');
+    });
+
+    app.delete(`/api/master/${cfg.route}/:id`, superAdminRequired, (req, res) => {
+        const id = toNum(req.params.id);
+        let found = false;
+        updateDb((db) => {
+            const row = db.master[cfg.table].find(r => Number(r.id) === id);
+            if (!row) return;
+            row.status = 0;
+            row.updated_time = nowIso();
+            found = true;
+        });
+        if (!found) return apiErr(res, req, 404, '数据不存在');
+        apiOk(res, req, true, '删除成功');
+    });
+
+    app.delete(`/api/master/${cfg.route}/batch`, superAdminRequired, (req, res) => {
+        const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(v => toNum(v)).filter(v => !Number.isNaN(v)) : [];
+        if (!ids.length) return apiErr(res, req, 400, '请先选择数据');
+        updateDb((db) => {
+            db.master[cfg.table].forEach(row => {
+                if (ids.includes(Number(row.id))) {
+                    row.status = 0;
+                    row.updated_time = nowIso();
+                }
+            });
+        });
+        apiOk(res, req, true, `已处理 ${ids.length} 条数据`);
+    });
+});
+
+const treeConfigs = [
+    { route: 'category', table: 'category', codeField: 'category_code', nameField: 'category_name' },
+    { route: 'channel', table: 'channel', codeField: 'channel_code', nameField: 'channel_name' },
+    { route: 'org', table: 'org', codeField: 'org_code', nameField: 'org_name' }
+];
+
+treeConfigs.forEach((cfg) => {
+    app.get(`/api/master/${cfg.route}/tree`, superAdminRequired, (req, res) => {
+        const rows = [...readDb().master[cfg.table]].sort((a, b) => toNum(a.level) - toNum(b.level) || toNum(a.sort_order) - toNum(b.sort_order));
+        apiOk(res, req, rows, '获取成功');
+    });
+
+    app.post(`/api/master/${cfg.route}`, superAdminRequired, (req, res) => {
+        const body = req.body || {};
+        if (!body[cfg.codeField] || !body[cfg.nameField]) return apiErr(res, req, 400, '编码和名称不能为空');
+        try {
+            updateDb((db) => {
+                const rows = db.master[cfg.table];
+                if (rows.some(r => String(r[cfg.codeField]) === String(body[cfg.codeField]))) throw new Error('编码已存在');
+                rows.push({
+                    id: nextId(rows),
+                    ...body,
+                    level: toNum(body.level, body.parent_code ? 2 : 1),
+                    sort_order: toNum(body.sort_order, rows.length + 1),
+                    status: toNum(body.status, 1),
+                    created_time: nowIso(),
+                    updated_time: nowIso()
+                });
+            });
+        } catch (error) {
+            return apiErr(res, req, 400, error.message || '新增失败');
         }
-        const [accounts] = await mysqlPool.query('SELECT id, password FROM t_ryytn_account');
-        for (const account of accounts) {
-            const pwd = String(account.password || '');
-            if (pwd && !pwd.startsWith('$2a$') && !pwd.startsWith('$2b$') && !pwd.startsWith('$2y$')) {
-                const hashedPassword = await bcrypt.hash(pwd, 10);
-                await mysqlPool.query('UPDATE t_ryytn_account SET password = ? WHERE id = ?', [hashedPassword, account.id]);
-            }
+        apiOk(res, req, true, '新增成功');
+    });
+
+    app.put(`/api/master/${cfg.route}/:id`, superAdminRequired, (req, res) => {
+        const id = toNum(req.params.id);
+        let found = false;
+        updateDb((db) => {
+            const row = db.master[cfg.table].find(r => Number(r.id) === id);
+            if (!row) return;
+            Object.assign(row, { ...req.body, updated_time: nowIso() });
+            found = true;
+        });
+        if (!found) return apiErr(res, req, 404, '数据不存在');
+        apiOk(res, req, true, '编辑成功');
+    });
+
+    app.delete(`/api/master/${cfg.route}/:id`, superAdminRequired, (req, res) => {
+        const id = toNum(req.params.id);
+        const db = readDb();
+        const row = db.master[cfg.table].find(r => Number(r.id) === id);
+        if (!row) return apiErr(res, req, 404, '数据不存在');
+        if (db.master[cfg.table].some(r => String(r.parent_code || '') === String(row[cfg.codeField]))) {
+            return apiErr(res, req, 400, '存在子节点，无法删除');
         }
-    } catch (err) {
-        console.warn('[Init] 初始化辅助码失败:', err.message);
+        updateDb((raw) => {
+            raw.master[cfg.table] = raw.master[cfg.table].filter(r => Number(r.id) !== id);
+        });
+        apiOk(res, req, true, '删除成功');
+    });
+});
+
+const relationConfigs = [
+    { route: 'rltn/warehouse-sku', table: 'rltn_warehouse_sku', uniqueKey: ['warehouse_code', 'sku_code'], keywordFields: ['warehouse_code', 'warehouse_name', 'sku_code', 'sku_name'] },
+    { route: 'rltn/org-reseller', table: 'rltn_org_reseller', uniqueKey: ['org_code', 'reseller_code'], keywordFields: ['org_code', 'org_name', 'reseller_code', 'reseller_name'] },
+    { route: 'rltn/product-sku', table: 'rltn_product_sku', uniqueKey: ['product_code', 'sku_code'], keywordFields: ['product_code', 'product_name', 'sku_code', 'sku_name'] }
+];
+
+relationConfigs.forEach((cfg) => {
+    app.get(`/api/master/${cfg.route}`, superAdminRequired, (req, res) => {
+        const { page = 1, pageSize = 20, keyword = '', dateStatus = '', status = '' } = req.query || {};
+        let rows = withMasterFilter(readDb().master[cfg.table], { keyword, status }, cfg.keywordFields);
+        if (dateStatus) rows = rows.filter(r => relationValidity(r) === String(dateStatus));
+        rows.sort((a, b) => toNum(b.id) - toNum(a.id));
+        apiOk(res, req, paginate(rows, page, pageSize), '获取成功');
+    });
+
+    app.post(`/api/master/${cfg.route}`, superAdminRequired, (req, res) => {
+        const body = req.body || {};
+        for (const k of cfg.uniqueKey) {
+            if (!body[k]) return apiErr(res, req, 400, `${k}不能为空`);
+        }
+        try {
+            updateDb((db) => {
+                const rows = db.master[cfg.table];
+                const exists = rows.find(r => cfg.uniqueKey.every(k => String(r[k]) === String(body[k])));
+                if (exists) throw new Error('关系已存在');
+                rows.push({
+                    id: nextId(rows),
+                    ...body,
+                    begin_date: toDateKey(body.begin_date),
+                    end_date: toDateKey(body.end_date),
+                    status: toNum(body.status, 1),
+                    created_time: nowIso(),
+                    updated_time: nowIso()
+                });
+            });
+        } catch (error) {
+            return apiErr(res, req, 400, error.message || '新增失败');
+        }
+        apiOk(res, req, true, '新增成功');
+    });
+
+    app.put(`/api/master/${cfg.route}/:id`, superAdminRequired, (req, res) => {
+        const id = toNum(req.params.id);
+        let found = false;
+        updateDb((db) => {
+            const row = db.master[cfg.table].find(r => Number(r.id) === id);
+            if (!row) return;
+            Object.assign(row, {
+                ...req.body,
+                begin_date: req.body?.begin_date !== undefined ? toDateKey(req.body.begin_date) : row.begin_date,
+                end_date: req.body?.end_date !== undefined ? toDateKey(req.body.end_date) : row.end_date,
+                updated_time: nowIso()
+            });
+            found = true;
+        });
+        if (!found) return apiErr(res, req, 404, '数据不存在');
+        apiOk(res, req, true, '编辑成功');
+    });
+
+    app.delete(`/api/master/${cfg.route}/:id`, superAdminRequired, (req, res) => {
+        const id = toNum(req.params.id);
+        let found = false;
+        updateDb((db) => {
+            const row = db.master[cfg.table].find(r => Number(r.id) === id);
+            if (!row) return;
+            row.status = 0;
+            row.updated_time = nowIso();
+            found = true;
+        });
+        if (!found) return apiErr(res, req, 404, '数据不存在');
+        apiOk(res, req, true, '删除成功');
+    });
+
+    app.delete(`/api/master/${cfg.route}/batch`, superAdminRequired, (req, res) => {
+        const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(v => toNum(v)).filter(v => !Number.isNaN(v)) : [];
+        if (!ids.length) return apiErr(res, req, 400, '请先选择数据');
+        updateDb((db) => {
+            db.master[cfg.table].forEach(row => {
+                if (ids.includes(Number(row.id))) {
+                    row.status = 0;
+                    row.updated_time = nowIso();
+                }
+            });
+        });
+        apiOk(res, req, true, `已处理 ${ids.length} 条数据`);
+    });
+});
+
+app.get('/api/master/calendar/month', superAdminRequired, (req, res) => {
+    const year = String(req.query?.year || '');
+    const month = String(req.query?.month || '').padStart(2, '0');
+    const prefix = `${year}-${month}-`;
+    const rows = readDb().master.calendar.filter(r => String(r.cal_date).startsWith(prefix));
+    apiOk(res, req, rows, '获取成功');
+});
+
+app.get('/api/master/calendar', superAdminRequired, (req, res) => {
+    const { year = '2026', month = '', isHoliday = '', isWorkday = '', page = 1, pageSize = 50 } = req.query || {};
+    let rows = readDb().master.calendar.filter(r => String(r.cal_date).startsWith(`${year}-`));
+    if (month) rows = rows.filter(r => String(r.cal_date).slice(5, 7) === String(month).padStart(2, '0'));
+    if (isHoliday !== '') rows = rows.filter(r => String(r.is_holiday) === String(isHoliday));
+    if (isWorkday !== '') rows = rows.filter(r => String(r.is_workday) === String(isWorkday));
+    rows.sort((a, b) => String(a.cal_date).localeCompare(String(b.cal_date)));
+    apiOk(res, req, paginate(rows, page, pageSize), '获取成功');
+});
+
+app.put('/api/master/calendar/:id', superAdminRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const body = req.body || {};
+    let found = false;
+    updateDb((db) => {
+        const row = db.master.calendar.find(c => Number(c.id) === id);
+        if (!row) return;
+        row.is_workday = body.is_workday !== undefined ? toNum(body.is_workday, row.is_workday) : row.is_workday;
+        row.is_holiday = body.is_holiday !== undefined ? toNum(body.is_holiday, row.is_holiday) : row.is_holiday;
+        row.holiday_name = body.holiday_name !== undefined ? String(body.holiday_name) : row.holiday_name;
+        row.remark = body.remark !== undefined ? String(body.remark) : row.remark;
+        row.updated_time = nowIso();
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '数据不存在');
+    apiOk(res, req, true, '更新成功');
+});
+
+app.post('/api/master/import', superAdminRequired, upload.single('file'), (req, res) => {
+    const tableType = String(req.body?.tableType || '').toUpperCase();
+    if (!req.file) return apiErr(res, req, 400, '请上传文件');
+    if (!['SKU', 'RESELLER_RLTN'].includes(tableType)) return apiErr(res, req, 400, '暂不支持该表类型导入');
+
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    let successCount = 0;
+    const errors = [];
+
+    updateDb((db) => {
+        if (tableType === 'SKU') {
+            rows.forEach((r, idx) => {
+                const skuCode = String(r.sku_code || r['SKU编码'] || r['编码'] || '').trim();
+                const skuName = String(r.sku_name || r['SKU名称'] || r['名称'] || '').trim();
+                if (!skuCode || !skuName) {
+                    errors.push({ rowNumber: idx + 2, error: '缺少SKU编码或SKU名称' });
+                    return;
+                }
+                const target = db.master.sku.find(s => s.sku_code === skuCode);
+                const payload = {
+                    sku_code: skuCode,
+                    sku_name: skuName,
+                    bar_code: String(r.bar_code || r['69码'] || ''),
+                    category_code: String(r.category_code || r['品类编码'] || ''),
+                    lifecycle_status: String(r.lifecycle_status || r['生命周期'] || 'ACTIVE'),
+                    shelf_life_days: toNum(r.shelf_life_days || r['保质期(天)'] || r['保质期'] || 0),
+                    unit_ratio: Number(r.unit_ratio || r['单位换算'] || 1),
+                    volume_m3: Number(r.volume_m3 || r['规格体积(m³)'] || 0),
+                    status: 1,
+                    updated_time: nowIso()
+                };
+                if (target) Object.assign(target, payload);
+                else db.master.sku.push({ id: nextId(db.master.sku), ...payload, created_time: nowIso() });
+                successCount += 1;
+            });
+        } else {
+            rows.forEach((r, idx) => {
+                const skuCode = String(r.sku_code || r['SKU编码'] || '').trim();
+                const resellerCode = String(r.reseller_code || r['经销商编码'] || '').trim();
+                const beginDate = toDateKey(r.begin_date || r['生效开始日期'] || r['开始日期']);
+                const endDate = toDateKey(r.end_date || r['生效结束日期'] || r['结束日期']);
+                if (!skuCode || !resellerCode || !beginDate || !endDate) {
+                    errors.push({ rowNumber: idx + 2, error: '缺少关键字段' });
+                    return;
+                }
+                if (beginDate > endDate) {
+                    errors.push({ rowNumber: idx + 2, error: '开始日期晚于结束日期' });
+                    return;
+                }
+                const payload = {
+                    sku_code: skuCode,
+                    reseller_code: resellerCode,
+                    reseller_name: String(r.reseller_name || r['经销商名称'] || ''),
+                    region: String(r.region || r['所属大区'] || ''),
+                    channel_type: String(r.channel_type || r['渠道类型'] || 'DIST'),
+                    begin_date: beginDate,
+                    end_date: endDate,
+                    price_grade: String(r.price_grade || r['价格等级'] || 'A'),
+                    quota_cases: toNum(r.quota_cases || r['月度配额(箱)'] || 0),
+                    status: 1,
+                    updated_time: nowIso()
+                };
+                const target = db.master.reseller_relation.find(s => s.sku_code === skuCode && s.reseller_code === resellerCode);
+                if (target) Object.assign(target, payload);
+                else db.master.reseller_relation.push({ id: nextId(db.master.reseller_relation), ...payload, created_time: nowIso() });
+                successCount += 1;
+            });
+        }
+    });
+
+    const failCount = errors.length;
+    const totalCount = rows.length;
+    const status = failCount === 0 ? 'SUCCESS' : (successCount > 0 ? 'PARTIAL_SUCCESS' : 'FAILED');
+    const summary = {
+        tableType,
+        totalRows: totalCount,
+        totalCount,
+        successCount,
+        failCount,
+        errorCount: failCount,
+        errors
+    };
+    const task = appendTaskRecord('IMPORT', {
+        bizType: tableType,
+        taskName: `${tableType} 导入`,
+        fileName: req.file.originalname || '',
+        operatorId: req.user?.id,
+        operatorName: req.user?.nickname || req.user?.username || '',
+        requestPath: req.originalUrl || req.path || '',
+        querySnapshot: { tableType },
+        status,
+        totalCount,
+        successCount,
+        failCount,
+        resultMessage: `导入处理完成：成功 ${successCount}，失败 ${failCount}`,
+        resultPayload: summary
+    });
+    if (task) {
+        appendNotification({
+            title: '导入任务完成',
+            content: `${tableType} 导入完成，成功 ${successCount}，失败 ${failCount}`,
+            bizType: 'IMPORT_TASK',
+            bizId: task.id,
+            receiverId: req.user?.id,
+            receiverName: req.user?.nickname || req.user?.username || ''
+        });
     }
+    appendOperationLog(req, {
+        moduleCode: 'import_task',
+        bizObjectType: 'import_task',
+        bizObjectId: task?.id || '',
+        actionType: 'IMPORT',
+        resultStatus: status === 'FAILED' ? 'FAILED' : 'SUCCESS',
+        message: `${tableType} 导入，成功 ${successCount}，失败 ${failCount}`,
+        requestSummary: { tableType, fileName: req.file.originalname || '' },
+        afterSnapshot: task
+    });
+
+    apiOk(res, req, {
+        ...summary,
+        taskId: task?.id || null
+    }, '导入处理完成');
+});
+
+app.use((err, req, res, next) => {
+    console.error('[Unhandled Error]', err);
+    if (res.headersSent) return next(err);
+    apiErr(res, req, 500, err?.message || '服务器内部错误');
+});
+
+app.listen(PORT, () => {
+    console.log(`[Local API] Server running on http://localhost:${PORT}`);
+    console.log(`[Local API] Data file: ${DB_FILE}`);
 });

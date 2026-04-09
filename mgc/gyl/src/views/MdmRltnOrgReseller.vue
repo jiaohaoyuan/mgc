@@ -44,12 +44,12 @@ const formRules = {
       <el-row :gutter="12">
         <el-col :span="12">
           <el-form-item label="组织编码" prop="org_code">
-            <el-input v-model="form.org_code" :disabled="isEdit" placeholder="如：ORG-001" />
+          <el-input v-model="form.org_code" :disabled="isEdit" placeholder="例如：ORG-001" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="经销商编码" prop="reseller_code">
-            <el-input v-model="form.reseller_code" :disabled="isEdit" placeholder="如：RS-001" />
+          <el-input v-model="form.reseller_code" :disabled="isEdit" placeholder="例如：RS-001" />
           </el-form-item>
         </el-col>
       </el-row>

@@ -71,7 +71,7 @@ const formRules = {
       <el-row :gutter="12">
         <el-col :span="12">
           <el-form-item label="仓库编码" prop="warehouse_code">
-            <el-input v-model="form.warehouse_code" :disabled="isEdit" placeholder="如：WH-CDC-001" />
+          <el-input v-model="form.warehouse_code" :disabled="isEdit" placeholder="例如：WH-CDC-001" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -83,7 +83,7 @@ const formRules = {
       <el-row :gutter="12">
         <el-col :span="12">
           <el-form-item label="一级类型" prop="lv1_type_name">
-            <el-input v-model="form.lv1_type_name" placeholder="如：CDC" />
+          <el-input v-model="form.lv1_type_name" placeholder="例如：CDC" />
           </el-form-item>
         </el-col>
         <el-col :span="12">

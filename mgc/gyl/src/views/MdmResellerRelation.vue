@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -7,7 +7,7 @@ import {
 } from '@element-plus/icons-vue'
 import axios from 'axios'
 
-// ─── 状态 ─────────────────────────────────────────────────
+// 状态
 const loading = ref(false)
 const tableData = ref<any[]>([])
 const total = ref(0)
@@ -22,7 +22,7 @@ const queryParams = reactive({
   validity: ''
 })
 
-// ─── 列表查询 ─────────────────────────────────────────────
+// 列表查询
 const fetchList = async () => {
   loading.value = true
   try {
@@ -49,11 +49,14 @@ const handleReset = () => {
 
 const handleSelectionChange = (sel: any[]) => { selectedRows.value = sel }
 const selectedIds = computed(() => selectedRows.value.map(r => r.id))
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`
+}))
 
 // 切换页码时自动清除勾选（避免跨页操作混乱）
 watch(() => queryParams.page, () => { selectedRows.value = [] })
 
-// ─── 新增/编辑 弹窗 ──────────────────────────────────────────
+// 新增/编辑弹窗
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增授权关系')
 const formRef = ref()
@@ -111,7 +114,7 @@ const openEdit = (row: any) => {
 }
 
 const submitForm = async () => {
-  // 先校验表单，失败则直接返回（避免溧出 Unhandled Promise Rejection）
+  // 先校验表单，失败则直接返回，避免抛出未处理异常
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
   try {
@@ -133,11 +136,11 @@ const submitForm = async () => {
   }
 }
 
-// ─── 单条撤销 ───────────────────────────────────────────────
+// 单条撤销
 const handleDelete = async (row: any) => {
   try {
     await ElMessageBox.confirm(
-      `确认撤销【${row.sku_code}】对【${row.reseller_name || row.reseller_code}】的授权？此操作为逻辑删除。`,
+      `确认撤销【${row.sku_code}】对【${row.reseller_name || row.reseller_code}】的授权吗？此操作为逻辑删除。`,
       '撤销授权确认',
       { type: 'warning', confirmButtonText: '确认撤销', cancelButtonText: '取消' }
     )
@@ -155,12 +158,12 @@ const handleDelete = async (row: any) => {
   }
 }
 
-// ─── 批量撤销（逻辑删除）──────────────────────────────────────
+// 批量撤销（逻辑删除）
 const handleBatchDelete = async () => {
   if (!selectedIds.value.length) return ElMessage.warning('请先勾选要撤销的授权关系')
   try {
     await ElMessageBox.confirm(
-      `确认批量撤销选中的 ${selectedIds.value.length} 条授权关系？此操作为逻辑删除，可恢复。`,
+      `确认批量撤销选中的 ${selectedIds.value.length} 条授权关系吗？此操作为逻辑删除，可恢复。`,
       '批量撤销确认',
       { type: 'warning', confirmButtonText: '确认撤销', cancelButtonText: '取消' }
     )
@@ -179,7 +182,7 @@ const handleBatchDelete = async () => {
   }
 }
 
-// ─── 导入相关 ─────────────────────────────────────────────────
+// 导入相关
 const importDialogVisible = ref(false)
 const fileList = ref<any[]>([])
 const uploading = ref(false)
@@ -191,11 +194,11 @@ const beforeUpload = (file: File) => {
     file.type === 'application/vnd.ms-excel' ||
     file.name.endsWith('.xlsx')
   if (!isExcel) {
-    ElMessage.error('仅支持上传 .xlsx 格式文件！')
+    ElMessage.error('仅支持上传 .xlsx 格式文件')
     return false
   }
   if (file.size / 1024 / 1024 > 10) {
-    ElMessage.error('文件大小不能超过 10MB！')
+    ElMessage.error('文件大小不能超过 10MB')
     return false
   }
   uploading.value = true
@@ -229,7 +232,7 @@ const handleDownloadTemplate = async () => {
   xlsx.writeFile(wb, '经销关系授权_导入模板.xlsx')
 }
 
-// ─── 导出（按当前筛选条件）──────────────────────────────────────
+// 导出（按当前筛选条件）
 const handleExport = async () => {
   try {
     const res = await axios.get('/master/RESELLER_RLTN/export', {
@@ -240,12 +243,15 @@ const handleExport = async () => {
         validity: queryParams.validity
       }
     })
-    if (!res.data.data || res.data.data.length === 0) {
+    const payload = res.data?.data
+    const rows = Array.isArray(payload) ? payload : (Array.isArray(payload?.list) ? payload.list : [])
+    const taskId = Array.isArray(payload) ? null : payload?.taskId
+    if (!rows.length) {
       return ElMessage.warning('当前筛选条件下暂无数据可导出')
     }
     const xlsx = await import('xlsx')
     const fmt = (d: any) => d ? String(d).split('T')[0] : ''
-    const exportData = res.data.data.map((r: any) => ({
+    const exportData = rows.map((r: any) => ({
       'SKU编码': r.sku_code,
       '经销商编码': r.reseller_code,
       '经销商名称': r.reseller_name,
@@ -265,19 +271,19 @@ const handleExport = async () => {
     const now = new Date()
     const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`
     xlsx.writeFile(wb, `经销关系授权_${ts}.xlsx`)
-    ElMessage.success(`成功导出 ${exportData.length} 条数据`)
+    ElMessage.success(taskId ? `成功导出 ${exportData.length} 条数据，任务ID: ${taskId}` : `成功导出 ${exportData.length} 条数据`)
   } catch (e: any) {
     ElMessage.error(e.response?.data?.msg || '导出失败')
   }
 }
 
-// ─── 工具函数 ──────────────────────────────────────────────────
+// 工具函数
 /** 日期格式化：只取日期部分，兼容 ISO 字符串 */
 const fmtDate = (d: any) => d ? String(d).split('T')[0] : '-'
 
 /**
  * 有效性判断：用字符串比较代替 new Date()，性能更好
- * yyyy-MM-dd 字符串的字典序与日期大小顺序一致，可以直接比较
+ * yyyy-MM-dd 字符串的字典序与日期大小顺序一致，可直接比较
  */
 const validityTag = (row: any) => {
   const todayStr = new Date().toISOString().slice(0, 10)
@@ -312,13 +318,13 @@ onMounted(fetchList)
 
 <template>
   <div class="mdm-container">
-    <!-- ── 页头 ── -->
+    <!-- 页头 -->
     <div class="page-header">
       <div class="page-title">
-        <span class="title-icon">🤝</span>
+        <span class="title-icon">馃</span>
         <div>
           <h2>经销关系授权管理</h2>
-          <p class="subtitle">Master Data Management · SKU × 经销商授权</p>
+          <p class="subtitle">Master Data Management 路 SKU × 经销商授权</p>
         </div>
       </div>
       <div class="header-actions">
@@ -335,7 +341,7 @@ onMounted(fetchList)
       </div>
     </div>
 
-    <!-- ── 筛选栏 ── -->
+    <!-- 筛选栏 -->
     <div class="filter-bar">
       <el-form :inline="true" :model="queryParams" @submit.prevent="handleSearch" class="filter-form">
         <el-form-item label="关键字">
@@ -380,14 +386,13 @@ onMounted(fetchList)
       </el-form>
     </div>
 
-    <!-- ── 已选提示 ── -->
+    <!-- 已选提示 -->
     <div v-if="selectedIds.length" class="selection-bar">
       <el-icon><Link /></el-icon>
-      已选择 <b>{{ selectedIds.length }}</b> 条授权关系
-      <el-button link type="primary" @click="selectedRows = []" style="margin-left:8px">清除</el-button>
+      已选择 <b>{{ selectedIds.length }}</b> 条授权关系 <el-button link type="primary" @click="selectedRows = []" style="margin-left:8px">清除</el-button>
     </div>
 
-    <!-- ── 表格 ── -->
+    <!-- 表格 -->
     <el-table
       v-loading="loading"
       :data="tableData"
@@ -462,7 +467,7 @@ onMounted(fetchList)
       </el-table-column>
     </el-table>
 
-    <!-- ── 分页 ── -->
+    <!-- 分页 -->
     <div class="pagination-wrapper">
       <el-pagination
         v-model:current-page="queryParams.page"
@@ -476,7 +481,7 @@ onMounted(fetchList)
       />
     </div>
 
-    <!-- ══ 新增/编辑 弹窗 ══ -->
+    <!-- 新增/编辑弹窗 -->
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
@@ -496,12 +501,12 @@ onMounted(fetchList)
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="SKU编码" prop="sku_code">
-              <el-input v-model="form.sku_code" :disabled="isEdit" placeholder="如：SKU-P001" id="form-rltn-sku" />
+              <el-input v-model="form.sku_code" :disabled="isEdit" placeholder="例如：SKU-P001" id="form-rltn-sku" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="经销商编码" prop="reseller_code">
-              <el-input v-model="form.reseller_code" :disabled="isEdit" placeholder="如：DIST-苏州" id="form-rltn-reseller" />
+              <el-input v-model="form.reseller_code" :disabled="isEdit" placeholder="例如：DIST-苏州" id="form-rltn-reseller" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -571,7 +576,7 @@ onMounted(fetchList)
       </template>
     </el-dialog>
 
-    <!-- ══ Excel 导入弹窗 ══ -->
+    <!-- Excel 导入弹窗 -->
     <el-dialog
       v-model="importDialogVisible"
       title="经销关系授权 批量导入"
@@ -583,14 +588,13 @@ onMounted(fetchList)
       <div v-if="!importResult">
         <el-alert type="info" :closable="false" show-icon style="margin-bottom:16px">
           <template #default>
-            自动识别已存在的 (SKU + 经销商) 组合并覆盖更新日期；新组合直接新增。
-            <el-button link type="primary" @click="handleDownloadTemplate" style="margin-left:8px" id="btn-rltn-template">下载模板</el-button>
+            自动识别已存在的 (SKU + 经销商) 组合并覆盖更新日期；新组合直接新增。<el-button link type="primary" @click="handleDownloadTemplate" style="margin-left:8px" id="btn-rltn-template">下载模板</el-button>
           </template>
         </el-alert>
         <el-upload
           drag
           action="http://localhost:3000/api/master/import"
-          :headers="{ Authorization: 'Bearer ' + (localStorage.getItem('accessToken') || '') }"
+          :headers="uploadHeaders"
           :data="{ tableType: 'RESELLER_RLTN' }"
           :before-upload="beforeUpload"
           :on-success="handleImportSuccess"
@@ -603,7 +607,7 @@ onMounted(fetchList)
           <el-icon class="el-icon--upload" style="font-size:48px; color:#409eff;"><upload-filled /></el-icon>
           <div class="el-upload__text">拖拽 .xlsx 到此处，或 <em>点击选择</em></div>
           <template #tip>
-            <div class="el-upload__tip">日期格式 YYYY-MM-DD，最大 10,000 行，不超过 10MB</div>
+            <div class="el-upload__tip">日期格式 YYYY-MM-DD，最多 10,000 行，不超过 10MB</div>
           </template>
         </el-upload>
       </div>
@@ -642,7 +646,7 @@ onMounted(fetchList)
   min-height: calc(100vh - 60px);
 }
 
-/* ─ 页头 ─ */
+/* 页头 */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -679,7 +683,7 @@ onMounted(fetchList)
   flex-wrap: wrap;
 }
 
-/* ─ 筛选栏 ─ */
+/* 筛选栏 */
 .filter-bar {
   background: #fff;
   border-radius: 12px;
@@ -688,7 +692,7 @@ onMounted(fetchList)
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
 
-/* ─ 已选 ─ */
+/* 已选 */
 .selection-bar {
   display: flex;
   align-items: center;
@@ -702,7 +706,7 @@ onMounted(fetchList)
   margin-bottom: 12px;
 }
 
-/* ─ 表格 ─ */
+/* 表格 */
 .rltn-table {
   border-radius: 12px;
   overflow: hidden;
@@ -743,7 +747,7 @@ onMounted(fetchList)
 .date-sep { color: #9ca3af; }
 .date-end { color: #374151; }
 
-/* ─ 分页 ─ */
+/* 分页 */
 .pagination-wrapper {
   display: flex;
   justify-content: flex-end;
@@ -754,7 +758,7 @@ onMounted(fetchList)
   margin-top: -1px;
 }
 
-/* ─ 弹窗 ─ */
+/* 弹窗 */
 .rltn-dialog :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
   border-radius: 12px 12px 0 0;
@@ -771,3 +775,4 @@ onMounted(fetchList)
   border-radius: 12px;
 }
 </style>
+

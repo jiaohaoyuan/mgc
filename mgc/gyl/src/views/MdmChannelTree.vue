@@ -44,7 +44,7 @@ const formRules = {
 
     <template #form="{ form, isEdit }">
       <el-form-item label="渠道编码" prop="channel_code">
-        <el-input v-model="form.channel_code" :disabled="isEdit" placeholder="如：CH-L1-001" />
+          <el-input v-model="form.channel_code" :disabled="isEdit" placeholder="例如：CH-L1-001" />
       </el-form-item>
       <el-form-item label="渠道名称" prop="channel_name">
         <el-input v-model="form.channel_name" placeholder="如：线上渠道" />

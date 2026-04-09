@@ -47,12 +47,12 @@ const formRules = {
       <el-row :gutter="12">
         <el-col :span="12">
           <el-form-item label="产品编码" prop="product_code">
-            <el-input v-model="form.product_code" :disabled="isEdit" placeholder="如：PRD-001" />
+          <el-input v-model="form.product_code" :disabled="isEdit" placeholder="例如：PRD-001" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="SKU编码" prop="sku_code">
-            <el-input v-model="form.sku_code" :disabled="isEdit" placeholder="如：SKU-P001" />
+          <el-input v-model="form.sku_code" :disabled="isEdit" placeholder="例如：SKU-P001" />
           </el-form-item>
         </el-col>
       </el-row>

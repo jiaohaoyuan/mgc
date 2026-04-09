@@ -301,7 +301,7 @@ async function handleSubmit() {
           <el-input v-model="formData.name" placeholder="如：奶牛育种专员" />
         </el-form-item>
         <el-form-item label="岗位编码" prop="code">
-          <el-input v-model="formData.code" placeholder="如：POST_BREED" />
+              <el-input v-model="formData.code" placeholder="例如：POST_BREED" />
         </el-form-item>
         <el-form-item label="归属部门" prop="deptIds">
           <el-cascader

@@ -45,7 +45,7 @@ const formRules = {
 
     <template #form="{ form, isEdit }">
       <el-form-item label="品类编码" prop="category_code">
-        <el-input v-model="form.category_code" :disabled="isEdit" placeholder="如：CAT-L3-001" />
+          <el-input v-model="form.category_code" :disabled="isEdit" placeholder="例如：CAT-L3-001" />
       </el-form-item>
       <el-form-item label="品类名称" prop="category_name">
         <el-input v-model="form.category_name" placeholder="如：低温鲜奶" />

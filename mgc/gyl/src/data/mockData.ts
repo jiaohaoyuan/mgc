@@ -353,6 +353,8 @@ export interface RoleItem {
     status: number
     permissionIds: number[]   // 拥有的权限节点ID
     postIds: number[]         // 关联的岗位ID（一角色多岗位）
+    dataScopeType?: string
+    dataScopeConfig?: Record<string, unknown>
     remark?: string
     createTime: string
 }

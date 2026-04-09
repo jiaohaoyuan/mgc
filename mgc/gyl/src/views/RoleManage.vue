@@ -1,10 +1,10 @@
-<!-- 这个文件是什么作用显示的是什么：这是角色管理页面。显示/实现的是：系统角色的列表以及为各个角色分配特定权限的界面。 -->
+<!-- 角色管理页面：系统角色列表与权限分配 -->
 <script setup lang="ts">
 /**
  * 角色管理页面
- * 实现角色CRUD，带Tabs编辑界面：
+ * 实现角色 CRUD，带 Tabs 编辑界面
  *   Tab 1 - 功能权限：树形复选框（含按钮级权限）
- *   Tab 2 - 关联岗位：实现"一角色多岗位"跨部门勾选
+ *   Tab 2 - 关联岗位：实现一角色多岗位、跨部门勾选
  */
 import { ref, reactive, computed, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -61,9 +61,21 @@ const formData = reactive({
   sort: 0,
   status: 1,
   remark: '',
+  dataScopeType: 'ALL',
+  dataScopeConfigText: '{}',
   permissionIds: [] as number[],
   postIds: [] as number[]
 })
+
+const dataScopeOptions = [
+  { label: '全部数据', value: 'ALL' },
+  { label: '本部门', value: 'DEPT' },
+  { label: '本部门及下级', value: 'DEPT_AND_CHILD' },
+  { label: '仅本人', value: 'SELF' },
+  { label: '指定区域', value: 'REGION' },
+  { label: '指定渠道', value: 'CHANNEL' },
+  { label: '指定组织', value: 'ORG' }
+]
 
 const rules = {
   name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
@@ -81,7 +93,7 @@ const postGroups = computed(() => {
   return groups
 })
 
-// 获取权限名称列表（使用 DB 页面表的名称）
+// 获取权限名称列表（使用 DB 页面中的名称）
 function getPermNames(ids: number[]): string[] {
   if (!ids || ids.length === 0) return []
   return ids.map(id => pageNameMap[id]).filter(Boolean) as string[]
@@ -147,6 +159,8 @@ function handleAdd() {
     sort: 0,
     status: 1,
     remark: '',
+    dataScopeType: 'ALL',
+    dataScopeConfigText: '{}',
     permissionIds: [],
     postIds: []
   })
@@ -169,6 +183,8 @@ function handleEdit(row: RoleItem) {
     sort: row.sort,
     status: row.status,
     remark: row.remark || '',
+    dataScopeType: row.dataScopeType || 'ALL',
+    dataScopeConfigText: JSON.stringify(row.dataScopeConfig || {}, null, 2),
     permissionIds: [...row.permissionIds],
     postIds: [...row.postIds]
   })
@@ -225,6 +241,13 @@ async function handleSubmit() {
   const checkedIds = permTreeRef.value?.getCheckedKeys() || []
   const halfCheckedIds = permTreeRef.value?.getHalfCheckedKeys() || []
   const allPermIds = [...checkedIds, ...halfCheckedIds]
+  let dataScopeConfig: Record<string, any> = {}
+  try {
+    dataScopeConfig = formData.dataScopeConfigText ? JSON.parse(formData.dataScopeConfigText) : {}
+  } catch {
+    ElMessage.error('数据范围配置必须是合法 JSON')
+    return
+  }
 
   const payload = {
     id: formData.id,
@@ -232,6 +255,8 @@ async function handleSubmit() {
     code: formData.code,
     sort: formData.sort,
     status: formData.status,
+    dataScopeType: formData.dataScopeType,
+    dataScopeConfig,
     permissionIds: allPermIds,
     postIds: [...formData.postIds],
     remark: formData.remark
@@ -403,7 +428,26 @@ async function handleSubmit() {
             </el-col>
             <el-col :span="4">
               <el-form-item label="状态">
-                <el-switch v-model="formData.status" :active-value="1" :inactive-value="0" active-text="启" inactive-text="停" />
+                <el-switch v-model="formData.status" :active-value="1" :inactive-value="0" active-text="启用" inactive-text="停用" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="16">
+            <el-col :span="8">
+              <el-form-item label="Data Scope">
+                <el-select v-model="formData.dataScopeType" placeholder="Select scope" style="width: 100%">
+                  <el-option v-for="item in dataScopeOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="16">
+              <el-form-item label="Scope JSON">
+                <el-input
+                  v-model="formData.dataScopeConfigText"
+                  type="textarea"
+                  :rows="2"
+                  placeholder='{"regionCodes":["EAST"]}'
+                />
               </el-form-item>
             </el-col>
           </el-row>
@@ -452,7 +496,7 @@ async function handleSubmit() {
           <el-tab-pane label="关联岗位" name="posts">
             <div style="margin-bottom: 12px; font-size: 13px; color: var(--text-secondary)">
               <el-icon><InfoFilled /></el-icon>
-              勾选该角色适用的岗位，支持跨部门多选（实现"一角色多岗位"逻辑）
+              勾选该角色可适配的岗位，支持跨部门多选（实现一角色多岗位逻辑）
             </div>
             <div style="max-height: 340px; overflow-y: auto">
               <div v-for="(posts, groupName) in postGroups" :key="groupName as string" style="margin-bottom: 16px">
@@ -480,7 +524,7 @@ async function handleSubmit() {
               <el-icon><InfoFilled /></el-icon>
               已关联 {{ formData.postIds.length }} 个岗位
               <template v-if="formData.postIds.length > 0">
-                ：{{ getPostNames(formData.postIds).join('、') }}
+                ({{ getPostNames(formData.postIds).join('、') }})
               </template>
             </div>
           </el-tab-pane>
@@ -488,8 +532,8 @@ async function handleSubmit() {
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="handleSubmit">确 定</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>

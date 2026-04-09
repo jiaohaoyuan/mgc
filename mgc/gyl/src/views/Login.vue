@@ -1,11 +1,13 @@
-<!-- 这个文件是什么作用显示的是什么：这是用户登录页面。显示/实现的是：用户名/密码输入框及登录、注册、忘记密码等操作入口。 -->
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
+import { useAppStore } from '@/stores/appStore'
 
 const router = useRouter()
+const route = useRoute()
+const appStore = useAppStore()
 
 const loginForm = reactive({
   username: 'jiaohaoyuan',
@@ -30,13 +32,29 @@ const handleLogin = async () => {
     if (data.code === 200) {
       ElMessage.success(data.msg || '登录成功，欢迎来到供应链决策平台')
       localStorage.setItem('accessToken', data.data.token)
-      localStorage.setItem('isAuthenticated', '1')
       localStorage.setItem('currentUser', JSON.stringify({
-        username: data.data.username,
         nickname: data.data.nickname || data.data.username,
         role: data.data.role
       }))
-      router.push('/department')
+      appStore.setAccessContext({
+        id: data.data.id,
+        username: data.data.username,
+        roleIds: data.data.roleIds || [],
+        roleNames: data.data.roleNames || [],
+        permissionIds: data.data.permissionIds || [],
+        permissionPaths: data.data.permissionPaths || [],
+        isSuperAdmin: Boolean(data.data.isSuperAdmin)
+      })
+
+      const redirectPath = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+      const canUseRedirect = Boolean(
+        redirectPath &&
+        redirectPath.startsWith('/') &&
+        !redirectPath.startsWith('//') &&
+        (redirectPath === '/profile' || appStore.canAccessPath(redirectPath))
+      )
+
+      await router.replace(canUseRedirect ? redirectPath : appStore.getFirstAccessiblePath())
     } else {
       ElMessage.error(data.msg || '账号或密码不正确！')
     }

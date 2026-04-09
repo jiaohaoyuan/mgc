@@ -65,7 +65,7 @@ const formRules = {
       <el-row :gutter="12">
         <el-col :span="12">
           <el-form-item label="工厂编码" prop="factory_code">
-            <el-input v-model="form.factory_code" :disabled="isEdit" placeholder="如：FAC-001" />
+          <el-input v-model="form.factory_code" :disabled="isEdit" placeholder="例如：FAC-001" />
           </el-form-item>
         </el-col>
         <el-col :span="12">

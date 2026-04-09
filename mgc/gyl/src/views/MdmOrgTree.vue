@@ -46,7 +46,7 @@ const formRules = {
 
     <template #form="{ form, isEdit }">
       <el-form-item label="组织编码" prop="org_code">
-        <el-input v-model="form.org_code" :disabled="isEdit" placeholder="如：ORG-001" />
+          <el-input v-model="form.org_code" :disabled="isEdit" placeholder="例如：ORG-001" />
       </el-form-item>
       <el-form-item label="组织名称" prop="org_name">
         <el-input v-model="form.org_name" />

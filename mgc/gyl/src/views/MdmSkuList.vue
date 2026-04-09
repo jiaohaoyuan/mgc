@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -7,7 +7,7 @@ import {
 } from '@element-plus/icons-vue'
 import axios from 'axios'
 
-// ─── 状态 ─────────────────────────────────────────────────
+// 状态
 const loading = ref(false)
 const tableData = ref<any[]>([])
 const total = ref(0)
@@ -20,7 +20,7 @@ const queryParams = reactive({
   lifecycleStatus: ''
 })
 
-// ─── 主数据查询 ─────────────────────────────────────────────
+// 主数据查询
 const fetchList = async () => {
   loading.value = true
   try {
@@ -55,11 +55,14 @@ const handleSelectionChange = (selection: any[]) => {
 }
 
 const selectedIds = computed(() => selectedRows.value.map(r => r.id))
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`
+}))
 
 // 切换页码时自动清除勾选
 watch(() => queryParams.page, () => { selectedRows.value = [] })
 
-// ─── 新增/编辑 弹窗 ──────────────────────────────────────────
+// 新增/编辑弹窗
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增 SKU')
 const formRef = ref()
@@ -112,7 +115,7 @@ const openEdit = (row: any) => {
 }
 
 const submitForm = async () => {
-  // 校验表单，失败直接返回，避免 Unhandled Promise Rejection
+  // 校验表单，失败则直接返回，避免未处理的 Promise 异常
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
   try {
@@ -134,11 +137,11 @@ const submitForm = async () => {
   }
 }
 
-// ─── 单条删除 ───────────────────────────────────────────────
+// 单条删除
 const handleDelete = async (row: any) => {
   try {
     await ElMessageBox.confirm(
-      `确认删除 SKU【${row.sku_name}】？此操作为逻辑删除，数据可恢复。`,
+      `确认删除 SKU【${row.sku_name}】吗？此操作为逻辑删除，数据可恢复。`,
       '删除确认',
       { type: 'warning', confirmButtonText: '确认删除', cancelButtonText: '取消' }
     )
@@ -156,12 +159,12 @@ const handleDelete = async (row: any) => {
   }
 }
 
-// ─── 批量删除 ───────────────────────────────────────────────
+// 批量删除
 const handleBatchDelete = async () => {
   if (!selectedIds.value.length) return ElMessage.warning('请先勾选要删除的数据')
   try {
     await ElMessageBox.confirm(
-      `确认批量删除选中的 ${selectedIds.value.length} 条 SKU？此操作为逻辑删除，可恢复。`,
+      `确认批量删除选中的 ${selectedIds.value.length} 条 SKU 吗？此操作为逻辑删除，可恢复。`,
       '批量删除确认',
       { type: 'warning', confirmButtonText: '确认删除', cancelButtonText: '取消' }
     )
@@ -180,13 +183,13 @@ const handleBatchDelete = async () => {
   }
 }
 
-// ─── 批量启用 / 停用 ─────────────────────────────────────────
+// 批量启用 / 停用
 const handleBatchStatus = async (targetStatus: 'ACTIVE' | 'INACTIVE') => {
   if (!selectedIds.value.length) return ElMessage.warning('请先勾选要操作的数据')
   const label = targetStatus === 'ACTIVE' ? '启用' : '停用'
   try {
     await ElMessageBox.confirm(
-      `确认将选中的 ${selectedIds.value.length} 条 SKU 批量设为【${label}】状态？`,
+      `确认将选中的 ${selectedIds.value.length} 条 SKU 批量设为【${label}】状态吗？`,
       `批量${label}确认`,
       { type: 'warning', confirmButtonText: `确认${label}`, cancelButtonText: '取消' }
     )
@@ -208,7 +211,7 @@ const handleBatchStatus = async (targetStatus: 'ACTIVE' | 'INACTIVE') => {
   }
 }
 
-// ─── 批量操作统一分发（dropdown @command handler）──────────────
+// 批量操作统一分发（dropdown @command handler）
 const handleBatchCommand = (command: string) => {
   if (command === 'ACTIVE' || command === 'INACTIVE') {
     handleBatchStatus(command)
@@ -217,7 +220,7 @@ const handleBatchCommand = (command: string) => {
   }
 }
 
-// ─── Excel 导入 ─────────────────────────────────────────────
+// Excel 导入
 const importDialogVisible = ref(false)
 const fileList = ref<any[]>([])
 const uploading = ref(false)
@@ -229,11 +232,11 @@ const beforeUpload = (file: File) => {
     file.type === 'application/vnd.ms-excel' ||
     file.name.endsWith('.xlsx')
   if (!isExcel) {
-    ElMessage.error('仅支持上传 .xlsx 格式文件！')
+    ElMessage.error('仅支持上传 .xlsx 格式文件')
     return false
   }
   if (file.size / 1024 / 1024 > 10) {
-    ElMessage.error('文件大小不能超过 10MB！')
+    ElMessage.error('文件大小不能超过 10MB')
     return false
   }
   uploading.value = true
@@ -267,17 +270,20 @@ const handleDownloadTemplate = async () => {
   xlsx.writeFile(wb, 'SKU_导入模板.xlsx')
 }
 
-// ─── Excel 导出（按当前筛选条件）──────────────────────────────
+// Excel 导出（按当前筛选条件）
 const handleExport = async () => {
   try {
     const res = await axios.get('/master/SKU/export', {
       params: { keyword: queryParams.keyword, lifecycleStatus: queryParams.lifecycleStatus }
     })
-    if (!res.data.data || res.data.data.length === 0) {
+    const payload = res.data?.data
+    const rows = Array.isArray(payload) ? payload : (Array.isArray(payload?.list) ? payload.list : [])
+    const taskId = Array.isArray(payload) ? null : payload?.taskId
+    if (!rows.length) {
       return ElMessage.warning('当前筛选条件下暂无数据可导出')
     }
     const xlsx = await import('xlsx')
-    const exportData = res.data.data.map((r: any) => ({
+    const exportData = rows.map((r: any) => ({
       'SKU编码': r.sku_code,
       'SKU名称': r.sku_name,
       '69码/国际码': r.bar_code,
@@ -300,13 +306,13 @@ const handleExport = async () => {
     const now = new Date()
     const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`
     xlsx.writeFile(wb, `SKU主数据导出_${ts}.xlsx`)
-    ElMessage.success(`成功导出 ${exportData.length} 条数据`)
+    ElMessage.success(taskId ? `成功导出 ${exportData.length} 条数据，任务ID: ${taskId}` : `成功导出 ${exportData.length} 条数据`)
   } catch (e: any) {
     ElMessage.error(e.response?.data?.msg || '导出失败')
   }
 }
 
-// ─── 工具 ────────────────────────────────────────────────────
+// 工具
 const lifecycleTagType = (status: string) => {
   const map: Record<string, string> = { ACTIVE: 'success', INACTIVE: 'warning', OBSOLETE: 'info' }
   return (map[status] || 'info') as any
@@ -321,13 +327,13 @@ onMounted(fetchList)
 
 <template>
   <div class="mdm-container">
-    <!-- ── 页头 ── -->
+    <!-- 页头 -->
     <div class="page-header">
       <div class="page-title">
-        <span class="title-icon">📦</span>
+        <span class="title-icon">馃摝</span>
         <div>
           <h2>SKU 主数据管理</h2>
-          <p class="subtitle">Master Data Management · SKU</p>
+          <p class="subtitle">Master Data Management 路 SKU</p>
         </div>
       </div>
       <div class="header-actions">
@@ -349,13 +355,13 @@ onMounted(fetchList)
       </div>
     </div>
 
-    <!-- ── 筛选栏 ── -->
+    <!-- 筛选栏 -->
     <div class="filter-bar">
       <el-form :inline="true" :model="queryParams" @submit.prevent="handleSearch" class="filter-form">
         <el-form-item label="关键字">
           <el-input
             v-model="queryParams.keyword"
-            placeholder="搜 SKU 编码 / 名称"
+            placeholder="搜索 SKU 编码 / 名称"
             clearable
             style="width: 220px"
             :prefix-icon="Search"
@@ -385,14 +391,13 @@ onMounted(fetchList)
       </el-form>
     </div>
 
-    <!-- ── 已选提示 ── -->
+    <!-- 已选提示 -->
     <div v-if="selectedIds.length" class="selection-bar">
       <el-icon><Check /></el-icon>
-      已选择 <b>{{ selectedIds.length }}</b> 条数据
-      <el-button link type="primary" @click="selectedRows = []" style="margin-left:8px">清除选择</el-button>
+      已选择 <b>{{ selectedIds.length }}</b> 条数据 <el-button link type="primary" @click="selectedRows = []" style="margin-left:8px">清除选择</el-button>
     </div>
 
-    <!-- ── 表格 ── -->
+    <!-- 表格 -->
     <el-table
       v-loading="loading"
       :data="tableData"
@@ -458,7 +463,7 @@ onMounted(fetchList)
       </el-table-column>
     </el-table>
 
-    <!-- ── 分页 ── -->
+    <!-- 分页 -->
     <div class="pagination-wrapper">
       <el-pagination
         v-model:current-page="queryParams.page"
@@ -472,7 +477,7 @@ onMounted(fetchList)
       />
     </div>
 
-    <!-- ══ 新增/编辑 弹窗 ══ -->
+    <!-- 新增/编辑弹窗 -->
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
@@ -490,17 +495,17 @@ onMounted(fetchList)
         label-position="left"
       >
         <el-form-item label="SKU编码" prop="sku_code">
-          <el-input v-model="form.sku_code" :disabled="isEdit" placeholder="例：SKU-P001" id="form-sku-code" />
+          <el-input v-model="form.sku_code" :disabled="isEdit" placeholder="例如：SKU-P001" id="form-sku-code" />
           <div v-if="isEdit" class="form-hint">编辑时 SKU 编码不可更改</div>
         </el-form-item>
         <el-form-item label="SKU名称" prop="sku_name">
-          <el-input v-model="form.sku_name" placeholder="例：认养一头牛 全脂纯牛奶 200ml×12盒" id="form-sku-name" />
+          <el-input v-model="form.sku_name" placeholder="例如：认养一头牛 全脂纯牛奶200ml×12盒" id="form-sku-name" />
         </el-form-item>
         <el-form-item label="69码">
           <el-input v-model="form.bar_code" placeholder="国际条形码（可选）" id="form-bar-code" />
         </el-form-item>
         <el-form-item label="品类编码">
-          <el-input v-model="form.category_code" placeholder="例：MILK-FRESH（可选）" id="form-category-code" />
+          <el-input v-model="form.category_code" placeholder="例如：MILK-FRESH（可选）" id="form-category-code" />
         </el-form-item>
         <el-form-item label="生命周期" prop="lifecycle_status">
           <el-select v-model="form.lifecycle_status" style="width: 100%" id="form-lifecycle-status">
@@ -533,7 +538,7 @@ onMounted(fetchList)
       </template>
     </el-dialog>
 
-    <!-- ══ Excel 导入弹窗 ══ -->
+    <!-- 鈺愨晲 Excel 导入弹窗 鈺愨晲 -->
     <el-dialog
       v-model="importDialogVisible"
       title="SKU 批量导入 (Upsert)"
@@ -545,8 +550,7 @@ onMounted(fetchList)
       <div v-if="!importResult">
         <el-alert type="info" :closable="false" show-icon style="margin-bottom: 16px">
           <template #default>
-            支持最大 <b>10,000</b> 行；遇到已有 SKU 编码时自动覆盖更新。
-            <el-button link type="primary" @click="handleDownloadTemplate" style="margin-left:8px" id="btn-download-template">
+            支持最多 <b>10,000</b> 行；遇到已有 SKU 编码时自动覆盖更新。<el-button link type="primary" @click="handleDownloadTemplate" style="margin-left:8px" id="btn-download-template">
               下载导入模板
             </el-button>
           </template>
@@ -554,7 +558,7 @@ onMounted(fetchList)
         <el-upload
           drag
           action="http://localhost:3000/api/master/import"
-          :headers="{ Authorization: 'Bearer ' + (localStorage.getItem('accessToken') || '') }"
+          :headers="uploadHeaders"
           :data="{ tableType: 'SKU' }"
           :before-upload="beforeUpload"
           :on-success="handleImportSuccess"
@@ -567,7 +571,7 @@ onMounted(fetchList)
           <el-icon class="el-icon--upload" style="font-size: 48px; color: #409eff;"><upload-filled /></el-icon>
           <div class="el-upload__text">拖拽 .xlsx 文件到此处，或 <em>点击选择</em></div>
           <template #tip>
-            <div class="el-upload__tip">只能上传 <b>.xlsx</b> 格式文件，单次不超过 10MB</div>
+            <div class="el-upload__tip">仅支持上传 <b>.xlsx</b> 格式文件，单个不超过 10MB</div>
           </template>
         </el-upload>
         <div v-if="uploading" class="uploading-tip">
@@ -609,7 +613,7 @@ onMounted(fetchList)
   min-height: calc(100vh - 60px);
 }
 
-/* ─ 页头 ─ */
+/* 页头 */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -647,7 +651,7 @@ onMounted(fetchList)
   flex-wrap: wrap;
 }
 
-/* ─ 筛选栏 ─ */
+/* 筛选栏 */
 .filter-bar {
   background: #fff;
   border-radius: 12px;
@@ -659,7 +663,7 @@ onMounted(fetchList)
   margin-bottom: 12px;
 }
 
-/* ─ 已选提示 ─ */
+/* 已选提示 */
 .selection-bar {
   display: flex;
   align-items: center;
@@ -676,7 +680,7 @@ onMounted(fetchList)
   font-weight: 700;
 }
 
-/* ─ 表格 ─ */
+/* 表格 */
 .sku-table {
   border-radius: 12px;
   overflow: hidden;
@@ -692,7 +696,7 @@ onMounted(fetchList)
   border-radius: 4px;
 }
 
-/* ─ 分页 ─ */
+/* 分页 */
 .pagination-wrapper {
   display: flex;
   justify-content: flex-end;
@@ -703,7 +707,7 @@ onMounted(fetchList)
   margin-top: -1px;
 }
 
-/* ─ 弹窗 ─ */
+/* 弹窗 */
 .sku-dialog :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px 12px 0 0;
@@ -734,3 +738,4 @@ onMounted(fetchList)
   justify-content: center;
 }
 </style>
+
