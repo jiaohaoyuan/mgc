@@ -167,10 +167,6 @@ export const useAppStore = defineStore('app', () => {
         const path = normalizePath(rawPath)
         if (!path) return true
 
-        if (path.startsWith('/mdm')) {
-            return isSuperAdmin.value
-        }
-
         if (isSuperAdmin.value) {
             return true
         }
@@ -195,6 +191,21 @@ export const useAppStore = defineStore('app', () => {
             '/export-task',
             '/pasture',
             '/intelligent',
+            '/intelligent-closed-loop',
+            '/inventory-ops',
+            '/mdm/sku',
+            '/mdm/reseller-relation',
+            '/mdm/category',
+            '/mdm/warehouse',
+            '/mdm/factory',
+            '/mdm/channel',
+            '/mdm/reseller',
+            '/mdm/org',
+            '/mdm/calendar',
+            '/mdm/rltn/warehouse-sku',
+            '/mdm/rltn/org-reseller',
+            '/mdm/rltn/product-sku',
+            '/mdm/governance',
             '/profile'
         ]
 

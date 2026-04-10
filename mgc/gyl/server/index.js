@@ -12,6 +12,9 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const { DB_FILE, nowIso, readDb, updateDb, nextId } = require('./localDb');
+const { registerOrderPhase2Routes } = require('./orderPhase2');
+const { registerInventoryOpsRoutes } = require('./inventoryOps');
+const { registerMdmGovernanceRoutes } = require('./mdmGovernance');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -49,7 +52,8 @@ const API_PERMISSION_RULES = [
     { matcher: /^\/warehouses(?:\/|$)/, permissionPath: '/intelligent' },
     { matcher: /^\/orders(?:\/|$)/, permissionPath: '/intelligent' },
     { matcher: /^\/order-analysis(?:\/|$)/, permissionPath: '/intelligent' },
-    { matcher: /^\/inventory(?:\/|$)/, permissionPath: '/intelligent' }
+    { matcher: /^\/inventory(?:\/|$)/, permissionPath: '/intelligent' },
+    { matcher: /^\/inventory-ops(?:\/|$)/, permissionPath: '/inventory-ops' }
 ];
 
 const createTraceId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -232,6 +236,46 @@ const resolveApiPermissionPath = (apiPath) => {
     return '';
 };
 
+const resolveMasterPermissionPath = (req) => {
+    const rawPath = normalizePath(String(req.path || req.originalUrl || '').split('?')[0]);
+    const pathNoApi = rawPath.startsWith('/api/') ? rawPath.slice(4) : rawPath;
+    const pathLower = pathNoApi.toLowerCase();
+
+    if (pathLower === '/master/import') {
+        const tableType = String(req.body?.tableType || '').toUpperCase();
+        if (tableType === 'SKU') return '/mdm/sku';
+        if (tableType === 'RESELLER_RLTN') return '/mdm/reseller-relation';
+        return '/mdm/governance';
+    }
+
+    const rules = [
+        [/^\/master\/sku(?:\/|$)/, '/mdm/sku'],
+        [/^\/master\/reseller_rltn(?:\/|$)/, '/mdm/reseller-relation'],
+        [/^\/master\/category(?:\/|$)/, '/mdm/category'],
+        [/^\/master\/warehouse(?:\/|$)/, '/mdm/warehouse'],
+        [/^\/master\/factory(?:\/|$)/, '/mdm/factory'],
+        [/^\/master\/channel(?:\/|$)/, '/mdm/channel'],
+        [/^\/master\/reseller(?:\/|$)/, '/mdm/reseller'],
+        [/^\/master\/org(?:\/|$)/, '/mdm/org'],
+        [/^\/master\/calendar(?:\/|$)/, '/mdm/calendar'],
+        [/^\/master\/rltn\/warehouse-sku(?:\/|$)/, '/mdm/rltn/warehouse-sku'],
+        [/^\/master\/rltn\/org-reseller(?:\/|$)/, '/mdm/rltn/org-reseller'],
+        [/^\/master\/rltn\/product-sku(?:\/|$)/, '/mdm/rltn/product-sku'],
+        [/^\/master\/governance(?:\/|$)/, '/mdm/governance']
+    ];
+
+    for (const [matcher, permissionPath] of rules) {
+        if (matcher.test(pathLower)) return permissionPath;
+    }
+    return '';
+};
+
+const userHasPermissionPath = (req, permissionPath) => {
+    if (!permissionPath) return false;
+    const userPathSet = new Set((req.user?.permissionPaths || []).map(normalizePath));
+    return userPathSet.has(normalizePath(permissionPath));
+};
+
 const getRoleIdsByAccount = (db, accountId) =>
     db.system.account_roles.filter(r => Number(r.account_id) === Number(accountId)).map(r => Number(r.role_id));
 
@@ -315,8 +359,15 @@ const authRequired = (req, res, next) => {
 
 const superAdminRequired = (req, res, next) => {
     if (!ensureAuthedUser(req, res)) return;
-    if (!req.user.isSuperAdmin) return apiErr(res, req, 403, '仅超级管理员可访问');
-    next();
+    if (req.user.isSuperAdmin) return next();
+
+    const masterPermissionPath = resolveMasterPermissionPath(req);
+    if (masterPermissionPath) {
+        if (userHasPermissionPath(req, masterPermissionPath)) return next();
+        return apiErr(res, req, 403, '无权限访问该接口');
+    }
+
+    return apiErr(res, req, 403, '仅超级管理员可访问');
 };
 
 const apiPermissionRequired = (req, res, next) => {
@@ -326,14 +377,12 @@ const apiPermissionRequired = (req, res, next) => {
     if (!ensureAuthedUser(req, res)) return;
 
     if (apiPath.startsWith('/master')) {
-        if (!req.user.isSuperAdmin) return apiErr(res, req, 403, '主数据管理仅超级管理员可访问');
         return next();
     }
 
     const requiredPath = resolveApiPermissionPath(apiPath);
     if (!requiredPath || req.user.isSuperAdmin) return next();
-    const userPathSet = new Set((req.user.permissionPaths || []).map(normalizePath));
-    if (!userPathSet.has(normalizePath(requiredPath))) return apiErr(res, req, 403, '无权限访问该接口');
+    if (!userHasPermissionPath(req, requiredPath)) return apiErr(res, req, 403, '无权限访问该接口');
     next();
 };
 
@@ -1568,22 +1617,175 @@ app.get('/api/orders', authRequired, (req, res) => {
 });
 
 app.get('/api/order-analysis', authRequired, (req, res) => {
-    const rows = readDb().biz.orders;
-    const regionStats = rows.reduce((acc, row) => {
+    const db = readDb();
+    const rows = ensureArray(db.biz.orders);
+    const productMap = new Map(ensureArray(db.biz.products).map(item => [item.product_code, item]));
+    const coreRegions = ['华东', '华中', '华南', '华北'];
+    const fallbackWeights = { 华东: 0.31, 华中: 0.22, 华南: 0.24, 华北: 0.23 };
+    const sumLiters = (list) => list.reduce((sum, row) => sum + toNum(row.request_liters, 0), 0);
+    const sumRegionLiters = (list) => list.reduce((acc, row) => {
         const key = row.region || '其他';
         acc[key] = (acc[key] || 0) + toNum(row.request_liters, 0);
         return acc;
     }, {});
+    const allocateCoreRegionStats = (rawStats, forcedWeights = null) => {
+        const coreBaseStats = coreRegions.reduce((acc, key) => {
+            acc[key] = toNum(rawStats[key], 0);
+            return acc;
+        }, {});
+        const coreBaseTotal = Object.values(coreBaseStats).reduce((sum, value) => sum + toNum(value, 0), 0);
+        const nationalDirectLiters = toNum(rawStats['全国'], 0);
+        const weights = coreRegions.reduce((acc, key) => {
+            acc[key] = forcedWeights?.[key] ?? (coreBaseTotal > 0 ? toNum(coreBaseStats[key], 0) / coreBaseTotal : fallbackWeights[key]);
+            return acc;
+        }, {});
+        const allocatedNational = coreRegions.reduce((acc, key, index) => {
+            if (index === coreRegions.length - 1) {
+                const allocated = Object.values(acc).reduce((sum, value) => sum + toNum(value, 0), 0);
+                acc[key] = Math.max(0, nationalDirectLiters - allocated);
+                return acc;
+            }
+            acc[key] = Math.round(nationalDirectLiters * toNum(weights[key], 0));
+            return acc;
+        }, {});
+        const stats = coreRegions.reduce((acc, key) => {
+            acc[key] = toNum(coreBaseStats[key], 0) + toNum(allocatedNational[key], 0);
+            return acc;
+        }, {});
+        return {
+            stats,
+            coreBaseStats,
+            weights,
+            nationalDirectLiters,
+            allocatedNational,
+            coreBaseTotal
+        };
+    };
+
+    const pendingRows = rows.filter(row => row.status === 'Pending');
+    const matchedRows = rows.filter(row => row.status === 'Matched');
+    const rawRegionStats = sumRegionLiters(rows);
+    const pendingRawRegionStats = sumRegionLiters(pendingRows);
+    const matchedRawRegionStats = sumRegionLiters(matchedRows);
+    const regionAllocation = allocateCoreRegionStats(rawRegionStats);
+    const pendingAllocation = allocateCoreRegionStats(pendingRawRegionStats, regionAllocation.weights);
+    const matchedAllocation = allocateCoreRegionStats(matchedRawRegionStats, regionAllocation.weights);
+    const regionStats = regionAllocation.stats;
+    const pendingRegionStats = pendingAllocation.stats;
+    const matchedRegionStats = matchedAllocation.stats;
+    const totalOrders = rows.length;
+    const pendingOrders = pendingRows.length;
+    const matchedOrders = matchedRows.length;
+    const totalLiters = sumLiters(rows);
+    const pendingLiters = sumLiters(pendingRows);
+    const matchedLiters = sumLiters(matchedRows);
+    const coreRegionLiters = Object.values(regionStats).reduce((sum, value) => sum + toNum(value, 0), 0);
+    const corePendingLiters = Object.values(pendingRegionStats).reduce((sum, value) => sum + toNum(value, 0), 0);
+    const lowTempPendingRows = pendingRows.filter(row => productMap.get(row.sku_id)?.material_type === 'LowTemp');
+    const lowTempPendingOrders = lowTempPendingRows.length;
+    const lowTempPendingLiters = sumLiters(lowTempPendingRows);
+    const regionLoad = coreRegions.map((region) => {
+        const liters = toNum(regionStats[region], 0);
+        const regionPendingLiters = toNum(pendingRegionStats[region], 0);
+        const regionPendingRate = liters > 0 ? (regionPendingLiters / liters) * 100 : 0;
+        let alertLevel = 'healthy';
+        if (regionPendingRate >= 55) {
+            alertLevel = 'critical';
+        } else if (regionPendingRate >= 25) {
+            alertLevel = 'attention';
+        }
+        return {
+            region,
+            liters,
+            matchedLiters: toNum(matchedRegionStats[region], 0),
+            pendingLiters: regionPendingLiters,
+            share: coreRegionLiters > 0 ? Number(((liters / coreRegionLiters) * 100).toFixed(1)) : 0,
+            pendingRate: Number(regionPendingRate.toFixed(1)),
+            alertLevel
+        };
+    }).sort((a, b) => b.pendingRate - a.pendingRate || b.pendingLiters - a.pendingLiters);
+    const criticalRegions = regionLoad.filter(item => item.alertLevel === 'critical');
+    const attentionRegions = regionLoad.filter(item => item.alertLevel === 'attention');
+    const westRegionLiters = toNum(rawRegionStats['西南'], 0);
+    const westPendingLiters = toNum(pendingRawRegionStats['西南'], 0);
     const sevenDayTrend = [];
     for (let i = 6; i >= 0; i -= 1) {
         const d = new Date();
         d.setDate(d.getDate() - i);
         const key = toDateKey(d);
-        const liters = rows.filter(r => String(r.create_time).slice(0, 10) === key).reduce((sum, r) => sum + toNum(r.request_liters, 0), 0);
-        sevenDayTrend.push({ date: key, liters });
+        const dayRows = rows.filter(row => String(row.create_time).slice(0, 10) === key);
+        const dayPendingRows = dayRows.filter(row => row.status === 'Pending');
+        const dayAllocation = allocateCoreRegionStats(sumRegionLiters(dayRows));
+        const dayPendingAllocation = allocateCoreRegionStats(sumRegionLiters(dayPendingRows), dayAllocation.weights);
+        sevenDayTrend.push({
+            date: key,
+            coreLiters: Object.values(dayAllocation.stats).reduce((sum, value) => sum + toNum(value, 0), 0),
+            westLiters: toNum(sumRegionLiters(dayRows)['西南'], 0),
+            pendingCoreLiters: Object.values(dayPendingAllocation.stats).reduce((sum, value) => sum + toNum(value, 0), 0),
+            totalLiters: sumLiters(dayRows)
+        });
     }
-    apiOk(res, req, { regionStats, sevenDayTrend }, '获取成功');
+    apiOk(res, req, {
+        totalOrders,
+        totalLiters,
+        pendingOrders,
+        pendingLiters,
+        matchedOrders,
+        matchedLiters,
+        matchRate: totalOrders > 0 ? Number(((matchedOrders / totalOrders) * 100).toFixed(1)) : 0,
+        coreRegionLiters,
+        corePendingLiters,
+        regionStats,
+        pendingRegionStats,
+        matchedRegionStats,
+        regionLoad,
+        rawRegionStats,
+        nationalDirectLiters: regionAllocation.nationalDirectLiters,
+        nationalPendingLiters: pendingAllocation.nationalDirectLiters,
+        westRegionLiters,
+        westPendingLiters,
+        alertSummary: {
+            totalRiskCount: criticalRegions.length + attentionRegions.length + (lowTempPendingOrders > 0 ? 1 : 0),
+            criticalRegionCount: criticalRegions.length,
+            attentionRegionCount: attentionRegions.length,
+            lowTempPendingOrders,
+            lowTempPendingLiters
+        },
+        chartMeta: {
+            title: '四大核心区域订单需求量对比',
+            note: '全国直营/电商需求已按四大区承接份额分摊，西南需求单列观察'
+        },
+        sevenDayTrend
+    }, '获取成功');
 });
+
+registerOrderPhase2Routes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    appendOperationLog,
+    paginate,
+    contains,
+    safeClone
+});
+
+registerInventoryOpsRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate,
+    contains
+});
+
+registerMdmGovernanceRoutes({
+    app,
+    superAdminRequired,
+    apiOk,
+    apiErr
+});
+
 const withMasterFilter = (rows, { keyword = '', status = '' }, fields) => {
     let list = [...rows];
     if (keyword) list = list.filter(r => fields.some(f => contains(r[f], keyword)));

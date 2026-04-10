@@ -330,7 +330,7 @@ onMounted(fetchList)
     <!-- 页头 -->
     <div class="page-header">
       <div class="page-title">
-        <span class="title-icon">馃摝</span>
+        <span class="title-icon">SKU</span>
         <div>
           <h2>SKU 主数据管理</h2>
           <p class="subtitle">Master Data Management 路 SKU</p>

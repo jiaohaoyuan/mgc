@@ -135,6 +135,73 @@ const chartRegionRef = ref<HTMLElement | null>(null)
 const chartTrendRef = ref<HTMLElement | null>(null)
 let chartRegionInstance: echarts.ECharts | null = null
 let chartTrendInstance: echarts.ECharts | null = null
+const coreRegions = ['华东', '华中', '华南', '华北']
+
+const formatWanLiters = (value: number) => (Number(value || 0) / 10000).toFixed(1)
+
+const overviewCards = computed(() => {
+  const data = analysis.value
+  if (!data) {
+    return [
+      { label: '待调度订单', value: '--', meta: '待分配 -- 万L', tone: 'warning' },
+      { label: '已智能匹配', value: '--', meta: '已匹配 -- 万L', tone: 'success' },
+      { label: '匹配完成率', value: '--', meta: '总订单 -- 笔', tone: 'primary' },
+      { label: '核心四区承接量', value: '--', meta: '西南观察 -- 万L', tone: 'info' }
+    ]
+  }
+  return [
+    {
+      label: '待调度订单',
+      value: data.pendingOrders,
+      meta: `待分配 ${formatWanLiters(data.pendingLiters)} 万L`,
+      tone: 'warning'
+    },
+    {
+      label: '已智能匹配',
+      value: data.matchedOrders,
+      meta: `已匹配 ${formatWanLiters(data.matchedLiters)} 万L`,
+      tone: 'success'
+    },
+    {
+      label: '匹配完成率',
+      value: `${Number(data.matchRate || 0).toFixed(1)}%`,
+      meta: `总订单 ${data.totalOrders || 0} 笔`,
+      tone: 'primary'
+    },
+    {
+      label: '核心四区承接量',
+      value: `${formatWanLiters(data.coreRegionLiters)} 万L`,
+      meta: `西南观察 ${formatWanLiters(data.westRegionLiters)} 万L`,
+      tone: 'info'
+    }
+  ]
+})
+
+const warningHighlights = computed(() => {
+  const data = analysis.value
+  if (!data) return []
+  const riskRegions = (data.regionLoad || []).filter((item: any) => item.alertLevel !== 'healthy')
+  return [
+    {
+      label: '区域积压预警',
+      value: `${data.alertSummary?.criticalRegionCount || 0} 个`,
+      meta: riskRegions.length ? riskRegions.filter((item: any) => item.alertLevel === 'critical').map((item: any) => `${item.region} ${item.pendingRate}%`).join(' / ') : '四区负荷平稳',
+      tone: 'critical'
+    },
+    {
+      label: '关注区域',
+      value: `${data.alertSummary?.attentionRegionCount || 0} 个`,
+      meta: `全国待分摊 ${formatWanLiters(data.nationalPendingLiters)} 万L`,
+      tone: 'attention'
+    },
+    {
+      label: '低温待调度',
+      value: `${data.alertSummary?.lowTempPendingOrders || 0} 单`,
+      meta: `${formatWanLiters(data.alertSummary?.lowTempPendingLiters || 0)} 万L`,
+      tone: 'neutral'
+    }
+  ]
+})
 
 const fetchAnalysis = async () => {
   try {
@@ -153,12 +220,20 @@ const renderCharts = () => {
   // 四大区域需求饱和图 (柱状图  + 饼图并排)
   if (chartRegionRef.value) {
     chartRegionInstance = chartRegionInstance || echarts.init(chartRegionRef.value, 'dark')
-    const regions = Object.keys(analysis.value.regionStats)
-    const values = Object.values(analysis.value.regionStats) as number[]
+    const regions = coreRegions
+    const values = regions.map((region) => Number(analysis.value.regionStats?.[region] || 0))
     const total = values.reduce((a, b) => a + b, 0)
     chartRegionInstance.setOption({
       backgroundColor: 'transparent',
-      tooltip: { trigger: 'axis', formatter: (p: any) => `${p[0].name}<br/>需求量: <b>${(p[0].value / 10000).toFixed(1)}万L</b>` },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (p: any) => {
+          const point = p?.[0]
+          if (!point) return ''
+          const percent = total > 0 ? ((Number(point.value || 0) / total) * 100).toFixed(1) : '0.0'
+          return `${point.name}<br/>需求量: <b>${(Number(point.value || 0) / 10000).toFixed(1)}万L</b><br/>核心四区占比: <b>${percent}%</b>`
+        }
+      },
       grid: { left: 36, right: 16, top: 16, bottom: 32 },
       xAxis: { type: 'category', data: regions, axisLabel: { color: '#94a3b8', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#334155' } } },
       yAxis: { type: 'value', axisLabel: { color: '#64748b', formatter: (v: number) => `${(v/10000).toFixed(0)}万L` }, splitLine: { lineStyle: { color: '#1e293b' } } },
@@ -171,7 +246,7 @@ const renderCharts = () => {
             return colors[params.dataIndex % colors.length]
           }
         },
-        label: { show: true, position: 'top', color: '#94a3b8', formatter: (p: any) => `${((p.value / total) * 100).toFixed(1)}%` }
+        label: { show: true, position: 'top', color: '#94a3b8', formatter: (p: any) => `${total > 0 ? ((p.value / total) * 100).toFixed(1) : '0.0'}%` }
       }]
     })
   }
@@ -179,20 +254,80 @@ const renderCharts = () => {
   // 7天涋出货量趋势图
   if (chartTrendRef.value) {
     chartTrendInstance = chartTrendInstance || echarts.init(chartTrendRef.value, 'dark')
-    const trend = analysis.value.sevenDayTrend
+    const trend = analysis.value.sevenDayTrend || []
     chartTrendInstance.setOption({
       backgroundColor: 'transparent',
-      tooltip: { trigger: 'axis', formatter: (p: any) => `${p[0].axisValue}<br/>出货量: <b>${(p[0].value / 10000).toFixed(2)}万L</b>` },
-      grid: { left: 52, right: 16, top: 16, bottom: 32 },
-      xAxis: { type: 'category', data: trend.map((d: any) => d.date), axisLabel: { color: '#94a3b8' }, axisLine: { lineStyle: { color: '#334155' } } },
+      legend: {
+        top: 0,
+        right: 0,
+        textStyle: { color: '#94a3b8', fontSize: 11 },
+        itemWidth: 10,
+        itemHeight: 10,
+        data: ['核心四区承接量', '西南观察量', '待调度量']
+      },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        borderColor: 'rgba(148, 163, 184, 0.2)',
+        textStyle: { color: '#e2e8f0' },
+        formatter: (points: any[]) => {
+          const rows = (points || []).map((point) => `${point.marker}${point.seriesName}: <b>${formatWanLiters(Number(point.value || 0))} 万L</b>`)
+          return [`${points?.[0]?.axisValue || ''}`, ...rows].join('<br/>')
+        }
+      },
+      grid: { left: 52, right: 16, top: 44, bottom: 32 },
+      xAxis: {
+        type: 'category',
+        data: trend.map((d: any) => d.date),
+        axisLabel: { color: '#94a3b8', formatter: (value: string) => value.slice(5) },
+        axisLine: { lineStyle: { color: '#334155' } }
+      },
       yAxis: { type: 'value', axisLabel: { color: '#64748b', formatter: (v: number) => `${(v/10000).toFixed(0)}万L` }, splitLine: { lineStyle: { color: '#1e293b' } } },
-      series: [{
-        type: 'line', data: trend.map((d: any) => d.liters), smooth: true,
-        symbol: 'circle', symbolSize: 8,
-        lineStyle: { color: '#38bdf8', width: 3 },
-        itemStyle: { color: '#38bdf8', borderWidth: 2, borderColor: '#0f172a' },
-        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(56,189,248,0.3)' }, { offset: 1, color: 'rgba(56,189,248,0.02)' }] } }
-      }]
+      series: [
+        {
+          name: '待调度量',
+          type: 'bar',
+          data: trend.map((d: any) => d.pendingCoreLiters),
+          barMaxWidth: 18,
+          itemStyle: {
+            color: 'rgba(239, 68, 68, 0.35)',
+            borderRadius: [4, 4, 0, 0]
+          }
+        },
+        {
+          name: '核心四区承接量',
+          type: 'line',
+          data: trend.map((d: any) => d.coreLiters),
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 8,
+          lineStyle: { color: '#38bdf8', width: 3 },
+          itemStyle: { color: '#38bdf8', borderWidth: 2, borderColor: '#0f172a' },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(56,189,248,0.28)' },
+                { offset: 1, color: 'rgba(56,189,248,0.03)' }
+              ]
+            }
+          }
+        },
+        {
+          name: '西南观察量',
+          type: 'line',
+          data: trend.map((d: any) => d.westLiters),
+          smooth: true,
+          symbol: 'emptyCircle',
+          symbolSize: 7,
+          lineStyle: { color: '#f59e0b', width: 2, type: 'dashed' },
+          itemStyle: { color: '#f59e0b', borderColor: '#0f172a', borderWidth: 2 }
+        }
+      ]
     })
   }
 }
@@ -477,14 +612,18 @@ const getFreshnessProps = (row: any) => {
 
           <!-- 统计摘要 -->
           <div class="stats-mini">
-              <div class="stat-box">
-                  <span class="label">等待调度网点数 / 笔</span>
-                  <span class="val">{{ totalOrders - 350 }}</span>
-              </div>
-              <div class="stat-box">
-                  <span class="label">全网完成匹配数</span>
-                  <span class="val success">350</span> 
-              </div>
+            <div v-for="item in overviewCards" :key="item.label" class="stat-box" :class="`is-${item.tone}`">
+              <span class="label">{{ item.label }}</span>
+              <span class="val">{{ item.value }}</span>
+              <span class="stat-meta">{{ item.meta }}</span>
+            </div>
+          </div>
+          <div v-if="warningHighlights.length" class="warning-strip">
+            <div v-for="item in warningHighlights" :key="item.label" class="warning-pill" :class="`is-${item.tone}`">
+              <span class="warning-pill__label">{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+              <span class="warning-pill__meta">{{ item.meta }}</span>
+            </div>
           </div>
           
           <div class="factor-item">
@@ -519,7 +658,10 @@ const getFreshnessProps = (row: any) => {
       <el-col :span="12">
         <div class="analysis-card">
           <div class="analysis-card-title">
-            <span>&#128202; 四大区域订单需求量对比</span>
+            <div>
+              <span>&#128202; {{ analysis.chartMeta?.title || '四大核心区域订单需求量对比' }}</span>
+              <div class="analysis-note">{{ analysis.chartMeta?.note || '全国直营/电商需求已按四大区承接份额分摊，西南需求单列观察' }}；当前全国直营/电商 {{ formatWanLiters(analysis.nationalDirectLiters || 0) }} 万L，西南 {{ formatWanLiters(analysis.westRegionLiters || 0) }} 万L</div>
+            </div>
             <span class="analysis-sub">华东 / 华中 / 华南 / 华北 (万升)</span>
           </div>
           <div ref="chartRegionRef" style="height: 200px;" />
@@ -529,10 +671,14 @@ const getFreshnessProps = (row: any) => {
       <el-col :span="12">
         <div class="analysis-card">
           <div class="analysis-card-title">
-            <span>&#128200; 近 7 日全网历史出货趋势 (万升)</span>
+            <div>
+              <span>&#128200; 近 7 日核心四区承接趋势 (万升)</span>
+              <div class="analysis-note">核心四区承接量沿用同一分摊逻辑，西南以观察线单列展示，红柱为待调度量</div>
+            </div>
             <div class="kpi-badges">
               <span class="kpi-badge blue">总订单<strong>{{ analysis.totalOrders }}</strong>笔</span>
-              <span class="kpi-badge green">总出货量<strong>{{ (analysis.totalLiters / 10000).toFixed(1) }}</strong>万L</span>
+              <span class="kpi-badge green">核心承接<strong>{{ formatWanLiters(analysis.coreRegionLiters || 0) }}</strong>万L</span>
+              <span class="kpi-badge amber">匹配率<strong>{{ Number(analysis.matchRate || 0).toFixed(1) }}</strong>%</span>
             </div>
           </div>
           <div ref="chartTrendRef" style="height: 200px;" />
@@ -869,17 +1015,19 @@ const getFreshnessProps = (row: any) => {
 
 .stats-mini {
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 
 .stat-box {
-    flex: 1;
+    flex: 1 1 calc(50% - 6px);
     background: #f8fafc;
     padding: 12px;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
-    text-align: center;
+    text-align: left;
+    min-height: 86px;
 }
 
 .stat-box .label {
@@ -896,8 +1044,110 @@ const getFreshnessProps = (row: any) => {
     font-family: monospace;
 }
 
-.stat-box .val.success {
-    color: #10b981;
+.stat-meta {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.stat-box.is-warning {
+    border-color: rgba(245, 158, 11, 0.28);
+    background: linear-gradient(180deg, #fff7ed 0%, #fffbeb 100%);
+}
+
+.stat-box.is-success {
+    border-color: rgba(16, 185, 129, 0.24);
+    background: linear-gradient(180deg, #ecfdf5 0%, #f0fdf4 100%);
+}
+
+.stat-box.is-success .val {
+    color: #059669;
+}
+
+.stat-box.is-primary {
+    border-color: rgba(59, 130, 246, 0.24);
+    background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+}
+
+.stat-box.is-primary .val {
+    color: #2563eb;
+}
+
+.stat-box.is-info {
+    border-color: rgba(14, 165, 233, 0.24);
+    background: linear-gradient(180deg, #f0f9ff 0%, #f8fafc 100%);
+}
+
+.stat-box.is-info .val {
+    color: #0284c7;
+}
+
+.warning-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.warning-pill {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: #f8fafc;
+}
+
+.warning-pill__label,
+.warning-pill__meta {
+  display: block;
+}
+
+.warning-pill__label {
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.warning-pill strong {
+  display: block;
+  font-size: 18px;
+  line-height: 1.2;
+  color: #1e293b;
+}
+
+.warning-pill__meta {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.warning-pill.is-critical {
+  background: linear-gradient(180deg, #fef2f2 0%, #fff7ed 100%);
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+.warning-pill.is-critical strong {
+  color: #dc2626;
+}
+
+.warning-pill.is-attention {
+  background: linear-gradient(180deg, #fff7ed 0%, #fffbeb 100%);
+  border-color: rgba(245, 158, 11, 0.22);
+}
+
+.warning-pill.is-attention strong {
+  color: #d97706;
+}
+
+.warning-pill.is-neutral {
+  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+  border-color: rgba(59, 130, 246, 0.18);
+}
+
+.warning-pill.is-neutral strong {
+  color: #2563eb;
 }
 
 .factor-item {
@@ -961,11 +1211,20 @@ const getFreshnessProps = (row: any) => {
 .analysis-card-title {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 600;
   color: #e2e8f0;
+}
+
+.analysis-note {
+  margin-top: 4px;
+  max-width: 440px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #94a3b8;
+  font-weight: 400;
 }
 
 .analysis-sub {
@@ -994,6 +1253,11 @@ const getFreshnessProps = (row: any) => {
 .kpi-badge.green {
   background: rgba(16,185,129,0.2);
   border: 1px solid rgba(16,185,129,0.4);
+}
+
+.kpi-badge.amber {
+  background: rgba(245,158,11,0.2);
+  border: 1px solid rgba(245,158,11,0.4);
 }
 
 .kpi-badge strong {

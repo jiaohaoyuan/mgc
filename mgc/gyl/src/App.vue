@@ -63,7 +63,9 @@ const navItems: NavItem[] = [
 
 const businessItems: NavItem[] = [
   { path: '/pasture', label: '牧场概览', icon: 'Van' },
-  { path: '/intelligent', label: '智能订购中心', icon: 'Cpu' }
+  { path: '/intelligent', label: '智能订购中心', icon: 'Cpu' },
+  { path: '/intelligent-closed-loop', label: '订单闭环中心', icon: 'Finished' },
+  { path: '/inventory-ops', label: '库存与仓配运营中心', icon: 'Box' }
 ]
 
 const mdmGroups = ref<MdmGroup[]>([
@@ -102,6 +104,12 @@ const mdmGroups = ref<MdmGroup[]>([
       { path: '/mdm/reseller-relation', label: 'SKU-经销关系' },
       { path: '/mdm/rltn/org-reseller', label: '组织-经销关系' },
       { path: '/mdm/rltn/product-sku', label: '产品-SKU转换关系' }
+    ]
+  },
+  {
+    title: '治理平台', icon: 'DataBoard', isOpen: false,
+    children: [
+      { path: '/mdm/governance', label: '主数据治理平台' }
     ]
   }
 ])

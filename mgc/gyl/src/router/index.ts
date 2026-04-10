@@ -75,6 +75,18 @@ const router = createRouter({
             meta: { title: '智能订购中心', icon: 'Cpu', permissionPath: '/intelligent' }
         },
         {
+            path: '/intelligent-closed-loop',
+            name: 'IntelligentClosedLoop',
+            component: () => import('@/views/OrderClosedLoopCenter.vue'),
+            meta: { title: '订单闭环中心', icon: 'Finished', permissionPath: '/intelligent-closed-loop' }
+        },
+        {
+            path: '/inventory-ops',
+            name: 'InventoryOps',
+            component: () => import('@/views/InventoryOpsCenter.vue'),
+            meta: { title: '库存与仓配运营中心', icon: 'Box', permissionPath: '/inventory-ops' }
+        },
+        {
             path: '/pasture',
             name: 'PastureOverview',
             component: () => import('@/views/PastureOverview.vue'),
@@ -163,6 +175,12 @@ const router = createRouter({
             name: 'MdmRltnProductSku',
             component: () => import('@/views/MdmRltnProductSku.vue'),
             meta: { title: '产品-SKU转换关系', icon: 'Connection', requiresSuperAdmin: true, permissionPath: '/mdm/rltn/product-sku' }
+        },
+        {
+            path: '/mdm/governance',
+            name: 'MdmGovernanceCenter',
+            component: () => import('@/views/MdmGovernanceCenter.vue'),
+            meta: { title: '主数据治理平台', icon: 'DataBoard', requiresSuperAdmin: true, permissionPath: '/mdm/governance' }
         }
 
     ]
@@ -220,11 +238,6 @@ router.beforeEach(async (to) => {
 
     if (isAuthPage && authed) {
         return { path: fallbackPath, replace: true }
-    }
-
-    const requiresSuperAdmin = Boolean(to.meta.requiresSuperAdmin)
-    if (requiresSuperAdmin && !appStore.isSuperAdmin) {
-        return { path: fallbackPath === to.path ? '/profile' : fallbackPath, replace: true }
     }
 
     const permissionPath = typeof to.meta.permissionPath === 'string' ? to.meta.permissionPath : ''
