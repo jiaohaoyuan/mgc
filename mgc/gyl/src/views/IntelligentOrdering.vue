@@ -69,7 +69,7 @@ const fetchData = async () => {
         pastures.value = warehouses
             .filter((w: any) => w.warehouse_type === 3)
             .map((p: any) => ({
-                id: p.id,
+                id: String(p.id),
                 name: p.warehouse_name,
                 lat: parseFloat(p.latitude || 0),
                 lng: parseFloat(p.longitude || 0),
@@ -79,7 +79,7 @@ const fetchData = async () => {
         distributors.value = warehouses
             .filter((w: any) => w.warehouse_type === 4 || w.warehouse_type === 1 || w.warehouse_type === 2)
             .map((d: any) => ({
-                id: d.id,
+                id: String(d.id),
                 name: d.warehouse_name,
                 level: d.contact_person || 'L3',  // fallback
                 lat: parseFloat(d.latitude || 0),
@@ -106,10 +106,10 @@ const fetchOrders = async () => {
             orders.value = res.data.data.list.map((o: any) => ({
                 ...o,
                 orderId: o.order_id,
-                distributorId: o.distributor_id,
+                distributorId: String(o.distributor_id || ''),
                 skuId: o.sku_id,
                 requestLiters: parseFloat(o.request_liters),
-                sourcePastureId: o.source_pasture_id,
+                sourcePastureId: String(o.source_pasture_id || ''),
                 matchScore: parseFloat(o.match_score),
                 createTime: o.create_time
             }))
@@ -352,8 +352,8 @@ const activeFlows = computed(() => {
   return filteredOrders.value
     .filter(o => o.status === 'Matched' && o.sourcePastureId)
     .map(o => {
-      const p = pastures.value.find(x => x.id === o.sourcePastureId)
-      const d = distributors.value.find(x => x.id === o.distributorId && (x.warehouse_type === 1 || x.warehouse_type === 2))
+      const p = pastures.value.find(x => String(x.id) === String(o.sourcePastureId))
+      const d = distributors.value.find(x => String(x.id) === String(o.distributorId) && (x.warehouse_type === 1 || x.warehouse_type === 2))
       if (p && d && p.lng && d.lng) {
         return {
           coords: [[p.lng, p.lat], [d.lng, d.lat]]
@@ -513,7 +513,8 @@ watch([pastures, renderDistributors, activeFlows], () => {
 
 
 const getSkuDetails = (skuId: string) => products.value.find(s => s.product_code === skuId)
-const getDistributorName = (dId: string) => distributors.value.find(d => d.id === dId)?.name
+const getDistributorName = (dId: string) => distributors.value.find(d => String(d.id) === String(dId))?.name
+const getPastureName = (pastureId: string) => pastures.value.find(p => String(p.id) === String(pastureId))?.name || '虚拟前置仓'
 
 // --- 一键智能匹配 ---
 const handleAutoMatch = (row: any) => {
@@ -536,7 +537,7 @@ const pastureDialogVisible = ref(false)
 const selectedPasture = ref<any>(null)
 
 const showPastureDetail = (pastureId: string) => {
-  const p = pastures.value.find(p => p.id === pastureId)
+  const p = pastures.value.find(p => String(p.id) === String(pastureId))
   if (p) {
     selectedPasture.value = p
     pastureDialogVisible.value = true
@@ -733,10 +734,10 @@ const getFreshnessProps = (row: any) => {
             <span v-if="!row.sourcePastureId" style="color: var(--text-muted)">-</span>
             <el-button v-else link type="primary" size="small" @click="showPastureDetail(row.sourcePastureId)">
               <el-icon style="margin-right: 4px"><MapLocation /></el-icon>
-              {{ pastures.find(p => p.id === row.sourcePastureId)?.name || '虚拟前置仓' }}
-            </el-button>
-          </template>
-        </el-table-column>
+                {{ getPastureName(row.sourcePastureId) }}
+              </el-button>
+            </template>
+          </el-table-column>
         
          <el-table-column label="新鲜度预估指标" width="130" align="center">
           <template #default="{ row }">

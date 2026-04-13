@@ -1,7 +1,7 @@
 {
   "meta": {
     "created_at": "2026-04-09T03:02:20.246Z",
-    "updated_at": "2026-04-13T05:21:15.792Z",
+    "updated_at": "2026-04-13T05:39:18.262Z",
     "storage_mode": "local-json",
     "helper_code": "952746",
     "helper_code_updated_at": "2026-04-09T03:02:20.246Z",
@@ -20359,7 +20359,7 @@
         "doc_type": "FORMAL",
         "order_status": "APPROVED",
         "review_status": "PASSED",
-        "fulfillment_status": "ALLOCATED",
+        "fulfillment_status": "ABNORMAL",
         "total_qty": 90,
         "total_amount": 3240,
         "submitted_at": "2026-04-13T05:20:11.937Z",
@@ -20367,10 +20367,10 @@
         "reviewed_by": "焦昊源",
         "review_comment": "审核通过",
         "has_exception": 0,
-        "current_allocation_version": 1,
+        "current_allocation_version": 2,
         "created_by": "焦昊源",
         "created_at": "2026-04-13T05:11:44.130Z",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:37:37.272Z"
       },
       {
         "id": 9,
@@ -20396,6 +20396,31 @@
         "created_by": "焦昊源",
         "created_at": "2026-04-13T05:20:02.952Z",
         "updated_at": "2026-04-13T05:20:38.558Z"
+      },
+      {
+        "id": 10,
+        "order_no": "SO202604130005",
+        "customer_code": "RS-EAST-RUNTAI",
+        "customer_name": "南京润泰商贸有限公司",
+        "channel_code": "CH-L2-DIST",
+        "channel_name": "经销渠道",
+        "region": "华东",
+        "order_source": "MANUAL",
+        "doc_type": "DRAFT",
+        "order_status": "DRAFT",
+        "review_status": "UNREVIEWED",
+        "fulfillment_status": "WAIT_ALLOCATE",
+        "total_qty": 50,
+        "total_amount": 2400,
+        "submitted_at": "",
+        "reviewed_at": "",
+        "reviewed_by": "",
+        "review_comment": "",
+        "has_exception": 0,
+        "current_allocation_version": 0,
+        "created_by": "焦昊源",
+        "created_at": "2026-04-13T05:38:38.994Z",
+        "updated_at": "2026-04-13T05:38:38.994Z"
       }
     ],
     "order_lines": [
@@ -20708,23 +20733,17 @@
           {
             "warehouse_code": "WH-DC-SHENZHEN",
             "warehouse_name": "深圳城市分拨仓",
-            "qty": 90,
-            "score": 0.9035,
-            "reasons": [
-              "库存:1.00",
-              "距离:0.97",
-              "鲜度:0.68",
-              "成本:0.82",
-              "优先级:0.96"
-            ],
-            "manual": false
+            "qty": 50,
+            "score": 1,
+            "reasons": [],
+            "manual": true
           }
         ],
-        "allocated_qty": 90,
+        "allocated_qty": 50,
         "exception_flag": 0,
         "exception_types": [],
         "created_at": "2026-04-13T05:11:44.130Z",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:37:37.272Z"
       },
       {
         "id": 10,
@@ -20759,6 +20778,25 @@
         "exception_types": [],
         "created_at": "2026-04-13T05:20:02.952Z",
         "updated_at": "2026-04-13T05:20:15.537Z"
+      },
+      {
+        "id": 11,
+        "order_no": "SO202604130005",
+        "line_no": 1,
+        "sku_code": "SKU-PASTEUR-450",
+        "sku_name": "巴氏鲜奶450ml",
+        "order_qty": 50,
+        "unit": "箱",
+        "unit_price": 48,
+        "line_amount": 2400,
+        "suggested_warehouse_code": "WH-RDC-EAST-SH",
+        "suggested_warehouse_name": "南京渠道分拨仓",
+        "allocation_result": [],
+        "allocated_qty": 0,
+        "exception_flag": 0,
+        "exception_types": [],
+        "created_at": "2026-04-13T05:38:38.994Z",
+        "updated_at": "2026-04-13T05:38:38.994Z"
       }
     ],
     "order_audit_records": [
@@ -21522,6 +21560,44 @@
         ],
         "created_by": "焦昊源",
         "created_at": "2026-04-13T05:21:13.891Z"
+      },
+      {
+        "id": 8,
+        "order_no": "SO202604130003",
+        "version_no": 2,
+        "weights": {
+          "inventory_weight": 0.34,
+          "distance_weight": 0.21,
+          "freshness_weight": 0.19,
+          "cost_weight": 0.14,
+          "priority_weight": 0.12,
+          "updated_by": "焦昊源",
+          "updated_at": "2026-04-13T05:09:38.739Z"
+        },
+        "plan_summary": "人工覆盖 V2 - 人工覆盖分配",
+        "details": [
+          {
+            "line_id": 9,
+            "line_no": 1,
+            "sku_code": "SKU-UHT-250-12",
+            "order_qty": 90,
+            "remaining_qty": 40,
+            "recommendations": [],
+            "selected_allocations": [
+              {
+                "warehouse_code": "WH-DC-SHENZHEN",
+                "warehouse_name": "深圳城市分拨仓",
+                "qty": 50,
+                "score": 1,
+                "reasons": [],
+                "manual": true
+              }
+            ],
+            "allocation_mode": "MANUAL"
+          }
+        ],
+        "created_by": "焦昊源",
+        "created_at": "2026-04-13T05:37:37.272Z"
       }
     ],
     "inventory_stock": [
@@ -25198,6 +25274,72 @@
         "decided_by": "李强",
         "decided_at": "2026-04-09T02:50:00.000Z",
         "decision_comment": "已触发调拨 TR202604080001"
+      },
+      {
+        "id": 2,
+        "order_no": "SO202604100001",
+        "line_id": 3,
+        "line_no": 1,
+        "sku_code": "SKU-UHT-250-24",
+        "sku_name": "常温纯牛奶250ml*24",
+        "suggestion_type": "TRANSFER",
+        "source_warehouse_code": "WH-RDC-SOUTH-GZ",
+        "source_warehouse_name": "广州华南RDC",
+        "target_warehouse_code": "WH-HQ-HZ",
+        "target_warehouse_name": "杭州总部中央仓",
+        "suggest_qty": 220,
+        "suggest_eta_hours": 24,
+        "status": "EXECUTED",
+        "created_by": "焦昊源",
+        "created_at": "2026-04-13T05:34:49.648Z",
+        "updated_at": "2026-04-13T05:34:55.115Z",
+        "decided_by": "焦昊源",
+        "decided_at": "2026-04-13T05:34:55.115Z",
+        "decision_comment": ""
+      },
+      {
+        "id": 3,
+        "order_no": "SO202604100001",
+        "line_id": 3,
+        "line_no": 2,
+        "sku_code": "SKU-POWDER-ADULT-HIGHPRO-800",
+        "sku_name": "成人高蛋白奶粉800g",
+        "suggestion_type": "TRANSFER",
+        "source_warehouse_code": "WH-RDC-CENTRAL-WH",
+        "source_warehouse_name": "武汉华中RDC",
+        "target_warehouse_code": "WH-HQ-HZ",
+        "target_warehouse_name": "杭州总部中央仓",
+        "suggest_qty": 50,
+        "suggest_eta_hours": 24,
+        "status": "EXECUTED",
+        "created_by": "焦昊源",
+        "created_at": "2026-04-13T05:34:49.648Z",
+        "updated_at": "2026-04-13T05:34:54.568Z",
+        "decided_by": "焦昊源",
+        "decided_at": "2026-04-13T05:34:54.568Z",
+        "decision_comment": ""
+      },
+      {
+        "id": 4,
+        "order_no": "SO202604130003",
+        "line_id": 9,
+        "line_no": 1,
+        "sku_code": "SKU-UHT-250-12",
+        "sku_name": "常温纯牛奶250ml*12",
+        "suggestion_type": "TRANSFER",
+        "source_warehouse_code": "WH-RDC-EAST-SH",
+        "source_warehouse_name": "上海华东RDC",
+        "target_warehouse_code": "WH-DC-SHENZHEN",
+        "target_warehouse_name": "深圳城市分拨仓",
+        "suggest_qty": 40,
+        "suggest_eta_hours": 24,
+        "status": "EXECUTED",
+        "created_by": "焦昊源",
+        "created_at": "2026-04-13T05:37:37.994Z",
+        "updated_at": "2026-04-13T05:37:43.650Z",
+        "decided_by": "焦昊源",
+        "decided_at": "2026-04-13T05:37:43.650Z",
+        "decision_comment": ""
       }
     ],
     "fulfillment_tracks": [
@@ -25328,6 +25470,30 @@
         "operator": "焦昊源",
         "action_time": "2026-04-13T05:20:38.558Z",
         "note": ""
+      },
+      {
+        "id": 17,
+        "order_no": "SO202604130003",
+        "status": "WAIT_ALLOCATE",
+        "operator": "焦昊源",
+        "action_time": "2026-04-13T05:35:24.670Z",
+        "note": ""
+      },
+      {
+        "id": 18,
+        "order_no": "SO202604130003",
+        "status": "OUTBOUND",
+        "operator": "焦昊源",
+        "action_time": "2026-04-13T05:35:27.100Z",
+        "note": ""
+      },
+      {
+        "id": 19,
+        "order_no": "SO202604130003",
+        "status": "IN_TRANSIT",
+        "operator": "焦昊源",
+        "action_time": "2026-04-13T05:35:29.636Z",
+        "note": ""
       }
     ],
     "inventory_ledger": [
@@ -25349,7 +25515,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 2,
@@ -25369,7 +25535,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "TRANSFER_OUT:TR202604090004",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 3,
@@ -25389,7 +25555,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 4,
@@ -25409,7 +25575,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 5,
@@ -25429,7 +25595,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 6,
@@ -25449,7 +25615,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 7,
@@ -25469,7 +25635,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 8,
@@ -25489,7 +25655,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 9,
@@ -25509,7 +25675,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 10,
@@ -25529,7 +25695,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 11,
@@ -25549,7 +25715,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 12,
@@ -25569,7 +25735,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 13,
@@ -25589,7 +25755,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 14,
@@ -25609,7 +25775,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 15,
@@ -25629,7 +25795,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 16,
@@ -25649,7 +25815,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 17,
@@ -25669,7 +25835,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 18,
@@ -25689,7 +25855,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 19,
@@ -25709,7 +25875,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 20,
@@ -25729,7 +25895,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 21,
@@ -25749,7 +25915,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 22,
@@ -25769,7 +25935,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 23,
@@ -25789,7 +25955,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 24,
@@ -25809,7 +25975,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 25,
@@ -25829,7 +25995,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604070001",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 26,
@@ -25849,7 +26015,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 27,
@@ -25869,7 +26035,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 28,
@@ -25889,7 +26055,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 29,
@@ -25909,7 +26075,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 30,
@@ -25929,7 +26095,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 31,
@@ -25949,7 +26115,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604130004",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 32,
@@ -25969,7 +26135,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 33,
@@ -25989,7 +26155,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 34,
@@ -26009,7 +26175,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 35,
@@ -26029,7 +26195,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 36,
@@ -26049,7 +26215,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 37,
@@ -26069,7 +26235,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604070001",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 38,
@@ -26089,7 +26255,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 39,
@@ -26109,7 +26275,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 40,
@@ -26129,7 +26295,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 41,
@@ -26149,7 +26315,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 42,
@@ -26169,7 +26335,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 43,
@@ -26189,7 +26355,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 44,
@@ -26209,7 +26375,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 45,
@@ -26229,7 +26395,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 46,
@@ -26249,7 +26415,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 47,
@@ -26269,7 +26435,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 48,
@@ -26289,7 +26455,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 49,
@@ -26309,7 +26475,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 50,
@@ -26329,7 +26495,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 51,
@@ -26349,7 +26515,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 52,
@@ -26369,7 +26535,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 53,
@@ -26389,7 +26555,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 54,
@@ -26409,7 +26575,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.891Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 55,
@@ -26429,7 +26595,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 56,
@@ -26449,7 +26615,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 57,
@@ -26469,7 +26635,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 58,
@@ -26489,7 +26655,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 59,
@@ -26509,7 +26675,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 60,
@@ -26529,7 +26695,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 61,
@@ -26549,7 +26715,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 62,
@@ -26569,7 +26735,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 63,
@@ -26589,7 +26755,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 64,
@@ -26609,7 +26775,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 65,
@@ -26629,7 +26795,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 66,
@@ -26649,7 +26815,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 67,
@@ -26669,7 +26835,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 68,
@@ -26689,7 +26855,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 69,
@@ -26709,7 +26875,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 70,
@@ -26729,7 +26895,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 71,
@@ -26749,7 +26915,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 72,
@@ -26769,7 +26935,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 73,
@@ -26789,7 +26955,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 74,
@@ -26809,7 +26975,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 75,
@@ -26829,7 +26995,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 76,
@@ -26849,7 +27015,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 77,
@@ -26869,7 +27035,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604090002",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 78,
@@ -26889,7 +27055,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 79,
@@ -26909,7 +27075,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 80,
@@ -26929,7 +27095,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 81,
@@ -26949,7 +27115,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 82,
@@ -26969,7 +27135,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 83,
@@ -26989,7 +27155,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 84,
@@ -27009,7 +27175,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 85,
@@ -27029,7 +27195,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 86,
@@ -27049,7 +27215,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 87,
@@ -27069,7 +27235,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 88,
@@ -27089,7 +27255,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 89,
@@ -27109,7 +27275,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 90,
@@ -27129,7 +27295,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 91,
@@ -27149,7 +27315,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 92,
@@ -27169,7 +27335,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 93,
@@ -27189,7 +27355,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 94,
@@ -27209,7 +27375,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 95,
@@ -27229,7 +27395,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 96,
@@ -27249,7 +27415,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 97,
@@ -27269,7 +27435,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 98,
@@ -27289,7 +27455,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 99,
@@ -27309,7 +27475,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 100,
@@ -27329,7 +27495,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 101,
@@ -27349,7 +27515,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 102,
@@ -27369,7 +27535,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 103,
@@ -27389,7 +27555,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604090018",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 104,
@@ -27409,7 +27575,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 105,
@@ -27429,7 +27595,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 106,
@@ -27449,7 +27615,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 107,
@@ -27469,7 +27635,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 108,
@@ -27489,7 +27655,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 109,
@@ -27509,7 +27675,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 110,
@@ -27529,7 +27695,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 111,
@@ -27549,7 +27715,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 112,
@@ -27569,7 +27735,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 113,
@@ -27589,7 +27755,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 114,
@@ -27609,7 +27775,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 115,
@@ -27629,7 +27795,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 116,
@@ -27649,7 +27815,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 117,
@@ -27669,7 +27835,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 118,
@@ -27689,7 +27855,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 119,
@@ -27709,7 +27875,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 120,
@@ -27729,7 +27895,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 121,
@@ -27742,14 +27908,14 @@
         "expiry_date": "2026-08-10",
         "remaining_days": 119,
         "total_qty": 367,
-        "available_qty": 277,
-        "locked_qty": 90,
+        "available_qty": 317,
+        "locked_qty": 50,
         "in_transit_qty": 0,
         "safety_qty": 101,
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604130003",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 122,
@@ -27769,7 +27935,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 123,
@@ -27789,7 +27955,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 124,
@@ -27809,7 +27975,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 125,
@@ -27829,7 +27995,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 126,
@@ -27849,7 +28015,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 127,
@@ -27869,7 +28035,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 128,
@@ -27889,7 +28055,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 129,
@@ -27909,7 +28075,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 130,
@@ -27929,7 +28095,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 131,
@@ -27949,7 +28115,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 132,
@@ -27969,7 +28135,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 133,
@@ -27989,7 +28155,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 134,
@@ -28009,7 +28175,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 135,
@@ -28029,7 +28195,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 136,
@@ -28049,7 +28215,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 137,
@@ -28069,7 +28235,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 138,
@@ -28089,7 +28255,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 139,
@@ -28109,7 +28275,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 140,
@@ -28129,7 +28295,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 141,
@@ -28149,7 +28315,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 142,
@@ -28169,7 +28335,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 143,
@@ -28189,7 +28355,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 144,
@@ -28209,7 +28375,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 145,
@@ -28229,7 +28395,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 146,
@@ -28249,7 +28415,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 147,
@@ -28269,7 +28435,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 148,
@@ -28289,7 +28455,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 149,
@@ -28309,7 +28475,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 150,
@@ -28329,7 +28495,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 151,
@@ -28349,7 +28515,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 152,
@@ -28369,7 +28535,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 153,
@@ -28389,7 +28555,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 154,
@@ -28409,7 +28575,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 155,
@@ -28429,7 +28595,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 156,
@@ -28449,7 +28615,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 157,
@@ -28469,7 +28635,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 158,
@@ -28489,7 +28655,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 159,
@@ -28509,7 +28675,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604090002",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 160,
@@ -28529,7 +28695,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 161,
@@ -28549,7 +28715,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 162,
@@ -28569,7 +28735,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 163,
@@ -28589,7 +28755,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "ORDER_ALLOCATE:SO202604090002",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 164,
@@ -28609,7 +28775,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 165,
@@ -28629,7 +28795,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 166,
@@ -28649,7 +28815,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 167,
@@ -28669,7 +28835,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 168,
@@ -28689,7 +28855,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 169,
@@ -28709,7 +28875,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 170,
@@ -28729,7 +28895,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 171,
@@ -28749,7 +28915,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 172,
@@ -28769,7 +28935,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 173,
@@ -28789,7 +28955,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 174,
@@ -28809,7 +28975,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 175,
@@ -28829,7 +28995,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 176,
@@ -28849,7 +29015,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 177,
@@ -28869,7 +29035,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 178,
@@ -28889,7 +29055,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 179,
@@ -28909,7 +29075,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 180,
@@ -28929,7 +29095,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 181,
@@ -28949,7 +29115,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 182,
@@ -28969,7 +29135,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 183,
@@ -28989,7 +29155,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 184,
@@ -29009,7 +29175,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 185,
@@ -29029,7 +29195,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 186,
@@ -29049,7 +29215,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 187,
@@ -29069,7 +29235,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 188,
@@ -29089,7 +29255,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 189,
@@ -29109,7 +29275,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 190,
@@ -29129,7 +29295,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 191,
@@ -29149,7 +29315,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 192,
@@ -29169,7 +29335,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 193,
@@ -29189,7 +29355,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 194,
@@ -29209,7 +29375,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 195,
@@ -29229,7 +29395,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 196,
@@ -29249,7 +29415,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 197,
@@ -29269,7 +29435,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 198,
@@ -29289,7 +29455,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "TRANSFER_CREATE",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 199,
@@ -29309,7 +29475,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_RELEASE:SO202604080017",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 200,
@@ -29329,7 +29495,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "DAMAGE:DM202604090001",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 201,
@@ -29349,7 +29515,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "PO_RECEIPT:PO202604030021",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 202,
@@ -29369,10 +29535,78 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "PO_RECEIPT:PO202604090001",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       }
     ],
     "inventory_transactions": [
+      {
+        "id": 218,
+        "tx_type": "UNFREEZE",
+        "source_doc_type": "ORDER",
+        "source_doc_no": "SO202604130003",
+        "warehouse_code": "WH-DC-SHENZHEN",
+        "warehouse_name": "深圳城市分拨仓",
+        "sku_code": "SKU-UHT-250-12",
+        "sku_name": "常温纯牛奶250ml*12",
+        "batch_no": "WH-DC-SHENZHEN-SKU-UHT-250-12-20260211",
+        "qty": 90,
+        "before_available_qty": 277,
+        "after_available_qty": 367,
+        "operator": "焦昊源",
+        "biz_time": "2026-04-13T05:37:37.273Z",
+        "remark": "订单重算释放锁定"
+      },
+      {
+        "id": 219,
+        "tx_type": "FREEZE",
+        "source_doc_type": "ORDER",
+        "source_doc_no": "SO202604130003",
+        "warehouse_code": "WH-DC-SHENZHEN",
+        "warehouse_name": "深圳城市分拨仓",
+        "sku_code": "SKU-UHT-250-12",
+        "sku_name": "常温纯牛奶250ml*12",
+        "batch_no": "WH-DC-SHENZHEN-SKU-UHT-250-12-20260211",
+        "qty": 50,
+        "before_available_qty": 367,
+        "after_available_qty": 317,
+        "operator": "焦昊源",
+        "biz_time": "2026-04-13T05:37:37.273Z",
+        "remark": "订单行1锁定"
+      },
+      {
+        "id": 217,
+        "tx_type": "FREEZE",
+        "source_doc_type": "ORDER",
+        "source_doc_no": "SO202604130003",
+        "warehouse_code": "WH-DC-SHENZHEN",
+        "warehouse_name": "深圳城市分拨仓",
+        "sku_code": "SKU-UHT-250-12",
+        "sku_name": "常温纯牛奶250ml*12",
+        "batch_no": "WH-DC-SHENZHEN-SKU-UHT-250-12-20260211",
+        "qty": 90,
+        "before_available_qty": 367,
+        "after_available_qty": 277,
+        "operator": "焦昊源",
+        "biz_time": "2026-04-13T05:21:13.892Z",
+        "remark": "订单行1锁定"
+      },
+      {
+        "id": 216,
+        "tx_type": "FREEZE",
+        "source_doc_type": "ORDER",
+        "source_doc_no": "SO202604130004",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-PASTEUR-950",
+        "sku_name": "巴氏鲜奶950ml",
+        "batch_no": "WH-RDC-EAST-SH-SKU-PASTEUR-950-20260408",
+        "qty": 50,
+        "before_available_qty": 181,
+        "after_available_qty": 131,
+        "operator": "焦昊源",
+        "biz_time": "2026-04-13T05:20:15.538Z",
+        "remark": "订单行1锁定"
+      },
       {
         "id": 215,
         "tx_type": "FREEZE",
@@ -33027,40 +33261,6 @@
         "operator": "系统初始化",
         "biz_time": "2026-03-31T00:00:00.000Z",
         "remark": "初始化库存入账"
-      },
-      {
-        "id": 216,
-        "tx_type": "FREEZE",
-        "source_doc_type": "ORDER",
-        "source_doc_no": "SO202604130004",
-        "warehouse_code": "WH-RDC-EAST-SH",
-        "warehouse_name": "上海华东RDC",
-        "sku_code": "SKU-PASTEUR-950",
-        "sku_name": "巴氏鲜奶950ml",
-        "batch_no": "WH-RDC-EAST-SH-SKU-PASTEUR-950-20260408",
-        "qty": 50,
-        "before_available_qty": 181,
-        "after_available_qty": 131,
-        "operator": "焦昊源",
-        "biz_time": "2026-04-13T05:20:15.538Z",
-        "remark": "订单行1锁定"
-      },
-      {
-        "id": 217,
-        "tx_type": "FREEZE",
-        "source_doc_type": "ORDER",
-        "source_doc_no": "SO202604130003",
-        "warehouse_code": "WH-DC-SHENZHEN",
-        "warehouse_name": "深圳城市分拨仓",
-        "sku_code": "SKU-UHT-250-12",
-        "sku_name": "常温纯牛奶250ml*12",
-        "batch_no": "WH-DC-SHENZHEN-SKU-UHT-250-12-20260211",
-        "qty": 90,
-        "before_available_qty": 367,
-        "after_available_qty": 277,
-        "operator": "焦昊源",
-        "biz_time": "2026-04-13T05:21:13.892Z",
-        "remark": "订单行1锁定"
       }
     ],
     "transfer_orders": [
@@ -36264,7 +36464,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 2,
@@ -36282,7 +36482,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 6,
@@ -36300,7 +36500,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 10,
@@ -36318,7 +36518,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 12,
@@ -36336,7 +36536,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 14,
@@ -36354,7 +36554,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 15,
@@ -36372,7 +36572,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 250,
@@ -36390,7 +36590,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 24,
@@ -36408,7 +36608,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 34,
@@ -36426,7 +36626,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 35,
@@ -36444,7 +36644,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 36,
@@ -36462,7 +36662,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 38,
@@ -36480,7 +36680,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 40,
@@ -36498,7 +36698,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 41,
@@ -36516,7 +36716,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 258,
@@ -36534,7 +36734,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 251,
@@ -36552,7 +36752,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 46,
@@ -36570,7 +36770,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 47,
@@ -36588,7 +36788,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 49,
@@ -36606,7 +36806,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 52,
@@ -36624,7 +36824,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 53,
@@ -36642,7 +36842,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 55,
@@ -36660,7 +36860,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 57,
@@ -36678,7 +36878,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 63,
@@ -36696,7 +36896,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 64,
@@ -36714,7 +36914,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 67,
@@ -36732,7 +36932,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 69,
@@ -36750,7 +36950,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 70,
@@ -36768,7 +36968,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 73,
@@ -36786,7 +36986,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 75,
@@ -36804,7 +37004,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 77,
@@ -36822,7 +37022,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 259,
@@ -36840,7 +37040,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 252,
@@ -36858,7 +37058,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 80,
@@ -36876,7 +37076,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 82,
@@ -36894,7 +37094,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 83,
@@ -36912,7 +37112,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 88,
@@ -36930,7 +37130,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 90,
@@ -36948,7 +37148,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 92,
@@ -36966,7 +37166,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 246,
@@ -36984,7 +37184,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 97,
@@ -37002,7 +37202,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 260,
@@ -37020,7 +37220,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 98,
@@ -37038,7 +37238,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 99,
@@ -37056,7 +37256,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 103,
@@ -37074,7 +37274,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 105,
@@ -37092,7 +37292,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 108,
@@ -37110,7 +37310,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 110,
@@ -37128,7 +37328,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 112,
@@ -37146,7 +37346,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 114,
@@ -37164,7 +37364,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 253,
@@ -37182,7 +37382,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 118,
@@ -37200,7 +37400,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 119,
@@ -37218,7 +37418,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 124,
@@ -37236,7 +37436,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 125,
@@ -37254,7 +37454,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 127,
@@ -37272,7 +37472,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 254,
@@ -37290,7 +37490,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 135,
@@ -37308,7 +37508,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 136,
@@ -37326,7 +37526,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 137,
@@ -37344,7 +37544,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 139,
@@ -37362,7 +37562,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 261,
@@ -37380,7 +37580,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 146,
@@ -37398,7 +37598,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 148,
@@ -37416,7 +37616,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 149,
@@ -37434,7 +37634,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 156,
@@ -37452,7 +37652,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 158,
@@ -37470,7 +37670,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 160,
@@ -37488,7 +37688,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 262,
@@ -37506,7 +37706,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 255,
@@ -37524,7 +37724,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 165,
@@ -37542,7 +37742,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 168,
@@ -37560,7 +37760,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 171,
@@ -37578,7 +37778,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 173,
@@ -37596,7 +37796,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 175,
@@ -37614,7 +37814,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 179,
@@ -37632,7 +37832,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 184,
@@ -37650,7 +37850,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 263,
@@ -37668,7 +37868,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 256,
@@ -37686,7 +37886,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 190,
@@ -37704,7 +37904,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 193,
@@ -37722,7 +37922,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 194,
@@ -37740,7 +37940,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 196,
@@ -37758,7 +37958,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 197,
@@ -37776,7 +37976,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 198,
@@ -37794,7 +37994,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 264,
@@ -37812,7 +38012,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 202,
@@ -37830,7 +38030,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 204,
@@ -37848,7 +38048,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 206,
@@ -37866,7 +38066,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 208,
@@ -37884,7 +38084,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 210,
@@ -37902,7 +38102,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 215,
@@ -37920,7 +38120,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 218,
@@ -37938,7 +38138,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 220,
@@ -37956,7 +38156,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 265,
@@ -37974,7 +38174,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 257,
@@ -37992,7 +38192,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 227,
@@ -38010,7 +38210,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 228,
@@ -38028,7 +38228,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 231,
@@ -38046,7 +38246,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 233,
@@ -38064,7 +38264,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 238,
@@ -38082,7 +38282,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 239,
@@ -38100,7 +38300,7 @@
         "handled_by": "林文超",
         "handled_at": "2026-04-09T06:15:00.000Z",
         "handle_comment": "已审批调拨 TR202604090003，待总部仓出库",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 240,
@@ -38118,7 +38318,7 @@
         "handled_by": "李强",
         "handled_at": "2026-04-09T02:12:00.000Z",
         "handle_comment": "已提交调拨申请 TR202604090002，待供应链经理审核",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       },
       {
         "id": 241,
@@ -38136,7 +38336,7 @@
         "handled_by": "李强",
         "handled_at": "2026-04-09T03:30:00.000Z",
         "handle_comment": "改为西南本地临促处理，跨区调拨单 TR202604090005 已取消",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:38:01.387Z"
       }
     ],
     "warehouse_capabilities": [
@@ -38952,13 +39152,31 @@
         "sku_name": "常温纯牛奶250ml*12",
         "batch_no": "WH-DC-SHENZHEN-SKU-UHT-250-12-20260211",
         "lock_qty": 90,
-        "status": "ACTIVE",
+        "status": "RELEASED",
         "reason": "ORDER_ALLOCATE_AUTO",
         "created_at": "2026-04-13T05:21:13.892Z",
+        "released_at": "2026-04-13T05:37:37.273Z",
+        "release_reason": "ORDER_ALLOCATE_MANUAL",
+        "operator": "焦昊源",
+        "updated_at": "2026-04-13T05:37:37.273Z"
+      },
+      {
+        "id": 10,
+        "order_no": "SO202604130003",
+        "line_id": 9,
+        "warehouse_code": "WH-DC-SHENZHEN",
+        "warehouse_name": "深圳城市分拨仓",
+        "sku_code": "SKU-UHT-250-12",
+        "sku_name": "常温纯牛奶250ml*12",
+        "batch_no": "WH-DC-SHENZHEN-SKU-UHT-250-12-20260211",
+        "lock_qty": 50,
+        "status": "ACTIVE",
+        "reason": "ORDER_ALLOCATE_MANUAL",
+        "created_at": "2026-04-13T05:37:37.273Z",
         "released_at": "",
         "release_reason": "",
         "operator": "焦昊源",
-        "updated_at": "2026-04-13T05:21:13.892Z"
+        "updated_at": "2026-04-13T05:37:37.273Z"
       }
     ],
     "order_allocation_weights": {
@@ -38996,7 +39214,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 2,
@@ -39023,7 +39241,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 3,
@@ -39050,7 +39268,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 4,
@@ -39077,7 +39295,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 5,
@@ -39104,7 +39322,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 6,
@@ -39131,7 +39349,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 7,
@@ -39158,7 +39376,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 8,
@@ -39185,7 +39403,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 9,
@@ -39212,7 +39430,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 10,
@@ -39239,7 +39457,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 11,
@@ -39266,7 +39484,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 12,
@@ -39293,7 +39511,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 13,
@@ -39320,7 +39538,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 14,
@@ -39347,7 +39565,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 15,
@@ -39374,7 +39592,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 16,
@@ -39401,7 +39619,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 17,
@@ -39428,7 +39646,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 18,
@@ -39455,7 +39673,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       },
       {
         "id": 19,
@@ -39482,7 +39700,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:13:56.179Z"
+        "updated_at": "2026-04-13T05:35:11.963Z"
       }
     ],
     "channel_dealer_authorizations": [
@@ -51136,6 +51354,42 @@
         "before_snapshot": null,
         "after_snapshot": null,
         "created_at": "2026-04-13T05:20:02.952Z"
+      },
+      {
+        "id": 27,
+        "log_type": "BUSINESS",
+        "module_code": "order-phase2",
+        "biz_object_type": "order",
+        "biz_object_id": "SO202604130005",
+        "action_type": "CREATE",
+        "operator_id": 1,
+        "operator_name": "焦昊源",
+        "operator_roles": [
+          "超级管理员"
+        ],
+        "operator_ip": "::1",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0",
+        "request_path": "/api/orders/phase2",
+        "request_method": "POST",
+        "trace_id": "08823323-9c60-41f3-a12e-a67434a6a4f1",
+        "result_status": "SUCCESS",
+        "message": "新增订单 SO202604130005",
+        "request_summary": {
+          "customer_code": "RS-EAST-RUNTAI",
+          "order_source": "MANUAL",
+          "lines": [
+            {
+              "sku_code": "SKU-PASTEUR-450",
+              "order_qty": 50,
+              "unit": "箱",
+              "unit_price": 48,
+              "suggested_warehouse_code": "WH-RDC-EAST-SH"
+            }
+          ]
+        },
+        "before_snapshot": null,
+        "after_snapshot": null,
+        "created_at": "2026-04-13T05:38:38.994Z"
       }
     ],
     "import_tasks": [
@@ -54320,7 +54574,7 @@
         "biz_id": "SO202604120001",
         "priority": "P0",
         "due_at": "2026-04-12T07:34:53.199Z",
-        "status": "PENDING",
+        "status": "DONE",
         "assignee_id": 1,
         "assignee_name": "焦昊源",
         "source_path": "/intelligent-closed-loop?orderNo=SO202604120001",
@@ -54330,9 +54584,9 @@
         "last_remind_at": "2026-04-13T05:14:30.376Z",
         "escalated": 0,
         "created_at": "2026-04-12T03:34:53.200Z",
-        "updated_at": "2026-04-13T05:14:30.376Z",
-        "done_at": "",
-        "done_comment": ""
+        "updated_at": "2026-04-13T05:39:04.148Z",
+        "done_at": "2026-04-13T05:39:04.148Z",
+        "done_comment": "已处理"
       },
       {
         "id": 2,
@@ -54389,7 +54643,7 @@
         "biz_id": "1",
         "priority": "P1",
         "due_at": "2026-04-12T05:34:53.199Z",
-        "status": "PENDING",
+        "status": "DONE",
         "assignee_id": 1,
         "assignee_name": "焦昊源",
         "source_path": "/workflow-center?tab=task&taskKey=WF-1",
@@ -54399,9 +54653,9 @@
         "last_remind_at": "",
         "escalated": 0,
         "created_at": "2026-04-12T03:34:53.200Z",
-        "updated_at": "2026-04-12T03:34:53.200Z",
-        "done_at": "",
-        "done_comment": ""
+        "updated_at": "2026-04-13T05:39:11.763Z",
+        "done_at": "2026-04-13T05:39:11.763Z",
+        "done_comment": "任务重试成功"
       },
       {
         "id": 5,
@@ -54782,6 +55036,21 @@
         "biz_id": "2",
         "created_at": "2026-04-13T04:57:46.253Z",
         "read_at": ""
+      },
+      {
+        "id": 5,
+        "category": "TASK",
+        "title": "任务重试成功：主数据增量同步任务",
+        "content": "任务 SYNC-MDM-20260412-01 已恢复成功",
+        "status": "UNREAD",
+        "priority": "P2",
+        "receiver_id": 1,
+        "receiver_name": "焦昊源",
+        "link_path": "/workflow-center?tab=task&taskKey=WF-1",
+        "biz_type": "TASK",
+        "biz_id": "1",
+        "created_at": "2026-04-13T05:39:11.763Z",
+        "read_at": ""
       }
     ],
     "workflow_tasks": [
@@ -54790,14 +55059,14 @@
         "task_code": "SYNC-MDM-20260412-01",
         "task_name": "主数据增量同步任务",
         "task_type": "SYNC",
-        "status": "FAILED",
+        "status": "SUCCESS",
         "owner_id": 1,
         "owner_name": "焦昊源",
-        "started_at": "2026-04-12T03:34:53.200Z",
-        "finished_at": "2026-04-12T03:34:53.200Z",
-        "retry_count": 0,
+        "started_at": "2026-04-13T05:39:11.763Z",
+        "finished_at": "2026-04-13T05:39:11.763Z",
+        "retry_count": 1,
         "max_retry": 3,
-        "last_error": "远程主数据服务 502",
+        "last_error": "",
         "logs": [
           {
             "id": 1,
@@ -54810,6 +55079,18 @@
             "level": "ERROR",
             "message": "下游接口响应超时",
             "created_at": "2026-04-12T03:34:53.200Z"
+          },
+          {
+            "id": 3,
+            "level": "INFO",
+            "message": "发起重试",
+            "created_at": "2026-04-13T05:39:11.763Z"
+          },
+          {
+            "id": 4,
+            "level": "INFO",
+            "message": "重试成功",
+            "created_at": "2026-04-13T05:39:11.763Z"
           }
         ]
       },

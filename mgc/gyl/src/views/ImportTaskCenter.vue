@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+﻿<script setup lang="ts">
+import { computed, onMounted, reactive, ref } from 'vue'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
@@ -29,6 +29,20 @@ const query = reactive({
   bizType: '',
   status: '',
   keyword: ''
+})
+
+const detailErrors = computed(() => {
+  const payload = detailData.value?.result_payload || {}
+  const errors = Array.isArray(payload.errors) ? payload.errors : []
+  if (errors.length) return errors
+
+  const failedRows = Array.isArray(payload.failed_rows) ? payload.failed_rows : []
+  return failedRows.map((item: any, index: number) => ({
+    rowNumber: Array.isArray(item?.rows) && item.rows.length ? item.rows.join(', ') : String(index + 1),
+    error: Array.isArray(item?.errors)
+      ? item.errors.map((err: any) => err?.reason || err?.type || '').filter(Boolean).join('；')
+      : String(item?.message || '导入失败')
+  }))
 })
 
 const fetchRows = async () => {
@@ -77,6 +91,7 @@ onMounted(fetchRows)
         <el-select v-model="query.bizType" placeholder="业务类型" clearable style="width: 160px">
           <el-option label="SKU" value="SKU" />
           <el-option label="经销关系" value="RESELLER_RLTN" />
+          <el-option label="订单闭环" value="ORDER_PHASE2" />
         </el-select>
         <el-select v-model="query.status" placeholder="状态" clearable style="width: 160px">
           <el-option label="成功" value="SUCCESS" />
@@ -143,7 +158,7 @@ onMounted(fetchRows)
         </el-descriptions>
 
         <el-divider content-position="left">失败明细</el-divider>
-        <el-table :data="detailData?.result_payload?.errors || []" border max-height="260" size="small">
+        <el-table :data="detailErrors" border max-height="260" size="small">
           <el-table-column prop="rowNumber" label="行号" width="90" />
           <el-table-column prop="error" label="失败原因" min-width="220" />
         </el-table>

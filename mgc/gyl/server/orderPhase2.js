@@ -30,6 +30,7 @@ const ensure = (db) => {
   db.biz.order_audit_records = arr(db.biz.order_audit_records);
   db.biz.order_allocation_plans = arr(db.biz.order_allocation_plans);
   db.biz.inventory_stock = arr(db.biz.inventory_stock);
+  db.biz.inventory_ledger = arr(db.biz.inventory_ledger);
   db.biz.order_exceptions = arr(db.biz.order_exceptions);
   db.biz.replenishment_suggestions = arr(db.biz.replenishment_suggestions);
   db.biz.fulfillment_tracks = arr(db.biz.fulfillment_tracks);
@@ -55,6 +56,30 @@ const relationValid = (db, customerCode, skuCode, bizDate = nowIso()) => {
     && Number(r.status) === 1
     && dateText(r.begin_date || '1900-01-01') <= d
     && dateText(r.end_date || '2999-12-31') >= d);
+};
+const calcRemainingDays = (expiryDate) => {
+  const day = dateText(expiryDate);
+  if (!day) return 99999;
+  const now = new Date(`${dateText(nowIso())}T00:00:00Z`).getTime();
+  const exp = new Date(`${day}T00:00:00Z`).getTime();
+  if (!Number.isFinite(now) || !Number.isFinite(exp)) return 99999;
+  return Math.floor((exp - now) / 86400000);
+};
+const inventoryCandidates = (db, skuCode, preferredWarehouseCode = '') => {
+  const preferred = normalize(preferredWarehouseCode);
+  return arr(db.biz.inventory_ledger)
+    .filter((row) => String(row.sku_code) === String(skuCode) && Number(row.unsellable_flag) !== 1)
+    .map((row) => ({ ...row, __remaining_days: toNum(row.remaining_days, calcRemainingDays(row.expiry_date)) }))
+    .sort((a, b) => {
+      if (preferred) {
+        const aPref = String(a.warehouse_code) === preferred ? 0 : 1;
+        const bPref = String(b.warehouse_code) === preferred ? 0 : 1;
+        if (aPref !== bPref) return aPref - bPref;
+      }
+      const diffAvail = toNum(b.available_qty, 0) - toNum(a.available_qty, 0);
+      if (diffAvail !== 0) return diffAvail;
+      return toNum(a.__remaining_days, 99999) - toNum(b.__remaining_days, 99999);
+    });
 };
 
 const genOrderNo = (db) => {
@@ -125,20 +150,23 @@ const validatePayload = (db, payload) => {
 };
 const lineIssues = (db, header, line) => {
   const issues = [];
-  const stocks = db.biz.inventory_stock.filter((s) => String(s.sku_code) === String(line.sku_code));
+  const stocks = inventoryCandidates(db, line.sku_code, line.suggested_warehouse_code);
   if (!stocks.length) {
     issues.push({ type: 'NO_MATCH_RELATION', reason: EXCEPTION_REASON.NO_MATCH_RELATION });
     return issues;
   }
-  const target = stocks.find((s) => String(s.warehouse_code) === String(line.suggested_warehouse_code)) || stocks[0];
+  const target = stocks[0];
   const avail = toNum(target.available_qty, 0);
   const lock = toNum(target.locked_qty, 0);
   const safety = toNum(target.safety_qty, 0);
-  const usable = avail - lock;
-  if (usable < toNum(line.order_qty, 0)) issues.push({ type: 'OUT_OF_STOCK', reason: EXCEPTION_REASON.OUT_OF_STOCK });
-  if (toNum(target.shelf_life_days_remaining, 0) <= 2) issues.push({ type: 'EXPIRY_RISK', reason: EXCEPTION_REASON.EXPIRY_RISK });
-  if (usable - toNum(line.order_qty, 0) < safety) issues.push({ type: 'SAFETY_STOCK_BREACH', reason: EXCEPTION_REASON.SAFETY_STOCK_BREACH });
-  if (lock > avail * 0.85) issues.push({ type: 'LOCKED_STOCK_OCCUPIED', reason: EXCEPTION_REASON.LOCKED_STOCK_OCCUPIED });
+  const qty = toNum(line.order_qty, 0);
+  const remainAfterAllocate = avail - qty;
+  const total = Math.max(1, toNum(target.total_qty, 0));
+  const remainingDays = toNum(target.__remaining_days, 99999);
+  if (avail < qty) issues.push({ type: 'OUT_OF_STOCK', reason: EXCEPTION_REASON.OUT_OF_STOCK });
+  if (Number(target.near_expiry_flag) === 1 || remainingDays <= 2) issues.push({ type: 'EXPIRY_RISK', reason: EXCEPTION_REASON.EXPIRY_RISK });
+  if (remainAfterAllocate < safety) issues.push({ type: 'SAFETY_STOCK_BREACH', reason: EXCEPTION_REASON.SAFETY_STOCK_BREACH });
+  if (lock / total > 0.85) issues.push({ type: 'LOCKED_STOCK_OCCUPIED', reason: EXCEPTION_REASON.LOCKED_STOCK_OCCUPIED });
   if (!relationValid(db, header.customer_code, line.sku_code)) issues.push({ type: 'OUT_OF_REGION_AUTH', reason: EXCEPTION_REASON.OUT_OF_REGION_AUTH });
   return issues;
 };
@@ -194,7 +222,7 @@ const syncExceptions = (db, orderNo, issues) => {
 };
 
 const recommend = (db, line, weights) => {
-  const stocks = db.biz.inventory_stock.filter((s) => String(s.sku_code) === String(line.sku_code));
+  const stocks = inventoryCandidates(db, line.sku_code, line.suggested_warehouse_code);
   const sku = skuRow(db, line.sku_code);
   const shelf = Math.max(1, toNum(sku?.shelf_life_days, 1));
   const qty = Math.max(1, toNum(line.order_qty, 1));
@@ -202,13 +230,13 @@ const recommend = (db, line, weights) => {
     const avail = toNum(s.available_qty, 0);
     const lock = toNum(s.locked_qty, 0);
     const safety = toNum(s.safety_qty, 0);
-    const inv = clamp((avail - lock - safety) / qty, 0, 1);
+    const inv = clamp((avail - safety) / qty, 0, 1);
     const dis = clamp(toNum(s.distance_factor, 0.9), 0, 1);
-    const fresh = clamp(toNum(s.shelf_life_days_remaining, 0) / shelf, 0, 1);
+    const fresh = clamp(toNum(s.__remaining_days, 0) / shelf, 0, 1);
     const cost = clamp(toNum(s.cost_factor, 0.9), 0, 1);
     const pri = clamp(toNum(s.priority_factor, 0.9), 0, 1);
     const score = Number((inv * toNum(weights.inventory_weight, 0) + dis * toNum(weights.distance_weight, 0) + fresh * toNum(weights.freshness_weight, 0) + cost * toNum(weights.cost_weight, 0) + pri * toNum(weights.priority_weight, 0)).toFixed(4));
-    return { warehouse_code: s.warehouse_code, warehouse_name: s.warehouse_name, available_qty: avail, locked_qty: lock, safety_qty: safety, score, reasons: [`库存:${inv.toFixed(2)}`, `距离:${dis.toFixed(2)}`, `鲜度:${fresh.toFixed(2)}`, `成本:${cost.toFixed(2)}`, `优先级:${pri.toFixed(2)}`] };
+    return { warehouse_code: s.warehouse_code, warehouse_name: s.warehouse_name, available_qty: avail, locked_qty: lock, safety_qty: safety, remaining_days: toNum(s.__remaining_days, 99999), score, reasons: [`库存:${inv.toFixed(2)}`, `距离:${dis.toFixed(2)}`, `鲜度:${fresh.toFixed(2)}`, `成本:${cost.toFixed(2)}`, `优先级:${pri.toFixed(2)}`] };
   }).sort((a, b) => b.score - a.score);
 };
 
@@ -225,7 +253,7 @@ const applyAutoAllocate = (db, orderNo, operator, customWeights = null) => {
     const selected = [];
     recs.forEach((r) => {
       if (left <= 0) return;
-      const can = Math.max(0, toNum(r.available_qty, 0) - toNum(r.locked_qty, 0) - toNum(r.safety_qty, 0));
+      const can = Math.max(0, toNum(r.available_qty, 0) - toNum(r.safety_qty, 0));
       const q = Math.min(left, can);
       if (q <= 0) return;
       selected.push({ warehouse_code: r.warehouse_code, warehouse_name: r.warehouse_name, qty: q, score: r.score, reasons: r.reasons, manual: false });
@@ -282,7 +310,7 @@ const orderDetail = (db, orderNo) => {
     fulfillment_tracks: db.biz.fulfillment_tracks.filter((x) => String(x.order_no) === String(orderNo)).sort((a, b) => String(a.action_time).localeCompare(String(b.action_time)))
   };
 };
-const registerOrderPhase2Routes = ({ app, authRequired, apiOk, apiErr, appendOperationLog, paginate, contains, safeClone }) => {
+const registerOrderPhase2Routes = ({ app, authRequired, apiOk, apiErr, appendOperationLog, appendTaskRecord, appendNotification, paginate, contains, safeClone }) => {
   const safe = safeClone || clone;
 
   app.get('/api/orders/phase2/config', authRequired, (req, res) => {
@@ -466,6 +494,44 @@ const registerOrderPhase2Routes = ({ app, authRequired, apiOk, apiErr, appendOpe
         result.order_nos.push(orderNo);
       });
     });
+    const status = result.fail === 0 ? 'SUCCESS' : (result.success > 0 ? 'PARTIAL_SUCCESS' : 'FAILED');
+    const task = typeof appendTaskRecord === 'function'
+      ? appendTaskRecord('IMPORT', {
+        bizType: 'ORDER_PHASE2',
+        taskName: '订单闭环批量导入',
+        fileName: normalize(req.body?.fileName || 'order_phase2_import.json'),
+        operatorId: req.user?.id,
+        operatorName: req.user?.nickname || req.user?.username || '',
+        requestPath: req.originalUrl || req.path || '',
+        querySnapshot: { source: 'phase2-import', groupCount: result.order_nos.length },
+        status,
+        totalCount: result.total,
+        successCount: result.success,
+        failCount: result.fail,
+        resultMessage: `导入处理完成：成功 ${result.success}，失败 ${result.fail}`,
+        resultPayload: { ...result, failed_rows: arr(result.failed_rows).slice(0, 20) }
+      })
+      : null;
+    if (task && typeof appendNotification === 'function') {
+      appendNotification({
+        title: '订单导入任务完成',
+        content: `订单闭环导入完成，成功 ${result.success}，失败 ${result.fail}`,
+        bizType: 'IMPORT_TASK',
+        bizId: task.id,
+        receiverId: req.user?.id,
+        receiverName: req.user?.nickname || req.user?.username || ''
+      });
+    }
+    appendOperationLog(req, {
+      moduleCode: 'import_task',
+      bizObjectType: 'import_task',
+      bizObjectId: task?.id || '',
+      actionType: 'IMPORT',
+      resultStatus: status === 'FAILED' ? 'FAILED' : 'SUCCESS',
+      message: `订单闭环导入，成功 ${result.success}，失败 ${result.fail}`,
+      requestSummary: { total: result.total, group_orders: result.order_nos.length },
+      afterSnapshot: task || { status, ...result }
+    });
     apiOk(res, req, result, '导入完成');
   });
 
@@ -624,8 +690,9 @@ const registerOrderPhase2Routes = ({ app, authRequired, apiOk, apiErr, appendOpe
         lines.forEach((line) => {
           const lack = Math.max(0, toNum(line.order_qty, 0) - toNum(line.allocated_qty, 0));
           if (lack <= 0) return;
-          const stocks = db.biz.inventory_stock.filter((s) => String(s.sku_code) === String(line.sku_code)).sort((a, b) => toNum(b.available_qty, 0) - toNum(a.available_qty, 0));
-          const source = stocks[0] || null;
+          const stocks = inventoryCandidates(db, line.sku_code).sort((a, b) => toNum(b.available_qty, 0) - toNum(a.available_qty, 0));
+          const targetWarehouseCode = normalize(line.suggested_warehouse_code);
+          const source = stocks.find((s) => String(s.warehouse_code) !== targetWarehouseCode) || stocks[0] || null;
           const c = customerRow(db, h.customer_code);
           const row = { id: nextId(db.biz.replenishment_suggestions), order_no: orderNo, line_id: line.id, line_no: line.line_no, sku_code: line.sku_code, sku_name: line.sku_name, suggestion_type: source && source.warehouse_code !== normalize(line.suggested_warehouse_code || c?.default_warehouse_code) ? 'TRANSFER' : 'REPLENISH', source_warehouse_code: source?.warehouse_code || 'FACTORY-PLAN', source_warehouse_name: source?.warehouse_name || '工厂补货', target_warehouse_code: normalize(line.suggested_warehouse_code || c?.default_warehouse_code), target_warehouse_name: normalize(line.suggested_warehouse_name || c?.default_warehouse_name), suggest_qty: lack, suggest_eta_hours: source ? 24 : 48, status: 'PENDING', created_by: req.user?.nickname || req.user?.username || '系统', created_at: nowIso(), updated_at: nowIso() };
           db.biz.replenishment_suggestions.push(row);

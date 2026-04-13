@@ -2335,18 +2335,48 @@ app.get('/api/pasture-stats', authRequired, (req, res) => apiOk(res, req, readDb
 app.get('/api/products', authRequired, (req, res) => apiOk(res, req, readDb().biz.products, '获取成功'));
 app.get('/api/warehouses', authRequired, (req, res) => apiOk(res, req, readDb().master.warehouse, '获取成功'));
 
-app.get('/api/orders', authRequired, (req, res) => {
-    const db = readDb();
-    const { page = 1, limit = 15 } = req.query || {};
-    const rows = [...db.biz.orders].sort((a, b) => String(b.create_time).localeCompare(String(a.create_time)));
-    const { list, total } = paginate(rows, page, limit);
-    apiOk(res, req, { list, total }, '获取成功');
-});
+const PHASE2_MATCHED_FULFILLMENT_STATUS = new Set(['ALLOCATED', 'WAIT_OUTBOUND', 'OUTBOUND', 'IN_TRANSIT', 'SIGNED', 'CLOSED']);
+const buildLegacyOrderRowsFromPhase2 = (db) => {
+    const headerRows = ensureArray(db?.biz?.order_headers);
+    const lineRows = ensureArray(db?.biz?.order_lines);
+    const warehouseRows = ensureArray(db?.master?.warehouse);
 
-app.get('/api/order-analysis', authRequired, (req, res) => {
-    const db = readDb();
-    const rows = ensureArray(db.biz.orders);
-    const productMap = new Map(ensureArray(db.biz.products).map(item => [item.product_code, item]));
+    const headerMap = new Map(headerRows.map((row) => [String(row.order_no), row]));
+    const lineCountMap = new Map();
+    lineRows.forEach((line) => {
+        const orderNo = String(line.order_no || '');
+        lineCountMap.set(orderNo, toNum(lineCountMap.get(orderNo), 0) + 1);
+    });
+    const warehouseIdByCode = new Map(warehouseRows.map((row) => [String(row.warehouse_code), row.id]));
+
+    const rows = lineRows.map((line) => {
+        const orderNo = String(line.order_no || '');
+        const header = headerMap.get(orderNo) || {};
+        const lineNo = toNum(line.line_no, 0);
+        const lineCount = toNum(lineCountMap.get(orderNo), 0);
+        const firstAlloc = ensureArray(line.allocation_result)[0] || null;
+        const matchedByAlloc = toNum(line.allocated_qty, 0) > 0;
+        const matchedByStatus = PHASE2_MATCHED_FULFILLMENT_STATUS.has(String(header.fulfillment_status || '')) || String(header.order_status) === 'CLOSED';
+        const sourceWarehouseCode = String(firstAlloc?.warehouse_code || '');
+        const sourceWarehouseId = warehouseIdByCode.get(sourceWarehouseCode);
+
+        return {
+            order_id: lineCount > 1 ? `${orderNo}-${String(lineNo || 1).padStart(2, '0')}` : orderNo,
+            distributor_id: String(header.customer_code || header.reseller_code || ''),
+            sku_id: String(line.sku_code || ''),
+            request_liters: toNum(line.order_qty, 0),
+            source_pasture_id: sourceWarehouseId || sourceWarehouseCode || '',
+            match_score: toNum(firstAlloc?.score, 0),
+            status: matchedByAlloc || matchedByStatus ? 'Matched' : 'Pending',
+            create_time: String(header.created_at || header.updated_at || ''),
+            region: String(header.region || '其他')
+        };
+    });
+    return rows.sort((a, b) => String(b.create_time || '').localeCompare(String(a.create_time || '')));
+};
+const buildLegacyOrderAnalysisFromPhase2 = (db) => {
+    const rows = buildLegacyOrderRowsFromPhase2(db);
+    const productMap = new Map(ensureArray(db?.biz?.products).map(item => [item.product_code, item]));
     const coreRegions = ['华东', '华中', '华南', '华北'];
     const fallbackWeights = { 华东: 0.31, 华中: 0.22, 华南: 0.24, 华北: 0.23 };
     const sumLiters = (list) => list.reduce((sum, row) => sum + toNum(row.request_liters, 0), 0);
@@ -2381,11 +2411,8 @@ app.get('/api/order-analysis', authRequired, (req, res) => {
         }, {});
         return {
             stats,
-            coreBaseStats,
             weights,
-            nationalDirectLiters,
-            allocatedNational,
-            coreBaseTotal
+            nationalDirectLiters
         };
     };
 
@@ -2452,7 +2479,7 @@ app.get('/api/order-analysis', authRequired, (req, res) => {
             totalLiters: sumLiters(dayRows)
         });
     }
-    apiOk(res, req, {
+    return {
         totalOrders,
         totalLiters,
         pendingOrders,
@@ -2483,7 +2510,20 @@ app.get('/api/order-analysis', authRequired, (req, res) => {
             note: '全国直营/电商需求已按四大区承接份额分摊，西南需求单列观察'
         },
         sevenDayTrend
-    }, '获取成功');
+    };
+};
+app.get('/api/orders', authRequired, (req, res) => {
+    const db = readDb();
+    const { page = 1, limit = 15, status = '' } = req.query || {};
+    let rows = buildLegacyOrderRowsFromPhase2(db);
+    if (status) rows = rows.filter((row) => String(row.status) === String(status));
+    const { list, total } = paginate(rows, page, limit);
+    apiOk(res, req, { list, total }, '获取成功');
+});
+
+app.get('/api/order-analysis', authRequired, (req, res) => {
+    const db = readDb();
+    apiOk(res, req, buildLegacyOrderAnalysisFromPhase2(db), '获取成功');
 });
 
 registerOrderPhase2Routes({
@@ -2492,6 +2532,8 @@ registerOrderPhase2Routes({
     apiOk,
     apiErr,
     appendOperationLog,
+    appendTaskRecord,
+    appendNotification,
     paginate,
     contains,
     safeClone

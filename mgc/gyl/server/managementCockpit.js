@@ -15,6 +15,26 @@ const round2 = (n) => Number(toNum(n, 0).toFixed(2));
 const contains = (src, key) => String(src || '').toLowerCase().includes(String(key || '').trim().toLowerCase());
 const dateText = (v) => String(v || '').slice(0, 10);
 const toPercent = (numerator, denominator) => (denominator ? round2((toNum(numerator, 0) / toNum(denominator, 0)) * 100) : 0);
+const DEFAULT_EXCLUDED_ORDER_STATUS = new Set(['DRAFT', 'REJECTED']);
+const toBool = (value) => ['1', 'true', 'yes', 'y'].includes(String(value || '').trim().toLowerCase());
+const parseOrderStatusScope = (query = {}) => {
+    const statuses = String(query.orderStatuses || query.orderStatus || '')
+        .split(',')
+        .map((v) => String(v || '').trim().toUpperCase())
+        .filter(Boolean);
+    return {
+        includeAllStatuses: toBool(query.includeAllStatuses),
+        statuses: new Set(statuses)
+    };
+};
+const shouldIncludeOrderHeader = (header, scope = {}) => {
+    const status = String(header?.order_status || '').toUpperCase();
+    const reviewStatus = String(header?.review_status || '').toUpperCase();
+    if (scope.statuses instanceof Set && scope.statuses.size) return scope.statuses.has(status);
+    if (scope.includeAllStatuses) return true;
+    if (DEFAULT_EXCLUDED_ORDER_STATUS.has(status) || reviewStatus === 'REJECTED') return false;
+    return true;
+};
 
 const getTime = (...values) => {
     for (let i = 0; i < values.length; i += 1) {
@@ -89,8 +109,9 @@ const ensureStructures = (db) => {
     db.platform.management_reports = arr(db.platform.management_reports);
 };
 
-const buildOrderAnalysis = (db) => {
-    const headers = byLatest(db.biz.order_headers, ['created_at', 'updated_at']);
+const buildOrderAnalysis = (db, query = {}) => {
+    const scope = parseOrderStatusScope(query);
+    const headers = byLatest(db.biz.order_headers, ['created_at', 'updated_at']).filter((row) => shouldIncludeOrderHeader(row, scope));
     const totalOrders = headers.length;
     const regionMap = new Map();
     const channelMap = new Map();
@@ -186,8 +207,9 @@ const buildInventoryAnalysis = (db) => {
     };
 };
 
-const buildChannelAnalysis = (db) => {
-    const orderRows = byLatest(db.biz.order_headers, ['created_at', 'updated_at']);
+const buildChannelAnalysis = (db, query = {}) => {
+    const scope = parseOrderStatusScope(query);
+    const orderRows = byLatest(db.biz.order_headers, ['created_at', 'updated_at']).filter((row) => shouldIncludeOrderHeader(row, scope));
     const authRows = arr(db.biz.channel_dealer_authorizations);
     const totalOrders = orderRows.length;
     const today = dateText(nowIso());
@@ -268,10 +290,10 @@ const buildMdmQualityAnalysis = (db) => {
     };
 };
 
-const buildOverview = (db) => {
-    const order = buildOrderAnalysis(db);
+const buildOverview = (db, query = {}) => {
+    const order = buildOrderAnalysis(db, query);
     const inventory = buildInventoryAnalysis(db);
-    const channel = buildChannelAnalysis(db);
+    const channel = buildChannelAnalysis(db, query);
     const mdm = buildMdmQualityAnalysis(db);
 
     const availableRate = toPercent(inventory.summary.available_qty, inventory.summary.total_qty);
@@ -299,24 +321,24 @@ const buildReportNo = (periodType, rows) => {
     return `${prefix}${datePart}${String(maxSeq + 1).padStart(4, '0')}`;
 };
 
-const buildReportSnapshot = (db) => ({ overview: buildOverview(db), order_analysis: buildOrderAnalysis(db), inventory_analysis: buildInventoryAnalysis(db), channel_analysis: buildChannelAnalysis(db), mdm_quality: buildMdmQualityAnalysis(db) });
+const buildReportSnapshot = (db, query = {}) => ({ overview: buildOverview(db, query), order_analysis: buildOrderAnalysis(db, query), inventory_analysis: buildInventoryAnalysis(db), channel_analysis: buildChannelAnalysis(db, query), mdm_quality: buildMdmQualityAnalysis(db) });
 
-const createReportRow = (db, periodType, operatorName) => {
+const createReportRow = (db, periodType, operatorName, query = {}) => {
     const label = getPeriodLabel(periodType);
-    const report = { id: nextId(db.platform.management_reports), report_no: buildReportNo(periodType, db.platform.management_reports), period_type: periodType, period_label: label, status: 'GENERATED', generated_at: nowIso(), generated_by: operatorName, archived_at: '', archived_by: '', file_name: `management-cockpit-${periodType}-${label}.json`, snapshot: buildReportSnapshot(db) };
+    const report = { id: nextId(db.platform.management_reports), report_no: buildReportNo(periodType, db.platform.management_reports), period_type: periodType, period_label: label, status: 'GENERATED', generated_at: nowIso(), generated_by: operatorName, archived_at: '', archived_by: '', file_name: `management-cockpit-${periodType}-${label}.json`, snapshot: buildReportSnapshot(db, query) };
     db.platform.management_reports.push(report);
     return report;
 };
 
-const createBatchReportRows = (db, periodTypes, operatorName) => {
+const createBatchReportRows = (db, periodTypes, operatorName, query = {}) => {
     const normalized = [...new Set(arr(periodTypes).map((v) => String(v || '').toUpperCase()))].filter((v) => REPORT_PERIOD_TYPES.includes(v));
     const finalTypes = normalized.length ? normalized : [...REPORT_PERIOD_TYPES];
-    return finalTypes.map((periodType) => createReportRow(db, periodType, operatorName));
+    return finalTypes.map((periodType) => createReportRow(db, periodType, operatorName, query));
 };
 
-const ensureSeedReports = (db, operatorName = 'system') => {
+const ensureSeedReports = (db, operatorName = 'system', query = {}) => {
     if (arr(db.platform.management_reports).length) return;
-    REPORT_PERIOD_TYPES.forEach((periodType) => createReportRow(db, periodType, operatorName));
+    REPORT_PERIOD_TYPES.forEach((periodType) => createReportRow(db, periodType, operatorName, query));
 };
 
 const serializeReportCsv = (report) => {
@@ -345,18 +367,18 @@ const getOperatorName = (req) => req?.user?.nickname || req?.user?.username || '
 
 const registerManagementCockpitRoutes = ({ app, authRequired, apiOk, apiErr, paginate }) => {
     app.get('/api/management-cockpit/options', authRequired, (req, res) => {
-        updateDb((db) => { ensureStructures(db); ensureSeedReports(db, getOperatorName(req)); });
+        updateDb((db) => { ensureStructures(db); ensureSeedReports(db, getOperatorName(req), req.query || {}); });
         apiOk(res, req, { report_period_types: REPORT_PERIOD_TYPES, report_status: REPORT_STATUS }, '获取成功');
     });
 
-    app.get('/api/management-cockpit/overview', authRequired, (req, res) => { const db = readDb(); ensureStructures(db); apiOk(res, req, buildOverview(db), '获取成功'); });
-    app.get('/api/management-cockpit/order-analysis', authRequired, (req, res) => { const db = readDb(); ensureStructures(db); apiOk(res, req, buildOrderAnalysis(db), '获取成功'); });
+    app.get('/api/management-cockpit/overview', authRequired, (req, res) => { const db = readDb(); ensureStructures(db); apiOk(res, req, buildOverview(db, req.query || {}), '获取成功'); });
+    app.get('/api/management-cockpit/order-analysis', authRequired, (req, res) => { const db = readDb(); ensureStructures(db); apiOk(res, req, buildOrderAnalysis(db, req.query || {}), '获取成功'); });
     app.get('/api/management-cockpit/inventory-analysis', authRequired, (req, res) => { const db = readDb(); ensureStructures(db); apiOk(res, req, buildInventoryAnalysis(db), '获取成功'); });
-    app.get('/api/management-cockpit/channel-analysis', authRequired, (req, res) => { const db = readDb(); ensureStructures(db); apiOk(res, req, buildChannelAnalysis(db), '获取成功'); });
+    app.get('/api/management-cockpit/channel-analysis', authRequired, (req, res) => { const db = readDb(); ensureStructures(db); apiOk(res, req, buildChannelAnalysis(db, req.query || {}), '获取成功'); });
     app.get('/api/management-cockpit/mdm-quality', authRequired, (req, res) => { const db = readDb(); ensureStructures(db); apiOk(res, req, buildMdmQualityAnalysis(db), '获取成功'); });
 
     app.get('/api/management-cockpit/reports', authRequired, (req, res) => {
-        updateDb((db) => { ensureStructures(db); ensureSeedReports(db, getOperatorName(req)); });
+        updateDb((db) => { ensureStructures(db); ensureSeedReports(db, getOperatorName(req), req.query || {}); });
         const { page = 1, pageSize = 20, periodType = '', status = '', keyword = '' } = req.query || {};
         const db = readDb();
         ensureStructures(db);
@@ -374,18 +396,18 @@ const registerManagementCockpitRoutes = ({ app, authRequired, apiOk, apiErr, pag
         const periodType = String(req.body?.periodType || '').toUpperCase();
         if (!REPORT_PERIOD_TYPES.includes(periodType)) return apiErr(res, req, 400, `periodType 仅支持 ${REPORT_PERIOD_TYPES.join('/')}`);
         let created = null;
-        updateDb((db) => { ensureStructures(db); created = createReportRow(db, periodType, getOperatorName(req)); });
+        updateDb((db) => { ensureStructures(db); created = createReportRow(db, periodType, getOperatorName(req), req.query || {}); });
         apiOk(res, req, pickReportRow(created), '生成成功');
     });
 
     app.post('/api/management-cockpit/reports/generate-batch', authRequired, (req, res) => {
         let createdRows = [];
-        updateDb((db) => { ensureStructures(db); createdRows = createBatchReportRows(db, arr(req.body?.periodTypes), getOperatorName(req)); });
+        updateDb((db) => { ensureStructures(db); createdRows = createBatchReportRows(db, arr(req.body?.periodTypes), getOperatorName(req), req.query || {}); });
         apiOk(res, req, { period_types: [...new Set(createdRows.map((row) => row.period_type))], total: createdRows.length, list: createdRows.map((row) => pickReportRow(row)) }, '批量生成成功');
     });
 
     app.get('/api/management-cockpit/reports/:id/snapshot', authRequired, (req, res) => {
-        updateDb((db) => { ensureStructures(db); ensureSeedReports(db, getOperatorName(req)); });
+        updateDb((db) => { ensureStructures(db); ensureSeedReports(db, getOperatorName(req), req.query || {}); });
         const db = readDb();
         ensureStructures(db);
         const row = arr(db.platform.management_reports).find((item) => Number(item.id) === toNum(req.params.id, 0));
@@ -394,7 +416,7 @@ const registerManagementCockpitRoutes = ({ app, authRequired, apiOk, apiErr, pag
     });
 
     app.get('/api/management-cockpit/reports/:id/export', authRequired, (req, res) => {
-        updateDb((db) => { ensureStructures(db); ensureSeedReports(db, getOperatorName(req)); });
+        updateDb((db) => { ensureStructures(db); ensureSeedReports(db, getOperatorName(req), req.query || {}); });
         const db = readDb();
         ensureStructures(db);
         const row = arr(db.platform.management_reports).find((item) => Number(item.id) === toNum(req.params.id, 0));
@@ -406,7 +428,7 @@ const registerManagementCockpitRoutes = ({ app, authRequired, apiOk, apiErr, pag
         let out = null;
         updateDb((db) => {
             ensureStructures(db);
-            ensureSeedReports(db, getOperatorName(req));
+            ensureSeedReports(db, getOperatorName(req), req.query || {});
             const row = arr(db.platform.management_reports).find((item) => Number(item.id) === toNum(req.params.id, 0));
             if (!row) return;
             row.status = 'ARCHIVED';

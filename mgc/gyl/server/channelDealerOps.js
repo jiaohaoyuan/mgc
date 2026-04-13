@@ -8,6 +8,7 @@ const PRICE_APPROVE_STATUS = ['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'];
 const RISK_TYPES = ['LOW_SALES', 'HIGH_FREQ_ORDER', 'OVERREACH_SALES', 'CONTRACT_EXPIRY'];
 const RISK_LEVEL = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 const RISK_STATUS = ['OPEN', 'PROCESSING', 'CLOSED'];
+const DEFAULT_EXCLUDED_ORDER_STATUS = new Set(['DRAFT', 'REJECTED']);
 
 const normalize = (v) => String(v || '').trim();
 const toNum = (v, fb = 0) => {
@@ -17,6 +18,25 @@ const toNum = (v, fb = 0) => {
 const arr = (v) => (Array.isArray(v) ? v : []);
 const dateText = (v) => String(v || '').slice(0, 10);
 const contains = (text, keyword) => String(text || '').toLowerCase().includes(String(keyword || '').trim().toLowerCase());
+const toBool = (value) => ['1', 'true', 'yes', 'y'].includes(String(value || '').trim().toLowerCase());
+const parseOrderStatusScope = (query = {}) => {
+    const statuses = String(query.orderStatuses || query.orderStatus || '')
+        .split(',')
+        .map((v) => String(v || '').trim().toUpperCase())
+        .filter(Boolean);
+    return {
+        includeAllStatuses: toBool(query.includeAllStatuses),
+        statuses: new Set(statuses)
+    };
+};
+const shouldIncludeOrderHeader = (header, scope = {}) => {
+    const status = String(header?.order_status || '').toUpperCase();
+    const reviewStatus = String(header?.review_status || '').toUpperCase();
+    if (scope.statuses instanceof Set && scope.statuses.size) return scope.statuses.has(status);
+    if (scope.includeAllStatuses) return true;
+    if (DEFAULT_EXCLUDED_ORDER_STATUS.has(status) || reviewStatus === 'REJECTED') return false;
+    return true;
+};
 
 const paginateRows = (rows, page, pageSize) => {
     const p = Math.max(1, toNum(page, 1));
@@ -300,11 +320,12 @@ const getRange = (query = {}) => {
 
 const collectOrderFacts = (db, query = {}) => {
     const { startDate, endDate } = getRange(query);
+    const statusScope = parseOrderStatusScope(query);
     const headerMap = new Map(
         arr(db.biz.order_headers)
             .filter((header) => {
                 const day = dateText(header.created_at);
-                return day >= startDate && day <= endDate;
+                return day >= startDate && day <= endDate && shouldIncludeOrderHeader(header, statusScope);
             })
             .map((header) => [String(header.order_no), header])
     );
@@ -348,7 +369,7 @@ const buildAnalysis = (db, query = {}) => {
     const rangeDays = Math.max(1, daysBetween(endDate, startDate) + 1);
     const prevEnd = addDays(startDate, -1);
     const prevStart = addDays(prevEnd, -rangeDays + 1);
-    const prevFacts = collectOrderFacts(db, { dateFrom: prevStart, dateTo: prevEnd }).facts;
+    const prevFacts = collectOrderFacts(db, { ...query, dateFrom: prevStart, dateTo: prevEnd }).facts;
 
     const regionCurrent = groupSum(facts, (row) => row.region || '未分区', (row) => row.qty);
     const regionPrev = groupSum(prevFacts, (row) => row.region || '未分区', (row) => row.qty);
@@ -505,11 +526,12 @@ const collectRiskCandidates = (db) => {
         });
     });
 
+    const defaultStatusScope = parseOrderStatusScope({});
     const orderCount14 = groupSum(
         arr(db.biz.order_headers)
             .filter((row) => {
                 const day = dateText(row.created_at);
-                return day >= addDays(today, -13) && day <= today;
+                return day >= addDays(today, -13) && day <= today && shouldIncludeOrderHeader(row, defaultStatusScope);
             }),
         (row) => normalize(row.customer_code),
         () => 1
@@ -673,10 +695,10 @@ const ensureChannelDealerOpsStructures = (db) => {
     if (!arr(db.biz.channel_dealer_risks).length) scanAndSyncRisks(db, '系统初始化');
 };
 
-const getDashboard = (db) => {
+const getDashboard = (db, query = {}) => {
     const today = dateText(nowIso());
-    const analysis = buildAnalysis(db, { dateFrom: addDays(today, -29), dateTo: today });
-    const overreach = detectOverreachSales(db, { dateFrom: addDays(today, -29), dateTo: today });
+    const analysis = buildAnalysis(db, { ...query, dateFrom: addDays(today, -29), dateTo: today });
+    const overreach = detectOverreachSales(db, { ...query, dateFrom: addDays(today, -29), dateTo: today });
 
     const contracts = arr(db.biz.channel_dealer_contracts);
     const expiringContractCount = contracts.filter((row) => {
@@ -691,7 +713,7 @@ const getDashboard = (db) => {
         const end = addDays(startOfMonth(today), -1 - (i - 1) * 30);
         const monthEnd = dateText(new Date(new Date(end).getFullYear(), new Date(end).getMonth() + 1, 0).toISOString().slice(0, 10));
         const monthStart = startOfMonth(end);
-        const facts = collectOrderFacts(db, { dateFrom: monthStart, dateTo: monthEnd }).facts;
+        const facts = collectOrderFacts(db, { ...query, dateFrom: monthStart, dateTo: monthEnd }).facts;
         const qty = round2(facts.reduce((sum, row) => sum + toNum(row.qty, 0), 0));
         const amount = round2(facts.reduce((sum, row) => sum + toNum(row.amount, 0), 0));
         recentTrend.push({
@@ -769,7 +791,7 @@ const registerChannelDealerOpsRoutes = ({ app, authRequired, apiOk, apiErr, pagi
     app.get('/api/channel-dealer-ops/dashboard', authRequired, (req, res) => {
         const db = readDb();
         ensureChannelDealerOpsStructures(db);
-        apiOk(res, req, getDashboard(db), '获取成功');
+        apiOk(res, req, getDashboard(db, req.query || {}), '获取成功');
     });
 
     app.get('/api/channel-dealer-ops/profiles/list', authRequired, (req, res) => {
