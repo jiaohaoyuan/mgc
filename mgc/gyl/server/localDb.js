@@ -18,7 +18,11 @@ const DEFAULT_PLATFORM_PAGES = [
     { id: 43, name: '导入任务', path: '/import-task', permission: 'sys:import:view', parent_id: 10 },
     { id: 44, name: '导出任务', path: '/export-task', permission: 'sys:export:view', parent_id: 10 },
     { id: 45, name: '订单闭环中心', path: '/intelligent-closed-loop', permission: 'biz:intelligent:closed-loop:view', parent_id: 20 },
-    { id: 46, name: '库存与仓配运营中心', path: '/inventory-ops', permission: 'biz:inventory:ops:view', parent_id: 20 }
+    { id: 46, name: '库存与仓配运营中心', path: '/inventory-ops', permission: 'biz:inventory:ops:view', parent_id: 20 },
+    { id: 47, name: '渠道与经销商经营中心', path: '/channel-dealer-ops', permission: 'biz:channel:dealer:ops:view', parent_id: 20 },
+    { id: 48, name: '流程协同与待办中心', path: '/workflow-center', permission: 'biz:workflow:center:view', parent_id: 20 },
+    { id: 49, name: '经营分析与管理驾驶舱', path: '/management-cockpit', permission: 'biz:management:cockpit:view', parent_id: 20 },
+    { id: 50, name: '企业级平台能力中心', path: '/enterprise-platform', permission: 'sys:enterprise:platform:view', parent_id: 10 }
 ];
 
 const DEFAULT_DICT_TYPES = [
@@ -45,6 +49,110 @@ const DEFAULT_DICT_ITEMS = [
     { id: 13, dict_type_code: 'notification_status', item_code: 'READ', item_name: '已读', item_value: 'READ', item_color: 'success', sort_order: 2, status: 1, system_flag: 1 }
 ];
 
+const DEFAULT_SYSTEM_CONFIG_DEFINITIONS = [
+    {
+        config_code: 'algo_weight',
+        config_name: '算法权重配置',
+        config_type: 'ALGORITHM_WEIGHT',
+        config_value: {
+            inventory_weight: 0.32,
+            distance_weight: 0.22,
+            freshness_weight: 0.2,
+            cost_weight: 0.14,
+            priority_weight: 0.12
+        }
+    },
+    {
+        config_code: 'alert_threshold',
+        config_name: '预警阈值配置',
+        config_type: 'ALERT_THRESHOLD',
+        config_value: {
+            order_delay_minutes: 30,
+            inventory_warning_days: 7,
+            api_slow_ms: 800,
+            api_error_rate_percent: 5
+        }
+    },
+    {
+        config_code: 'workflow_param',
+        config_name: '流程参数配置',
+        config_type: 'WORKFLOW_PARAM',
+        config_value: {
+            approve_timeout_hours: 24,
+            escalate_timeout_hours: 48,
+            auto_retry_count: 2
+        }
+    }
+];
+
+const DEFAULT_ARCHIVE_POLICY_DEFINITIONS = [
+    {
+        policy_code: 'ORDER_ARCHIVE',
+        policy_name: '订单归档策略',
+        target_type: 'ORDER',
+        retention_days: 365
+    },
+    {
+        policy_code: 'LOG_ARCHIVE',
+        policy_name: '日志归档策略',
+        target_type: 'LOG',
+        retention_days: 180
+    },
+    {
+        policy_code: 'TASK_ARCHIVE',
+        policy_name: '导入导出任务归档策略',
+        target_type: 'IMPORT_EXPORT',
+        retention_days: 120
+    }
+];
+
+const DEFAULT_FINE_PERMISSION_FIELDS = [
+    { field: 'status', label: '状态', visible: 1, editable: 1 },
+    { field: 'owner_name', label: '负责人', visible: 1, editable: 1 },
+    { field: 'amount', label: '金额', visible: 1, editable: 0 },
+    { field: 'remark', label: '备注', visible: 1, editable: 1 }
+];
+
+const buildDefaultSystemConfigRows = (timeIso) =>
+    DEFAULT_SYSTEM_CONFIG_DEFINITIONS.map((item, index) => ({
+        id: index + 1,
+        config_code: item.config_code,
+        config_name: item.config_name,
+        config_type: item.config_type,
+        config_value: cloneJson(item.config_value),
+        status: 1,
+        version: 1,
+        updated_by: 'system',
+        created_at: timeIso,
+        updated_at: timeIso
+    }));
+
+const buildDefaultSystemConfigVersionRows = (configs, timeIso) =>
+    configs.map((item, index) => ({
+        id: index + 1,
+        config_id: item.id,
+        config_code: item.config_code,
+        version: 1,
+        status: 1,
+        config_value: cloneJson(item.config_value),
+        change_note: '初始化版本',
+        changed_by: 'system',
+        changed_at: timeIso
+    }));
+
+const buildDefaultArchivePolicyRows = (timeIso) =>
+    DEFAULT_ARCHIVE_POLICY_DEFINITIONS.map((item, index) => ({
+        id: index + 1,
+        policy_code: item.policy_code,
+        policy_name: item.policy_name,
+        target_type: item.target_type,
+        retention_days: item.retention_days,
+        status: 1,
+        last_run_at: '',
+        created_at: timeIso,
+        updated_at: timeIso
+    }));
+
 const ensureDir = () => {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 };
@@ -63,6 +171,9 @@ const createSeedDb = () => {
         [22, '智能订购中心', '/intelligent', 'biz:intelligent:view', 20],
         [23, '订单闭环中心', '/intelligent-closed-loop', 'biz:intelligent:closed-loop:view', 20],
         [24, '库存与仓配运营中心', '/inventory-ops', 'biz:inventory:ops:view', 20],
+        [25, '渠道与经销商经营中心', '/channel-dealer-ops', 'biz:channel:dealer:ops:view', 20],
+        [26, '流程协同与待办中心', '/workflow-center', 'biz:workflow:center:view', 20],
+        [27, '经营分析与管理驾驶舱', '/management-cockpit', 'biz:management:cockpit:view', 20],
         [31, 'SKU管理', '/mdm/sku', 'mdm:sku:view', 30],
         [32, '经销关系', '/mdm/reseller-relation', 'mdm:relation:view', 30]
     ].map(([id, name, pathVal, permission, parent]) => ({
@@ -86,6 +197,9 @@ const createSeedDb = () => {
     ];
 
     const rolePages = pages.map((page) => ({ role_id: 1, page_id: page.id }));
+    const systemConfigs = buildDefaultSystemConfigRows(t);
+    const systemConfigVersions = buildDefaultSystemConfigVersionRows(systemConfigs, t);
+    const archivePolicies = buildDefaultArchivePolicyRows(t);
 
     return {
         meta: {
@@ -165,10 +279,24 @@ const createSeedDb = () => {
             dict_types: cloneJson(DEFAULT_DICT_TYPES),
             dict_items: cloneJson(DEFAULT_DICT_ITEMS),
             operation_logs: [],
+            security_logs: [],
             import_tasks: [],
             export_tasks: [],
             notifications: [],
-            task_runs: []
+            system_configs: systemConfigs,
+            system_config_versions: systemConfigVersions,
+            archive_policies: archivePolicies,
+            archive_jobs: [],
+            fine_permissions: [],
+            api_metrics: [],
+            task_runs: [],
+            workflow_todos: [],
+            workflow_approvals: [],
+            workflow_messages: [],
+            workflow_tasks: [],
+            workflow_reminders: [],
+            workflow_timeout_rules: [],
+            management_reports: []
         }
     };
 };
@@ -218,10 +346,24 @@ const ensurePlatformStructures = (db) => {
     db.platform.dict_types = ensureArray(db.platform.dict_types);
     db.platform.dict_items = ensureArray(db.platform.dict_items);
     db.platform.operation_logs = ensureArray(db.platform.operation_logs);
+    db.platform.security_logs = ensureArray(db.platform.security_logs);
     db.platform.import_tasks = ensureArray(db.platform.import_tasks);
     db.platform.export_tasks = ensureArray(db.platform.export_tasks);
     db.platform.notifications = ensureArray(db.platform.notifications);
+    db.platform.system_configs = ensureArray(db.platform.system_configs);
+    db.platform.system_config_versions = ensureArray(db.platform.system_config_versions);
+    db.platform.archive_policies = ensureArray(db.platform.archive_policies);
+    db.platform.archive_jobs = ensureArray(db.platform.archive_jobs);
+    db.platform.fine_permissions = ensureArray(db.platform.fine_permissions);
+    db.platform.api_metrics = ensureArray(db.platform.api_metrics);
     db.platform.task_runs = ensureArray(db.platform.task_runs);
+    db.platform.workflow_todos = ensureArray(db.platform.workflow_todos);
+    db.platform.workflow_approvals = ensureArray(db.platform.workflow_approvals);
+    db.platform.workflow_messages = ensureArray(db.platform.workflow_messages);
+    db.platform.workflow_tasks = ensureArray(db.platform.workflow_tasks);
+    db.platform.workflow_reminders = ensureArray(db.platform.workflow_reminders);
+    db.platform.workflow_timeout_rules = ensureArray(db.platform.workflow_timeout_rules);
+    db.platform.management_reports = ensureArray(db.platform.management_reports);
 
     DEFAULT_DICT_TYPES.forEach((item) => {
         if (!db.platform.dict_types.some((row) => String(row.dict_type_code) === String(item.dict_type_code))) {
@@ -235,6 +377,52 @@ const ensurePlatformStructures = (db) => {
             db.platform.dict_items.push(cloneJson(item));
             changed = true;
         }
+    });
+
+    DEFAULT_SYSTEM_CONFIG_DEFINITIONS.forEach((definition) => {
+        const exists = db.platform.system_configs.find((row) => String(row.config_code) === String(definition.config_code));
+        if (exists) return;
+        const configId = nextId(db.platform.system_configs);
+        db.platform.system_configs.push({
+            id: configId,
+            config_code: definition.config_code,
+            config_name: definition.config_name,
+            config_type: definition.config_type,
+            config_value: cloneJson(definition.config_value),
+            status: 1,
+            version: 1,
+            updated_by: 'system',
+            created_at: nowIso(),
+            updated_at: nowIso()
+        });
+        db.platform.system_config_versions.push({
+            id: nextId(db.platform.system_config_versions),
+            config_id: configId,
+            config_code: definition.config_code,
+            version: 1,
+            status: 1,
+            config_value: cloneJson(definition.config_value),
+            change_note: '初始化版本',
+            changed_by: 'system',
+            changed_at: nowIso()
+        });
+        changed = true;
+    });
+
+    DEFAULT_ARCHIVE_POLICY_DEFINITIONS.forEach((definition) => {
+        if (db.platform.archive_policies.some((row) => String(row.policy_code) === String(definition.policy_code))) return;
+        db.platform.archive_policies.push({
+            id: nextId(db.platform.archive_policies),
+            policy_code: definition.policy_code,
+            policy_name: definition.policy_name,
+            target_type: definition.target_type,
+            retention_days: definition.retention_days,
+            status: 1,
+            last_run_at: '',
+            created_at: nowIso(),
+            updated_at: nowIso()
+        });
+        changed = true;
     });
 
     const incomingPages = DEFAULT_PLATFORM_PAGES.map((page) => ({
@@ -273,6 +461,52 @@ const ensurePlatformStructures = (db) => {
         return next;
     });
 
+    db.platform.system_configs = db.platform.system_configs.map((row) => {
+        const next = { ...row };
+        if (!next.version || Number(next.version) < 1) {
+            next.version = 1;
+            changed = true;
+        }
+        if (!next.updated_by) {
+            next.updated_by = 'system';
+            changed = true;
+        }
+        if (!next.created_at) {
+            next.created_at = nowIso();
+            changed = true;
+        }
+        if (!next.updated_at) {
+            next.updated_at = nowIso();
+            changed = true;
+        }
+        if (next.status !== 0 && next.status !== 1) {
+            next.status = 1;
+            changed = true;
+        }
+        return next;
+    });
+
+    db.platform.archive_policies = db.platform.archive_policies.map((row) => {
+        const next = { ...row };
+        if (!next.retention_days || Number(next.retention_days) < 1) {
+            next.retention_days = 180;
+            changed = true;
+        }
+        if (next.status !== 0 && next.status !== 1) {
+            next.status = 1;
+            changed = true;
+        }
+        if (!next.created_at) {
+            next.created_at = nowIso();
+            changed = true;
+        }
+        if (!next.updated_at) {
+            next.updated_at = nowIso();
+            changed = true;
+        }
+        return next;
+    });
+
     db.system.pages.forEach((page) => {
         if (!db.system.role_pages.some((row) => Number(row.role_id) === 1 && Number(row.page_id) === Number(page.id))) {
             db.system.role_pages.push({ role_id: 1, page_id: Number(page.id) });
@@ -280,8 +514,37 @@ const ensurePlatformStructures = (db) => {
         }
     });
 
+    const finePermissionRows = db.platform.fine_permissions;
+    const finePermissionPaths = ['/enterprise-platform', '/operation-log', '/workflow-center', '/user'];
+    const pageMapByPath = finePermissionPaths.reduce((acc, itemPath) => {
+        const page = db.system.pages.find((row) => String(row.path) === itemPath);
+        if (page) acc[itemPath] = page;
+        return acc;
+    }, {});
+    db.system.roles.forEach((role) => {
+        finePermissionPaths.forEach((itemPath) => {
+            const page = pageMapByPath[itemPath];
+            if (!page) return;
+            if (finePermissionRows.some((row) => Number(row.role_id) === Number(role.id) && String(row.module_path) === itemPath)) return;
+            finePermissionRows.push({
+                id: nextId(finePermissionRows),
+                role_id: Number(role.id),
+                role_name: role.name,
+                module_path: itemPath,
+                module_name: page.name || itemPath,
+                button_codes: Number(role.id) === 1 ? ['view', 'create', 'edit', 'delete', 'export'] : ['view'],
+                data_scope_type: role.data_scope_type || 'ALL',
+                data_scope_config: role.data_scope_config && typeof role.data_scope_config === 'object' ? cloneJson(role.data_scope_config) : {},
+                field_permissions: cloneJson(DEFAULT_FINE_PERMISSION_FIELDS),
+                created_at: nowIso(),
+                updated_at: nowIso()
+            });
+            changed = true;
+        });
+    });
+
     const intelligentPage = db.system.pages.find((page) => String(page.path) === '/intelligent');
-    const inheritedPages = ['/intelligent-closed-loop', '/inventory-ops']
+    const inheritedPages = ['/intelligent-closed-loop', '/inventory-ops', '/channel-dealer-ops', '/workflow-center', '/management-cockpit']
         .map((p) => db.system.pages.find((page) => String(page.path) === p))
         .filter(Boolean);
     if (intelligentPage && inheritedPages.length) {

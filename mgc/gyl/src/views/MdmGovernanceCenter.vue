@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus,
@@ -10,6 +10,7 @@ import {
   Warning
 } from '@element-plus/icons-vue'
 import axios from 'axios'
+import { useRoute } from 'vue-router'
 
 interface OptionItem {
   code: string
@@ -18,6 +19,7 @@ interface OptionItem {
 }
 
 const activeTab = ref('request')
+const route = useRoute()
 const loading = ref(false)
 
 const objectTypes = ref<OptionItem[]>([])
@@ -42,6 +44,8 @@ const tagTypeMap: Record<string, any> = {
 }
 
 const toTagType = (status: string) => tagTypeMap[String(status || '').toUpperCase()] || 'info'
+const toStatusText = (status: number) => (Number(status) === 0 ? '停用' : '启用')
+const parseMultiText = (text: string) => String(text || '').split(/[\n,;；]/).map((item) => item.trim()).filter(Boolean)
 
 const loadConfig = async () => {
   const res = await axios.get('/master/governance/config')
@@ -56,6 +60,19 @@ const loadConfig = async () => {
 
 const objectTypeLabel = (code: string) => objectTypes.value.find((item) => item.code === code)?.label || code
 
+const loadObjectItems = async (objectType: string, keyword = '', includeDisabled = false) => {
+  if (!objectType) return []
+  const res = await axios.get('/master/governance/object-items', {
+    params: {
+      objectType,
+      keyword,
+      includeDisabled: includeDisabled ? 1 : 0,
+      limit: 100
+    }
+  })
+  return res.data?.data?.list || []
+}
+
 const requestQuery = reactive({
   page: 1,
   pageSize: 10,
@@ -68,6 +85,7 @@ const requestRows = ref<any[]>([])
 const requestTotal = ref(0)
 const selectedRequest = ref<any>(null)
 const requestLogs = ref<any[]>([])
+const lastRoutedRequestKey = ref('')
 
 const loadRequests = async () => {
   const res = await axios.get('/master/governance/requests', { params: requestQuery })
@@ -83,22 +101,44 @@ const loadRequestDetail = async (id: number) => {
 
 const requestDialogVisible = ref(false)
 const requestDialogSubmitting = ref(false)
+const requestTargetOptions = ref<any[]>([])
+const requestTargetLoading = ref(false)
 const requestForm = reactive({
   object_type: 'SKU',
   action: 'UPDATE',
   target_code: '',
+  target_keyword: '',
   reason: '',
   submit: true,
+  impact_objects_text: '',
+  attachments_text: '',
   change_after_text: '{\n  "sku_name": "示例新名称"\n}'
 })
+
+const loadRequestTargetOptions = async (keyword = '') => {
+  if (requestForm.action === 'CREATE') {
+    requestTargetOptions.value = []
+    return
+  }
+  requestTargetLoading.value = true
+  try {
+    requestTargetOptions.value = await loadObjectItems(requestForm.object_type, keyword, false)
+  } finally {
+    requestTargetLoading.value = false
+  }
+}
 
 const openRequestDialog = () => {
   requestForm.object_type = objectTypes.value[0]?.code || 'SKU'
   requestForm.action = 'UPDATE'
   requestForm.target_code = ''
+  requestForm.target_keyword = ''
   requestForm.reason = ''
   requestForm.submit = true
+  requestForm.impact_objects_text = ''
+  requestForm.attachments_text = ''
   requestForm.change_after_text = '{\n  "sku_name": "示例新名称"\n}'
+  void loadRequestTargetOptions()
   requestDialogVisible.value = true
 }
 
@@ -128,6 +168,8 @@ const createRequest = async () => {
       target_code: requestForm.target_code,
       reason: requestForm.reason,
       submit: requestForm.submit,
+      impact_objects: parseMultiText(requestForm.impact_objects_text),
+      attachments: parseMultiText(requestForm.attachments_text).map((url) => ({ name: url, url })),
       change_after: parseJsonText(requestForm.change_after_text)
     }
     await axios.post('/master/governance/requests', payload)
@@ -161,6 +203,10 @@ const reviewRequest = async (row: any, action: 'APPROVE' | 'REJECT') => {
     inputValue: ''
   }).catch(() => null)
   if (!result) return
+  if (action === 'REJECT' && !String(result.value || '').trim()) {
+    ElMessage.warning('驳回时请填写审批意见')
+    return
+  }
 
   await axios.post(`/master/governance/requests/${row.id}/review`, {
     action,
@@ -333,6 +379,8 @@ const conflictQuery = reactive({
 })
 const conflictRows = ref<any[]>([])
 const conflictTotal = ref(0)
+const conflictDetailVisible = ref(false)
+const selectedConflict = ref<any>(null)
 
 const loadConflictTasks = async () => {
   const res = await axios.get('/master/governance/conflicts/tasks', { params: { page: 1, pageSize: 50 } })
@@ -368,12 +416,30 @@ const handleConflict = async (row: any, status: string) => {
   await loadConflicts()
 }
 
+const openConflictDetail = async (row: any) => {
+  const res = await axios.get(`/master/governance/conflicts/${row.id}`)
+  selectedConflict.value = res.data?.data || null
+  conflictDetailVisible.value = true
+}
+
 const referenceForm = reactive({
   object_type: 'SKU',
+  target_keyword: '',
   target_code: ''
 })
 const referenceUsage = ref<any>(null)
 const disableRisk = ref<any>(null)
+const referenceTargetOptions = ref<any[]>([])
+const referenceTargetLoading = ref(false)
+
+const loadReferenceTargetOptions = async (keyword = '') => {
+  referenceTargetLoading.value = true
+  try {
+    referenceTargetOptions.value = await loadObjectItems(referenceForm.object_type, keyword, false)
+  } finally {
+    referenceTargetLoading.value = false
+  }
+}
 
 const loadReferenceUsage = async () => {
   if (!referenceForm.target_code.trim()) return ElMessage.warning('请输入目标编码')
@@ -415,6 +481,29 @@ const createDisableRequest = async () => {
 }
 
 const requestChangedFields = computed(() => selectedRequest.value?.changed_fields || [])
+const selectedRequestImpactText = computed(() => (selectedRequest.value?.impact_objects || []).join('、') || '-')
+const selectedRequestAttachments = computed(() => selectedRequest.value?.attachments || [])
+const selectedRequestRiskMessage = computed(() => (selectedRequest.value?.risk_summary?.risk?.messages || []).join('；') || '-')
+
+watch(
+  () => [requestForm.object_type, requestForm.action],
+  () => {
+    requestForm.target_code = ''
+    requestForm.target_keyword = ''
+    void loadRequestTargetOptions()
+  }
+)
+
+watch(
+  () => referenceForm.object_type,
+  () => {
+    referenceForm.target_code = ''
+    referenceForm.target_keyword = ''
+    referenceUsage.value = null
+    disableRisk.value = null
+    void loadReferenceTargetOptions()
+  }
+)
 
 const initialize = async () => {
   loading.value = true
@@ -429,6 +518,7 @@ const initialize = async () => {
       loadConflictTasks(),
       loadConflicts()
     ])
+    await loadReferenceTargetOptions()
   } catch (e: any) {
     ElMessage.error(e.response?.data?.msg || '初始化失败')
   } finally {
@@ -436,9 +526,46 @@ const initialize = async () => {
   }
 }
 
-onMounted(() => {
-  initialize()
+const openRequestByRoute = async () => {
+  const requestId = Number(route.query.requestId || 0)
+  const requestNo = String(route.query.requestNo || '').trim()
+  const routeKey = requestId > 0 ? `id:${requestId}` : (requestNo ? `no:${requestNo}` : '')
+  if (!routeKey || routeKey === lastRoutedRequestKey.value) return
+  lastRoutedRequestKey.value = routeKey
+  try {
+    activeTab.value = 'request'
+    let targetRequestId = requestId > 0 ? requestId : 0
+    if (requestNo) {
+      requestQuery.keyword = requestNo
+      requestQuery.page = 1
+      await loadRequests()
+      if (!targetRequestId) {
+        const matched = requestRows.value.find((item: any) => String(item.request_no || '') === requestNo)
+        targetRequestId = Number(matched?.id || 0)
+      }
+    }
+
+    if (!targetRequestId) {
+      ElMessage.warning('未找到对应申请单')
+      return
+    }
+    await loadRequestDetail(targetRequestId)
+  } catch {
+    ElMessage.error('申请单详情加载失败')
+  }
+}
+
+onMounted(async () => {
+  await initialize()
+  await openRequestByRoute()
 })
+
+watch(
+  () => [route.query.requestId, route.query.requestNo],
+  () => {
+    void openRequestByRoute()
+  }
+)
 </script>
 <template>
   <div class="governance-page" v-loading="loading">
@@ -523,6 +650,16 @@ onMounted(() => {
             <el-descriptions-item label="动作">{{ selectedRequest.action }}</el-descriptions-item>
             <el-descriptions-item label="目标编码">{{ selectedRequest.target_code || '-' }}</el-descriptions-item>
             <el-descriptions-item label="申请原因">{{ selectedRequest.reason || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="影响对象">{{ selectedRequestImpactText }}</el-descriptions-item>
+            <el-descriptions-item label="风险摘要">{{ selectedRequestRiskMessage }}</el-descriptions-item>
+            <el-descriptions-item label="附件" :span="2">
+              <div v-if="selectedRequestAttachments.length">
+                <el-tag v-for="(item, idx) in selectedRequestAttachments" :key="`attach-${idx}`" size="small" style="margin-right: 8px; margin-bottom: 6px">
+                  {{ item.name || item.url }}
+                </el-tag>
+              </div>
+              <span v-else>-</span>
+            </el-descriptions-item>
           </el-descriptions>
 
           <el-table :data="requestChangedFields" border size="small" style="margin-top: 12px">
@@ -558,7 +695,12 @@ onMounted(() => {
         </div>
 
         <el-table :data="versionRows" border stripe>
-          <el-table-column prop="version_no" label="版本" width="80" />
+          <el-table-column label="版本" width="120">
+            <template #default="{ row }">
+              <span>V{{ row.version_no }}</span>
+              <el-tag v-if="row.is_current" size="small" type="success" style="margin-left: 6px">当前</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="object_type" label="对象" width="120">
             <template #default="{ row }">{{ objectTypeLabel(row.object_type) }}</template>
           </el-table-column>
@@ -616,6 +758,7 @@ onMounted(() => {
           <el-table-column prop="target_name" label="目标名称" min-width="160" />
           <el-table-column prop="begin_date" label="开始日期" width="120" />
           <el-table-column prop="end_date" label="结束日期" width="120" />
+          <el-table-column prop="days_to_expiry" label="距到期(天)" width="110" align="right" />
           <el-table-column prop="effective_state" label="状态" width="120" align="center">
             <template #default="{ row }">
               <el-tag size="small" :type="toTagType(row.effective_state)">{{ row.effective_state }}</el-tag>
@@ -754,8 +897,9 @@ onMounted(() => {
             </template>
           </el-table-column>
           <el-table-column prop="handler" label="处理人" width="120" />
-          <el-table-column label="操作" width="180" align="center">
+          <el-table-column label="操作" width="240" align="center">
             <template #default="{ row }">
+              <el-button type="primary" link @click="openConflictDetail(row)">详情</el-button>
               <el-button v-if="row.status === 'OPEN'" type="warning" link @click="handleConflict(row, 'PROCESSING')">转处理中</el-button>
               <el-button v-if="row.status !== 'RESOLVED'" type="success" link @click="handleConflict(row, 'RESOLVED')">标记解决</el-button>
             </template>
@@ -772,7 +916,27 @@ onMounted(() => {
               </el-select>
             </el-form-item>
             <el-form-item>
-              <el-input v-model="referenceForm.target_code" placeholder="目标编码（如 SKU-P001）" style="width: 260px" />
+              <el-select
+                v-model="referenceForm.target_code"
+                filterable
+                remote
+                reserve-keyword
+                clearable
+                :remote-method="loadReferenceTargetOptions"
+                :loading="referenceTargetLoading"
+                placeholder="选择目标编码"
+                style="width: 320px"
+              >
+                <el-option
+                  v-for="item in referenceTargetOptions"
+                  :key="item.code"
+                  :label="`${item.code} / ${item.name}`"
+                  :value="item.code"
+                >
+                  <span>{{ item.code }} / {{ item.name }}</span>
+                  <span style="float:right;color:#94a3b8;margin-left:8px">{{ toStatusText(item.status) }}</span>
+                </el-option>
+              </el-select>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" :icon="Search" @click="loadReferenceUsage">查询引用</el-button>
@@ -815,10 +979,36 @@ onMounted(() => {
           </el-select>
         </el-form-item>
         <el-form-item label="目标编码" v-if="requestForm.action !== 'CREATE'">
-          <el-input v-model="requestForm.target_code" placeholder="填写已有主数据编码" />
+          <el-select
+            v-model="requestForm.target_code"
+            filterable
+            remote
+            reserve-keyword
+            clearable
+            :remote-method="loadRequestTargetOptions"
+            :loading="requestTargetLoading"
+            placeholder="检索并选择目标编码"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in requestTargetOptions"
+              :key="item.code"
+              :label="`${item.code} / ${item.name}`"
+              :value="item.code"
+            >
+              <span>{{ item.code }} / {{ item.name }}</span>
+              <span style="float:right;color:#94a3b8;margin-left:8px">{{ toStatusText(item.status) }}</span>
+            </el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="申请原因">
           <el-input v-model="requestForm.reason" type="textarea" :rows="2" placeholder="请说明变更原因" />
+        </el-form-item>
+        <el-form-item label="影响对象">
+          <el-input v-model="requestForm.impact_objects_text" type="textarea" :rows="2" placeholder="多个对象请用逗号或换行分隔，如 ORDER, INVENTORY, RELATION" />
+        </el-form-item>
+        <el-form-item label="附件URL">
+          <el-input v-model="requestForm.attachments_text" type="textarea" :rows="2" placeholder="附件链接，多个请用逗号或换行分隔" />
         </el-form-item>
         <el-form-item label="变更内容JSON">
           <el-input v-model="requestForm.change_after_text" type="textarea" :rows="8" />
@@ -862,6 +1052,24 @@ onMounted(() => {
         <el-table-column prop="before" label="变更前" min-width="180" show-overflow-tooltip />
         <el-table-column prop="after" label="变更后" min-width="180" show-overflow-tooltip />
       </el-table>
+    </el-dialog>
+
+    <el-dialog v-model="conflictDetailVisible" title="冲突详情" width="760px">
+      <el-descriptions v-if="selectedConflict" :column="2" border>
+        <el-descriptions-item label="冲突类型">{{ selectedConflict.conflict_type }}</el-descriptions-item>
+        <el-descriptions-item label="状态">{{ selectedConflict.status }}</el-descriptions-item>
+        <el-descriptions-item label="目标编码">{{ selectedConflict.target_code || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="处理人">{{ selectedConflict.handler || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="说明" :span="2">{{ selectedConflict.conflict_title || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      <el-input
+        v-if="selectedConflict"
+        :model-value="JSON.stringify(selectedConflict.detail || {}, null, 2)"
+        type="textarea"
+        :rows="10"
+        readonly
+        style="margin-top: 12px"
+      />
     </el-dialog>
   </div>
 </template>

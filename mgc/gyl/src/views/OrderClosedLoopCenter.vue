@@ -1,5 +1,6 @@
 ﻿<script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 
@@ -12,6 +13,7 @@ interface OrderLineForm {
 }
 
 const activeTab = ref('dashboard')
+const route = useRoute()
 
 const config = reactive<any>({
   enums: {
@@ -77,6 +79,7 @@ const orderForm = reactive<any>({
 const detailLoading = ref(false)
 const detailDrawerVisible = ref(false)
 const currentDetail = ref<any>(null)
+const lastRoutedOrderNo = ref('')
 
 const exceptionRows = ref<any[]>([])
 const exceptionLoading = ref(false)
@@ -343,10 +346,33 @@ const importDemo = async () => {
   await Promise.all([fetchOrders(), fetchDashboard(), fetchExceptions()])
 }
 
+const openOrderDetailByRoute = async () => {
+  const orderNo = String(route.query.orderNo || '').trim()
+  if (!orderNo || orderNo === lastRoutedOrderNo.value) return
+  lastRoutedOrderNo.value = orderNo
+  try {
+    activeTab.value = 'orders'
+    listQuery.keyword = orderNo
+    orderPage.value = 1
+    await fetchOrders()
+    await openDetail(orderNo)
+  } catch {
+    ElMessage.warning(`未找到订单 ${orderNo}`)
+  }
+}
+
 onMounted(async () => {
   await Promise.all([fetchConfig(), fetchWeights()])
   await Promise.all([fetchOrders(), fetchDashboard(), fetchExceptions()])
+  await openOrderDetailByRoute()
 })
+
+watch(
+  () => route.query.orderNo,
+  () => {
+    void openOrderDetailByRoute()
+  }
+)
 </script>
 <template>
   <div>

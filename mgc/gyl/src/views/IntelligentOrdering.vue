@@ -1,9 +1,6 @@
-<!-- 这个文件是什么作用显示的是什么：这是智能订货中心页面。显示/实现的是：基于数据可视化的地图、各区域发货状态以及智能订货建议视图。 -->
+﻿<!-- 智能订购中心页面：地图调度、AI参数配置、订单处理与趋势分析 -->
 <script setup lang="ts">
-/**
- * 智能订购与调度 (Intelligent Ordering) 原型页面 (已接入真实后端)
- * 包含：地图调度看板、AI匹配算法权重配置、智能单处理列表、分页加载
- */
+/** 智能订购与调度页面（已接入后端） */
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
@@ -44,7 +41,7 @@ const currentUserLevel = ref('L1')
 const alpha = ref(1.0)
 const beta = ref(1.5)
 
-// 地图实例
+// 鍦板浘瀹炰緥
 let chartMapInstance: echarts.ECharts | null = null
 const mapContainerRef = ref<HTMLElement | null>(null)
 
@@ -65,7 +62,7 @@ const fetchData = async () => {
         const proRes = await axios.get(`${API_BASE}/products`)
         products.value = proRes.data.data
 
-        // 2. 获取仓库数据 (分离出牧场和终端网点)
+        // 2. 获取仓库数据（分离出牧场和终端网点）
         const whRes = await axios.get(`${API_BASE}/warehouses`)
         const warehouses = whRes.data.data || []
         
@@ -76,7 +73,7 @@ const fetchData = async () => {
                 name: p.warehouse_name,
                 lat: parseFloat(p.latitude || 0),
                 lng: parseFloat(p.longitude || 0),
-                coldStorageStatus: Math.random() > 0.1 ? 'Normal' : 'Maintenance' // 随机状态
+                coldStorageStatus: Math.random() > 0.1 ? 'Normal' : 'Maintenance' // 演示状态
             }))
 
         distributors.value = warehouses
@@ -94,7 +91,7 @@ const fetchData = async () => {
         await fetchOrders()
         
     } catch (err) {
-        ElMessage.error('无法连接到后端 API，请检查 Node.js 服务是否运行并在 3000 端口')
+        ElMessage.error('无法连接后端 API，请检查 Node.js 服务是否已在 3000 端口运行')
         console.error(err)
     }
 }
@@ -105,7 +102,7 @@ const fetchOrders = async () => {
         const res = await axios.get(`${API_BASE}/orders?page=${currentPage.value}&limit=${pageSize.value}`)
         if (res.data.code === 200) {
             totalOrders.value = res.data.data.total
-            // 将蛇形命名转为驼峰适应原有逻辑
+            // 将蛇形命名转为驼峰适配原有逻辑
             orders.value = res.data.data.list.map((o: any) => ({
                 ...o,
                 orderId: o.order_id,
@@ -143,23 +140,23 @@ const overviewCards = computed(() => {
   const data = analysis.value
   if (!data) {
     return [
-      { label: '待调度订单', value: '--', meta: '待分配 -- 万L', tone: 'warning' },
-      { label: '已智能匹配', value: '--', meta: '已匹配 -- 万L', tone: 'success' },
+      { label: '待调度订单', value: '--', meta: '待分配 -- 万升', tone: 'warning' },
+      { label: '已智能匹配', value: '--', meta: '已匹配 -- 万升', tone: 'success' },
       { label: '匹配完成率', value: '--', meta: '总订单 -- 笔', tone: 'primary' },
-      { label: '核心四区承接量', value: '--', meta: '西南观察 -- 万L', tone: 'info' }
+      { label: '核心四区承接量', value: '--', meta: '西南观察 -- 万升', tone: 'info' }
     ]
   }
   return [
     {
       label: '待调度订单',
       value: data.pendingOrders,
-      meta: `待分配 ${formatWanLiters(data.pendingLiters)} 万L`,
+      meta: `待分配 ${formatWanLiters(data.pendingLiters)} 万升`,
       tone: 'warning'
     },
     {
       label: '已智能匹配',
       value: data.matchedOrders,
-      meta: `已匹配 ${formatWanLiters(data.matchedLiters)} 万L`,
+      meta: `已匹配 ${formatWanLiters(data.matchedLiters)} 万升`,
       tone: 'success'
     },
     {
@@ -170,8 +167,8 @@ const overviewCards = computed(() => {
     },
     {
       label: '核心四区承接量',
-      value: `${formatWanLiters(data.coreRegionLiters)} 万L`,
-      meta: `西南观察 ${formatWanLiters(data.westRegionLiters)} 万L`,
+      value: `${formatWanLiters(data.coreRegionLiters)} 万升`,
+      meta: `西南观察 ${formatWanLiters(data.westRegionLiters)} 万升`,
       tone: 'info'
     }
   ]
@@ -191,13 +188,13 @@ const warningHighlights = computed(() => {
     {
       label: '关注区域',
       value: `${data.alertSummary?.attentionRegionCount || 0} 个`,
-      meta: `全国待分摊 ${formatWanLiters(data.nationalPendingLiters)} 万L`,
+      meta: `全国待分摊 ${formatWanLiters(data.nationalPendingLiters)} 万升`,
       tone: 'attention'
     },
     {
       label: '低温待调度',
       value: `${data.alertSummary?.lowTempPendingOrders || 0} 单`,
-      meta: `${formatWanLiters(data.alertSummary?.lowTempPendingLiters || 0)} 万L`,
+      meta: `${formatWanLiters(data.alertSummary?.lowTempPendingLiters || 0)} 万升`,
       tone: 'neutral'
     }
   ]
@@ -217,7 +214,7 @@ const fetchAnalysis = async () => {
 }
 
 const renderCharts = () => {
-  // 四大区域需求饱和图 (柱状图  + 饼图并排)
+  // 四大区域需求对比图
   if (chartRegionRef.value) {
     chartRegionInstance = chartRegionInstance || echarts.init(chartRegionRef.value, 'dark')
     const regions = coreRegions
@@ -231,12 +228,12 @@ const renderCharts = () => {
           const point = p?.[0]
           if (!point) return ''
           const percent = total > 0 ? ((Number(point.value || 0) / total) * 100).toFixed(1) : '0.0'
-          return `${point.name}<br/>需求量: <b>${(Number(point.value || 0) / 10000).toFixed(1)}万L</b><br/>核心四区占比: <b>${percent}%</b>`
+          return `${point.name}<br/>需求量: <b>${(Number(point.value || 0) / 10000).toFixed(1)}万升</b><br/>核心四区占比: <b>${percent}%</b>`
         }
       },
       grid: { left: 36, right: 16, top: 16, bottom: 32 },
       xAxis: { type: 'category', data: regions, axisLabel: { color: '#94a3b8', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#334155' } } },
-      yAxis: { type: 'value', axisLabel: { color: '#64748b', formatter: (v: number) => `${(v/10000).toFixed(0)}万L` }, splitLine: { lineStyle: { color: '#1e293b' } } },
+      yAxis: { type: 'value', axisLabel: { color: '#64748b', formatter: (v: number) => `${(v/10000).toFixed(0)}万升` }, splitLine: { lineStyle: { color: '#1e293b' } } },
       series: [{
         type: 'bar', data: values, barMaxWidth: 60,
         itemStyle: {
@@ -251,7 +248,7 @@ const renderCharts = () => {
     })
   }
 
-  // 7天涋出货量趋势图
+  // 7澶╂秼鍑鸿揣閲忚秼鍔垮浘
   if (chartTrendRef.value) {
     chartTrendInstance = chartTrendInstance || echarts.init(chartTrendRef.value, 'dark')
     const trend = analysis.value.sevenDayTrend || []
@@ -271,7 +268,7 @@ const renderCharts = () => {
         borderColor: 'rgba(148, 163, 184, 0.2)',
         textStyle: { color: '#e2e8f0' },
         formatter: (points: any[]) => {
-          const rows = (points || []).map((point) => `${point.marker}${point.seriesName}: <b>${formatWanLiters(Number(point.value || 0))} 万L</b>`)
+          const rows = (points || []).map((point) => `${point.marker}${point.seriesName}: <b>${formatWanLiters(Number(point.value || 0))} 万升</b>`)
           return [`${points?.[0]?.axisValue || ''}`, ...rows].join('<br/>')
         }
       },
@@ -282,7 +279,7 @@ const renderCharts = () => {
         axisLabel: { color: '#94a3b8', formatter: (value: string) => value.slice(5) },
         axisLine: { lineStyle: { color: '#334155' } }
       },
-      yAxis: { type: 'value', axisLabel: { color: '#64748b', formatter: (v: number) => `${(v/10000).toFixed(0)}万L` }, splitLine: { lineStyle: { color: '#1e293b' } } },
+      yAxis: { type: 'value', axisLabel: { color: '#64748b', formatter: (v: number) => `${(v/10000).toFixed(0)}万升` }, splitLine: { lineStyle: { color: '#1e293b' } } },
       series: [
         {
           name: '待调度量',
@@ -342,7 +339,7 @@ onUnmounted(() => {
   chartTrendInstance?.dispose()
 })
 
-// 前端权限过滤（千级数据量下最好由后端过滤，这里做视图层简易演示）
+// 前端权限过滤（演示用途）
 const filteredOrders = computed(() => {
   if (currentUserLevel.value === 'L3') {
     return orders.value.filter(o => o.distributorId === 'D_L3_BJ_CY')
@@ -350,7 +347,7 @@ const filteredOrders = computed(() => {
   return orders.value
 })
 
-// 动态连线：只显示流向 L1/L2 节点的业务线
+// 动态连线：只展示流向 L1/L2 节点的业务线
 const activeFlows = computed(() => {
   return filteredOrders.value
     .filter(o => o.status === 'Matched' && o.sourcePastureId)
@@ -363,20 +360,20 @@ const activeFlows = computed(() => {
         }
       }
       return null
-    }).filter(Boolean).slice(0, 30) as any[] // 保持 30 条核心连线，确保动画流畅
+    }).filter(Boolean).slice(0, 30) as any[] // 淇濇寔 30 鏉℃牳蹇冭繛绾匡紝纭繚鍔ㄧ敾娴佺晠
 })
 
-// 地图只展示 L1 总部和 L2 RDC 大区中心 (均有真实经纬度)
+// 地图只展示 L1 总部和 L2 RDC 大区中心
 const renderDistributors = computed(() =>
   distributors.value.filter(d => d.warehouse_type === 1 || d.warehouse_type === 2)
 )
 
-// --- 地图渲染核心逻辑 ---
+// --- 鍦板浘娓叉煋鏍稿績閫昏緫 ---
 const renderMap = () => {
   if (!chartMapInstance && mapContainerRef.value) {
     chartMapInstance = echarts.init(mapContainerRef.value, 'dark')
     chartMapInstance.on('click', (params: any) => {
-      // 点击牧场或核心仓时，显示详情
+      // 点击牧场或核心仓时显示详情
       if ((params.seriesType === 'scatter' || params.seriesType === 'effectScatter') && params.data && params.data.id) {
         showPastureDetail(params.data.id)
       }
@@ -384,7 +381,7 @@ const renderMap = () => {
   }
   if (!chartMapInstance) return
 
-  // 整理 牧场(前置仓) 数据 -> 蓝色
+  // 整理牧场（前置仓）数据 -> 蓝色
   const pastureSeriesData = pastures.value.map(p => ({
     id: p.id,
     name: p.name,
@@ -400,7 +397,7 @@ const renderMap = () => {
     itemStyle: { color: '#fbbf24', shadowBlur: 20, shadowColor: '#fbbf24' }
   }))
 
-  // 整理 L2 RDC 数据 -> 橙色
+  // 鏁寸悊 L2 RDC 鏁版嵁 -> 姗欒壊
   const rdcSeriesData = renderDistributors.value.filter(d => d.warehouse_type === 2).map(d => ({
     id: d.id,
     name: d.name,
@@ -414,12 +411,12 @@ const renderMap = () => {
       trigger: 'item',
       formatter: (params: any) => {
         if (params.seriesType === 'lines') return ''
-        return `<b>${params.name}</b><br/>类型: ${params.seriesName}`
+        return `<b>${params.name}</b><br/>绫诲瀷: ${params.seriesName}`
       }
     },
     geo: {
       map: 'china',
-      roam: true, // 开启鼠标缩放和平移漫游，实现“跟地图软件一样能缩放”
+      roam: true, // 开启缩放和平移
       zoom: 1.2,
       label: {
         show: false, // 不显示省份名称以保持简洁
@@ -447,7 +444,7 @@ const renderMap = () => {
       },
       {
         name: 'L2 RDC大区中心',
-        type: 'scatter', // 也可以用 effectScatter
+        type: 'scatter', // 涔熷彲浠ョ敤 effectScatter
         coordinateSystem: 'geo',
         data: rdcSeriesData,
         symbolSize: 10,
@@ -461,7 +458,7 @@ const renderMap = () => {
       },
       {
         name: 'L1 鲜链总部',
-        type: 'effectScatter', // 发光动画波纹
+        type: 'effectScatter', // 鍙戝厜鍔ㄧ敾娉㈢汗
         coordinateSystem: 'geo',
         data: hqSeriesData,
         symbolSize: 16,
@@ -481,14 +478,14 @@ const renderMap = () => {
         zlevel: 1
       },
       {
-        name: '智能调度动线',
+        name: '鏅鸿兘璋冨害鍔ㄧ嚎',
         type: 'lines',
         coordinateSystem: 'geo',
         zlevel: 2,
         effect: {
           show: true,
           period: 4,
-          trailLength: 0.2, // 尾迹长度
+          trailLength: 0.2, // 灏捐抗闀垮害
           color: '#10b981',
           symbol: 'arrow',
           symbolSize: 5
@@ -496,8 +493,8 @@ const renderMap = () => {
         lineStyle: {
           color: '#10b981',
           width: 2,
-          opacity: 0.1, // 主干线淡一点，主要看动画光效
-          curveness: 0.3 // 曲线美化
+          opacity: 0.1, // 主干线更淡，突出动画
+          curveness: 0.3 // 鏇茬嚎缇庡寲
         },
         data: activeFlows.value
       }
@@ -507,7 +504,7 @@ const renderMap = () => {
   chartMapInstance.setOption(option)
 }
 
-// 监听数据变化重新渲染地图
+// 鐩戝惉鏁版嵁鍙樺寲閲嶆柊娓叉煋鍦板浘
 watch([pastures, renderDistributors, activeFlows], () => {
   nextTick(() => {
     renderMap()
@@ -520,7 +517,7 @@ const getDistributorName = (dId: string) => distributors.value.find(d => d.id ==
 
 // --- 一键智能匹配 ---
 const handleAutoMatch = (row: any) => {
-  // 原型演示：在没有后端复杂服务支撑的情况下，本地随机给予结果 (可改写调后端)
+  // 原型演示：本地随机给出匹配结果
   const pastureTarget = pastures.value[Math.floor(Math.random() * pastures.value.length)]
   const score = (Math.random() * 20 + 80).toFixed(1)
   
@@ -530,7 +527,7 @@ const handleAutoMatch = (row: any) => {
     target.sourcePastureId = pastureTarget?.id
     target.matchScore = score
     ;(target as any)._freshnessRemaining = Math.floor(Math.random() * 70 + 10)
-    ElMessage.success(`订单 ${row.orderId} ✨AI匹配成功: ${pastureTarget?.name} (评分: ${score})`)
+    ElMessage.success(`订单 ${row.orderId} AI匹配成功：${pastureTarget?.name}（评分：${score}）`)
   }
 }
 
@@ -546,7 +543,7 @@ const showPastureDetail = (pastureId: string) => {
   }
 }
 
-// 获取新鲜度进度条百分比与状态标识
+// 获取新鲜度进度条百分比与状态
 const getFreshnessProps = (row: any) => {
   const sku = getSkuDetails(row.skuId)
   if (!sku || sku.material_type !== 'LowTemp') return null
@@ -569,14 +566,14 @@ const getFreshnessProps = (row: any) => {
 </script>
 
 <template>
-  <div>
+  <div class="ordering-page">
     <!-- 智能看板区域 -->
-    <el-row :gutter="20" style="margin-bottom: 20px">
-      <!-- "伪地图" API 调度看板 (原型用深色背景及关键节点模拟) -->
-      <el-col :span="16">
+    <el-row :gutter="20" class="dashboard-row">
+      <!-- 地图调度看板 -->
+      <el-col :xl="16" :lg="16" :md="24" :sm="24" :xs="24" class="map-col">
         <div class="map-board">
           <div class="map-header">
-            <h3><el-icon><Location /></el-icon> 鲜链 (Fresh-Link) 全国网点大盘 (<span style="color:#10b981; font-weight: bold;">{{ distributors.length }}</span> 个终端节点)</h3>
+            <h3 class="map-title"><el-icon><Location /></el-icon> 鲜链 (Fresh-Link) 全国网点大盘（<span style="color:#10b981; font-weight: bold;">{{ distributors.length }}</span> 个终端节点）</h3>
             <div class="map-controls">
                 <el-button size="small" circle icon="Refresh" @click="resetMap" title="重置视角"></el-button>
                 <span class="live-tag"><span></span>LIVE</span>
@@ -588,21 +585,21 @@ const getFreshnessProps = (row: any) => {
       </el-col>
 
       <!-- 匹配因子配置区域 -->
-      <el-col :span="8">
+      <el-col :xl="8" :lg="8" :md="24" :sm="24" :xs="24" class="config-col">
         <div class="config-board page-card">
-          <div class="page-card-title" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+          <div class="page-card-title config-title">
             <div><el-icon><Cpu /></el-icon> AI 决策引擎网络态势</div>
             <el-tooltip effect="dark" placement="left">
               <template #content>
                  <div style="line-height: 1.8; font-size: 13px;">
-                  <strong style="color: #38bdf8;">核心匹配降维算法 (Scoring Formula):</strong><br/>
+                  <strong style="color: #38bdf8;">核心匹配评分公式 (Scoring Formula):</strong><br/>
                   <span style="font-family: monospace; font-size: 14px; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px;">
                     Score = (100 - Dist × α) + (Freshness × β) + Bias
                   </span><br/><br/>
                   <div style="color: #cbd5e1;">
-                    • <strong>距离权重 (α)</strong>: 值越大，物理距离对匹配得分的<strong>扣减(惩罚)</strong>越严重。<br/>
-                    • <strong>新鲜度溢价 (β)</strong>: 值越大，距离保质期越近的货物会被<strong>优先高分发货</strong>。<br/>
-                    • <strong>网点等级 (Bias)</strong>: L1>L2>L3，高优网点天然拥有优先调度权。
+                    - <strong>距离权重 (α)</strong>：值越大，物理距离对匹配得分的惩罚越明显。<br/>
+                    - <strong>新鲜度溢价 (β)</strong>：值越大，越接近保质期边界的货物越优先分配。<br/>
+                    - <strong>网点等级 (Bias)</strong>：L1 > L2 > L3，高优网点天然具备优先调度权。
                   </div>
                 </div>
               </template>
@@ -642,10 +639,10 @@ const getFreshnessProps = (row: any) => {
             <el-slider v-model="beta" :min="0.1" :max="3.0" :step="0.1" />
           </div>
           
-          <div style="margin-top: 30px; text-align: right">
+          <div class="scope-switch">
             <el-radio-group v-model="currentUserLevel" size="small">
-              <el-radio-button value="L1">L1 视角全局</el-radio-button>
-              <el-radio-button value="L3">L3 视角单门店</el-radio-button>
+              <el-radio-button value="L1">L1 全局视角</el-radio-button>
+              <el-radio-button value="L3">L3 单门店视角</el-radio-button>
             </el-radio-group>
           </div>
         </div>
@@ -653,22 +650,22 @@ const getFreshnessProps = (row: any) => {
     </el-row>
 
     <!-- 订单分析区域 -->
-    <el-row :gutter="20" style="margin-bottom: 20px" v-if="analysis">
+    <el-row :gutter="20" class="analysis-row" v-if="analysis">
       <!-- 四大区需求对比 -->
-      <el-col :span="12">
+      <el-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24">
         <div class="analysis-card">
           <div class="analysis-card-title">
             <div>
               <span>&#128202; {{ analysis.chartMeta?.title || '四大核心区域订单需求量对比' }}</span>
-              <div class="analysis-note">{{ analysis.chartMeta?.note || '全国直营/电商需求已按四大区承接份额分摊，西南需求单列观察' }}；当前全国直营/电商 {{ formatWanLiters(analysis.nationalDirectLiters || 0) }} 万L，西南 {{ formatWanLiters(analysis.westRegionLiters || 0) }} 万L</div>
+              <div class="analysis-note">{{ analysis.chartMeta?.note || '' }}；当前全国直营/电商 {{ formatWanLiters(analysis.nationalDirectLiters || 0) }} 万升，西南 {{ formatWanLiters(analysis.westRegionLiters || 0) }} 万升</div>
             </div>
             <span class="analysis-sub">华东 / 华中 / 华南 / 华北 (万升)</span>
           </div>
-          <div ref="chartRegionRef" style="height: 200px;" />
+          <div ref="chartRegionRef" class="chart-panel" />
         </div>
       </el-col>
       <!-- 7日出货趋势 -->
-      <el-col :span="12">
+      <el-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24">
         <div class="analysis-card">
           <div class="analysis-card-title">
             <div>
@@ -677,20 +674,20 @@ const getFreshnessProps = (row: any) => {
             </div>
             <div class="kpi-badges">
               <span class="kpi-badge blue">总订单<strong>{{ analysis.totalOrders }}</strong>笔</span>
-              <span class="kpi-badge green">核心承接<strong>{{ formatWanLiters(analysis.coreRegionLiters || 0) }}</strong>万L</span>
+              <span class="kpi-badge green">核心承接<strong>{{ formatWanLiters(analysis.coreRegionLiters || 0) }}</strong>万升</span>
               <span class="kpi-badge amber">匹配率<strong>{{ Number(analysis.matchRate || 0).toFixed(1) }}</strong>%</span>
             </div>
           </div>
-          <div ref="chartTrendRef" style="height: 200px;" />
+          <div ref="chartTrendRef" class="chart-panel" />
         </div>
       </el-col>
     </el-row>
 
-    <!-- 订单列表 (带分页) -->
-    <div class="page-card">
-      <div class="page-card-header">
+    <!-- 订单列表（带分页） -->
+    <div class="page-card orders-card">
+      <div class="page-card-header orders-header">
         <div class="page-card-title">
-          <el-icon><Tickets /></el-icon> 订购调度处理清单 (当前实时页)
+          <el-icon><Tickets /></el-icon> 订购调度处理清单（当前实时页）
         </div>
         <el-pagination
           v-model:current-page="currentPage"
@@ -707,7 +704,7 @@ const getFreshnessProps = (row: any) => {
         <el-table-column prop="orderId" label="订单号" width="150" />
         <el-table-column label="经销商 / 渠道 / 下属网点" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
-            <div style="font-weight: 500; font-size: 13px;">{{ getDistributorName(row.distributorId) || '门店载入中..' }}</div>
+            <div style="font-weight: 500; font-size: 13px;">{{ getDistributorName(row.distributorId) || '门店导入中...' }}</div>
           </template>
         </el-table-column>
         <el-table-column label="订购大类 & SKU" min-width="220" show-overflow-tooltip>
@@ -762,7 +759,7 @@ const getFreshnessProps = (row: any) => {
               <el-icon><Cpu /></el-icon> 调度
             </el-button>
             <span v-else style="font-size: 11px; color: #10b981; font-weight: 500;">
-              ✨分配完成
+              已分配完成
             </span>
           </template>
         </el-table-column>
@@ -770,18 +767,18 @@ const getFreshnessProps = (row: any) => {
     </div>
     
     <!-- 牧场实况对话框 -->
-    <el-dialog v-model="pastureDialogVisible" :title="'🔴 牧场/前置仓实况节点 - ' + selectedPasture?.name" width="400px">
+    <el-dialog v-model="pastureDialogVisible" :title="'牧场/前置仓实况节点 - ' + selectedPasture?.name" width="400px">
       <div v-if="selectedPasture" class="pasture-details">
         <div class="coord-label">卫星坐标：Lat {{ selectedPasture.lat }}, Lng {{ selectedPasture.lng }}</div>
         <div class="status-grid">
           <div class="status-card">
             <h4>冷链负荷状态</h4>
             <el-tag :type="selectedPasture.coldStorageStatus === 'Normal' ? 'success' : 'danger'" effect="dark">
-              {{ selectedPasture.coldStorageStatus === 'Normal' ? '正常制冷且富余' : '负荷较高报警' }}
+              {{ selectedPasture.coldStorageStatus === 'Normal' ? '正常制冷且富余' : '负荷较高预警' }}
             </el-tag>
           </div>
           <div class="status-card">
-            <h4>当前可用库存SKU</h4>
+            <h4>当前可用库存 SKU</h4>
             <div style="font-size: 18px; font-weight: bold; color: var(--primary-color)">152+ 款</div>
           </div>
         </div>
@@ -791,49 +788,82 @@ const getFreshnessProps = (row: any) => {
 </template>
 
 <style scoped>
-/* 伪地图样式 */
+.ordering-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-row,
+.analysis-row {
+  margin-bottom: 0 !important;
+}
+
+.map-col,
+.config-col {
+  display: flex;
+}
+
 .map-board {
+  width: 100%;
+  min-height: 420px;
   background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-  border-radius: 12px;
-  height: 380px;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.12);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.28);
 }
 
 .map-header {
-  padding: 12px 20px;
+  padding: 12px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(8px);
+  gap: 12px;
   z-index: 20;
 }
 
-.map-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.map-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #e2e8f0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
-.zoom-val {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 12px;
-    font-family: monospace;
-    min-width: 40px;
+.map-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .live-tag {
   color: #ef4444;
   font-size: 11px;
-  font-weight: bold;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.live-tag span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
+  animation: livePulse 1.8s infinite;
 }
 
 .map-viewport {
@@ -843,252 +873,104 @@ const getFreshnessProps = (row: any) => {
   background: #020617;
 }
 
-.map-content {
-  position: absolute;
-  top: 0; left: 0; 
-  width: 100%; height: 100%;
-  transform-origin: center center;
-  transition: transform 0.1s cubic-bezier(0.2, 0, 0, 1);
-  will-change: transform;
-  transform-style: preserve-3d; /* 启用GPU加速 */
-}
-
-.map-bg {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-image: url('@/assets/china_map.png');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.6;
-  filter: saturate(1.4) brightness(0.9) contrast(1.1);
-}
-
-.map-grid {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-size: 50px 50px;
-  background-image: 
-    linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
-}
-
-.map-marker {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 8px; /* 字体更小以适应千级 */
-  color: rgba(255,255,255,0.9);
-  z-index: 10;
-  cursor: pointer;
-  pointer-events: auto;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  opacity: 0.8;
-  will-change: transform, opacity;
-}
-
-.map-marker:hover {
-    transform: translate(-50%, -50%) scale(2);
-    z-index: 50;
-    opacity: 1;
-    filter: drop-shadow(0 0 8px currentColor);
-}
-
 .help-icon:hover {
-    color: #38bdf8 !important;
+  color: #38bdf8 !important;
 }
 
-.map-marker.pasture {
-  color: #38bdf8;
-}
-
-.map-marker.distributor {
-  color: #fbbf24;
-  font-size: 11px;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* 标记图标圆面 */
-.marker-node {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  border: 2px solid rgba(255,255,255,0.3);
-  box-shadow: 0 0 10px currentColor;
-}
-
-/* L1 总部: 金色 */
-.hq-node {
-  background: radial-gradient(circle, #fbbf24, #d97706);
-  color: #fff;
-  width: 34px;
-  height: 34px;
-  font-size: 16px;
-  border-color: #fbbf24;
-  animation: hq-pulse 2s ease-in-out infinite alternate;
-}
-
-/* L2 RDC: 橙色 */
-.rdc-node {
-  background: radial-gradient(circle, #f97316, #c2410c);
-  color: #fff;
-  border-color: #f97316;
-}
-
-/* 标记文字标签 */
-.marker-label {
-  margin-top: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  color: #e2e8f0;
-  background: rgba(15,23,42,0.8);
-  padding: 1px 5px;
-  border-radius: 3px;
-  white-space: nowrap;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-  backdrop-filter: blur(4px);
-}
-
-@keyframes hq-pulse {
-  0% { box-shadow: 0 0 8px #fbbf24; }
-  100% { box-shadow: 0 0 20px #fbbf24, 0 0 40px rgba(251,191,36,0.4); }
-}
-
-.ping {
-  position: absolute;
-  top: -2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: rgba(56, 189, 248, 0.6);
-  animation: ping-mark 3s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-.map-svg {
-  position: absolute;
-  top: 0; left: 0;
-  pointer-events: none;
-  z-index: 5;
-}
-
-.flow-line {
-  fill: none;
-  stroke: rgba(16, 185, 129, 0.2);
-  stroke-width: 1.5;
-  stroke-dasharray: 4 4;
-}
-
-.flow-line.active {
-  stroke: #10b981;
-  stroke-dasharray: 8 4;
-  animation: dash 30s linear infinite;
-  stroke-width: 2;
-}
-
-@keyframes ping-mark {
-  0% { transform: scale(1); opacity: 0.8; }
-  75%, 100% { transform: scale(4); opacity: 0; }
-}
-
-@keyframes dash {
-  from { stroke-dashoffset: 1000; }
-  to { stroke-dashoffset: 0; }
-}
-
-/* 参数面板 */
 .config-board {
-  height: 380px;
+  width: 100%;
+  min-height: 420px;
+  height: 100%;
   margin-bottom: 0 !important;
   display: flex;
   flex-direction: column;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.config-title {
+  margin-bottom: 18px !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .stats-mini {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .stat-box {
-    flex: 1 1 calc(50% - 6px);
-    background: #f8fafc;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    text-align: left;
-    min-height: 86px;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+  min-height: 90px;
 }
 
 .stat-box .label {
-    display: block;
-    font-size: 11px;
-    color: #64748b;
-    margin-bottom: 4px;
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 5px;
 }
 
 .stat-box .val {
-    font-size: 20px;
-    font-weight: 800;
-    color: #1e293b;
-    font-family: monospace;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e293b;
+  font-family: monospace;
 }
 
 .stat-meta {
-    display: block;
-    margin-top: 6px;
-    font-size: 11px;
-    color: #64748b;
-    line-height: 1.4;
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.4;
 }
 
 .stat-box.is-warning {
-    border-color: rgba(245, 158, 11, 0.28);
-    background: linear-gradient(180deg, #fff7ed 0%, #fffbeb 100%);
+  border-color: rgba(245, 158, 11, 0.28);
+  background: linear-gradient(180deg, #fff7ed 0%, #fffbeb 100%);
 }
 
 .stat-box.is-success {
-    border-color: rgba(16, 185, 129, 0.24);
-    background: linear-gradient(180deg, #ecfdf5 0%, #f0fdf4 100%);
+  border-color: rgba(16, 185, 129, 0.24);
+  background: linear-gradient(180deg, #ecfdf5 0%, #f0fdf4 100%);
 }
 
 .stat-box.is-success .val {
-    color: #059669;
+  color: #059669;
 }
 
 .stat-box.is-primary {
-    border-color: rgba(59, 130, 246, 0.24);
-    background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+  border-color: rgba(59, 130, 246, 0.24);
+  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
 }
 
 .stat-box.is-primary .val {
-    color: #2563eb;
+  color: #2563eb;
 }
 
 .stat-box.is-info {
-    border-color: rgba(14, 165, 233, 0.24);
-    background: linear-gradient(180deg, #f0f9ff 0%, #f8fafc 100%);
+  border-color: rgba(14, 165, 233, 0.24);
+  background: linear-gradient(180deg, #f0f9ff 0%, #f8fafc 100%);
 }
 
 .stat-box.is-info .val {
-    color: #0284c7;
+  color: #0284c7;
 }
 
 .warning-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
 .warning-pill {
@@ -1151,7 +1033,7 @@ const getFreshnessProps = (row: any) => {
 }
 
 .factor-item {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .factor-header {
@@ -1160,13 +1042,19 @@ const getFreshnessProps = (row: any) => {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .factor-header .val {
   color: var(--primary-color);
   font-family: monospace;
   font-size: 15px;
+}
+
+.scope-switch {
+  margin-top: auto;
+  text-align: right;
+  padding-top: 10px;
 }
 
 .coord-label {
@@ -1199,28 +1087,31 @@ const getFreshnessProps = (row: any) => {
   font-weight: 500;
 }
 
-/* 订单分析双图卡片 */
 .analysis-card {
+  min-height: 274px;
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: 12px;
-  padding: 16px 20px;
+  padding: 16px 18px;
   border: 1px solid rgba(56, 189, 248, 0.12);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
 }
 
 .analysis-card-title {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-size: 14px;
   font-weight: 600;
   color: #e2e8f0;
+  gap: 12px;
 }
 
 .analysis-note {
   margin-top: 4px;
-  max-width: 440px;
+  max-width: 460px;
   font-size: 11px;
   line-height: 1.5;
   color: #94a3b8;
@@ -1230,38 +1121,172 @@ const getFreshnessProps = (row: any) => {
 .analysis-sub {
   font-size: 11px;
   color: #64748b;
-  font-weight: normal;
+  font-weight: 400;
+}
+
+.chart-panel {
+  height: 210px;
+  margin-top: auto;
 }
 
 .kpi-badges {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .kpi-badge {
   font-size: 12px;
-  padding: 2px 10px;
+  padding: 3px 10px;
   border-radius: 20px;
   color: #e2e8f0;
 }
 
 .kpi-badge.blue {
-  background: rgba(59,130,246,0.2);
-  border: 1px solid rgba(59,130,246,0.4);
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
 }
 
 .kpi-badge.green {
-  background: rgba(16,185,129,0.2);
-  border: 1px solid rgba(16,185,129,0.4);
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
 }
 
 .kpi-badge.amber {
-  background: rgba(245,158,11,0.2);
-  border: 1px solid rgba(245,158,11,0.4);
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
 .kpi-badge strong {
   margin: 0 3px;
   font-size: 14px;
 }
+
+.orders-card {
+  margin-bottom: 0;
+}
+
+.orders-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.orders-header :deep(.el-pagination) {
+  margin-left: auto;
+}
+
+@media (max-width: 1400px) {
+  .map-board,
+  .config-board {
+    min-height: 390px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .warning-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .map-board {
+    min-height: 360px;
+  }
+
+  .config-board {
+    min-height: 0;
+    height: auto;
+  }
+
+  .warning-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .analysis-card {
+    min-height: 260px;
+  }
+
+  .analysis-card-title {
+    flex-direction: column;
+  }
+
+  .analysis-sub {
+    display: none;
+  }
+
+  .scope-switch {
+    text-align: left;
+    margin-top: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ordering-page {
+    gap: 16px;
+  }
+
+  .map-header {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+  }
+
+  .map-title {
+    font-size: 14px;
+  }
+
+  .config-title {
+    align-items: center;
+    margin-bottom: 14px !important;
+  }
+
+  .stats-mini {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .stat-box {
+    min-height: 0;
+  }
+
+  .factor-item {
+    margin-bottom: 14px;
+  }
+
+  .analysis-card {
+    padding: 14px;
+  }
+
+  .chart-panel {
+    height: 200px;
+  }
+
+  .orders-header :deep(.el-pagination) {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes livePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
 </style>
+
+
+
+

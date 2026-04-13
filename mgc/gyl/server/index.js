@@ -9,12 +9,16 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const { DB_FILE, nowIso, readDb, updateDb, nextId } = require('./localDb');
 const { registerOrderPhase2Routes } = require('./orderPhase2');
 const { registerInventoryOpsRoutes } = require('./inventoryOps');
 const { registerMdmGovernanceRoutes } = require('./mdmGovernance');
+const { registerChannelDealerOpsRoutes } = require('./channelDealerOps');
+const { registerWorkflowCenterRoutes } = require('./workflowCenter');
+const { registerManagementCockpitRoutes } = require('./managementCockpit');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -53,7 +57,11 @@ const API_PERMISSION_RULES = [
     { matcher: /^\/orders(?:\/|$)/, permissionPath: '/intelligent' },
     { matcher: /^\/order-analysis(?:\/|$)/, permissionPath: '/intelligent' },
     { matcher: /^\/inventory(?:\/|$)/, permissionPath: '/intelligent' },
-    { matcher: /^\/inventory-ops(?:\/|$)/, permissionPath: '/inventory-ops' }
+    { matcher: /^\/inventory-ops(?:\/|$)/, permissionPath: '/inventory-ops' },
+    { matcher: /^\/channel-dealer-ops(?:\/|$)/, permissionPath: '/channel-dealer-ops' },
+    { matcher: /^\/workflow-center(?:\/|$)/, permissionPath: '/workflow-center' },
+    { matcher: /^\/management-cockpit(?:\/|$)/, permissionPath: '/management-cockpit' },
+    { matcher: /^\/platform(?:\/|$)/, permissionPath: '/enterprise-platform' }
 ];
 
 const createTraceId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -135,6 +143,96 @@ const summarizePayload = (payload) => {
         next[key] = value;
     });
     return next;
+};
+const MAX_RUNTIME_API_METRICS = 5000;
+const runtimeApiMetrics = [];
+
+const pushRuntimeApiMetric = (metric) => {
+    runtimeApiMetrics.push(metric);
+    if (runtimeApiMetrics.length > MAX_RUNTIME_API_METRICS) {
+        runtimeApiMetrics.splice(0, runtimeApiMetrics.length - MAX_RUNTIME_API_METRICS);
+    }
+};
+
+const toDateMillis = (value, endOfDay = false) => {
+    if (!value) return 0;
+    const suffix = endOfDay ? 'T23:59:59.999Z' : 'T00:00:00.000Z';
+    const d = new Date(`${String(value).slice(0, 10)}${suffix}`);
+    const millis = d.getTime();
+    return Number.isNaN(millis) ? 0 : millis;
+};
+
+const toSafeObject = (value, fallback = {}) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return safeClone(fallback);
+    return safeClone(value);
+};
+
+const buildDiffSummary = (beforeSnapshot, afterSnapshot) => {
+    const before = toSafeObject(beforeSnapshot, {});
+    const after = toSafeObject(afterSnapshot, {});
+    const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])];
+    const changedKeys = keys.filter((key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]));
+    return {
+        changedCount: changedKeys.length,
+        changedKeys: changedKeys.slice(0, 12)
+    };
+};
+
+const appendSecurityLog = (req, payload) => {
+    try {
+        updateDb((db) => {
+            if (!db.platform) db.platform = {};
+            const rows = ensureArray(db.platform.security_logs);
+            db.platform.security_logs = rows;
+            const now = Date.now();
+            const username = String(payload.username || req.user?.username || '');
+            const eventType = String(payload.eventType || 'LOGIN');
+            const result = String(payload.result || 'SUCCESS');
+            let riskLevel = String(payload.riskLevel || '');
+
+            if (!riskLevel) {
+                if (eventType === 'LOGIN' && result === 'FAILED') {
+                    const failCount = rows.filter((row) =>
+                        String(row.event_type) === 'LOGIN' &&
+                        String(row.result) === 'FAILED' &&
+                        (String(row.username) === username || String(row.operator_ip) === String(getRequestIp(req))) &&
+                        (now - new Date(row.created_at).getTime()) <= 30 * 60 * 1000
+                    ).length + 1;
+                    riskLevel = failCount >= 5 ? 'CRITICAL' : (failCount >= 3 ? 'HIGH' : 'MEDIUM');
+                } else if (eventType === 'LOGIN' && result === 'SUCCESS') {
+                    const knownIp = rows.some((row) =>
+                        String(row.event_type) === 'LOGIN' &&
+                        String(row.result) === 'SUCCESS' &&
+                        String(row.username) === username &&
+                        String(row.operator_ip) === String(getRequestIp(req))
+                    );
+                    riskLevel = knownIp ? 'LOW' : 'MEDIUM';
+                } else if (eventType === 'PERMISSION_CHANGE') {
+                    riskLevel = 'MEDIUM';
+                } else {
+                    riskLevel = 'LOW';
+                }
+            }
+
+            rows.push({
+                id: nextId(rows),
+                event_type: eventType,
+                username,
+                user_id: payload.userId ?? req.user?.id ?? null,
+                module_code: payload.moduleCode || 'security',
+                action_type: payload.actionType || eventType,
+                result,
+                risk_level: riskLevel,
+                operator_ip: payload.operatorIp || getRequestIp(req),
+                user_agent: String(req.headers['user-agent'] || ''),
+                message: payload.message || '',
+                metadata: summarizePayload(payload.metadata || {}),
+                created_at: nowIso()
+            });
+        });
+    } catch (error) {
+        console.warn('[security-log] append failed:', error?.message || error);
+    }
 };
 
 const appendOperationLog = (req, payload) => {
@@ -398,6 +496,23 @@ app.use(helmet());
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use('/api', (req, res, next) => {
+    const beginAt = Date.now();
+    res.on('finish', () => {
+        const routePath = normalizePath(String(req.path || '').split('?')[0]);
+        if (!routePath || routePath === '/ping') return;
+        const durationMs = Date.now() - beginAt;
+        pushRuntimeApiMetric({
+            path: routePath,
+            method: req.method || 'GET',
+            status: res.statusCode,
+            duration_ms: durationMs,
+            trace_id: req.traceId || '',
+            created_at: nowIso()
+        });
+    });
+    next();
+});
 app.use('/api', rateLimit({
     windowMs: Number(process.env.API_LIMIT_WINDOW_MS || 60 * 1000),
     max: Number(process.env.API_LIMIT_MAX || 400),
@@ -414,10 +529,72 @@ app.post('/api/login', (req, res) => {
     if (!username || !password) return apiErr(res, req, 400, '账号和密码不能为空');
     const db = readDb();
     const account = db.system.accounts.find(a => a.login_id === username);
-    if (!account) return apiErr(res, req, 401, '账号或密码错误');
+    if (!account) {
+        appendOperationLog(req, {
+            moduleCode: 'auth',
+            bizObjectType: 'account',
+            bizObjectId: username || '',
+            actionType: 'LOGIN',
+            resultStatus: 'FAILED',
+            message: `登录失败，账号不存在 ${username}`,
+            requestSummary: { username }
+        });
+        appendSecurityLog(req, {
+            eventType: 'LOGIN',
+            actionType: 'LOGIN_FAIL',
+            username,
+            result: 'FAILED',
+            moduleCode: 'auth',
+            message: `账号不存在：${username}`,
+            metadata: { reason: 'ACCOUNT_NOT_FOUND' }
+        });
+        return apiErr(res, req, 401, '账号或密码错误');
+    }
     const passOk = (account.password_hash && bcrypt.compareSync(String(password), String(account.password_hash))) || String(password) === String(account.password_hash);
-    if (!passOk) return apiErr(res, req, 401, '账号或密码错误');
-    if (Number(account.status) !== 1) return apiErr(res, req, 403, '该账号已被停用');
+    if (!passOk) {
+        appendOperationLog(req, {
+            moduleCode: 'auth',
+            bizObjectType: 'account',
+            bizObjectId: account.id,
+            actionType: 'LOGIN',
+            resultStatus: 'FAILED',
+            message: `登录失败，密码错误 ${username}`,
+            requestSummary: { username }
+        });
+        appendSecurityLog(req, {
+            eventType: 'LOGIN',
+            actionType: 'LOGIN_FAIL',
+            username,
+            userId: account.id,
+            result: 'FAILED',
+            moduleCode: 'auth',
+            message: `密码错误：${username}`,
+            metadata: { reason: 'WRONG_PASSWORD' }
+        });
+        return apiErr(res, req, 401, '账号或密码错误');
+    }
+    if (Number(account.status) !== 1) {
+        appendOperationLog(req, {
+            moduleCode: 'auth',
+            bizObjectType: 'account',
+            bizObjectId: account.id,
+            actionType: 'LOGIN',
+            resultStatus: 'FAILED',
+            message: `登录失败，账号停用 ${username}`,
+            requestSummary: { username }
+        });
+        appendSecurityLog(req, {
+            eventType: 'LOGIN',
+            actionType: 'LOGIN_FAIL',
+            username,
+            userId: account.id,
+            result: 'FAILED',
+            moduleCode: 'auth',
+            message: `账号已停用：${username}`,
+            metadata: { reason: 'ACCOUNT_DISABLED' }
+        });
+        return apiErr(res, req, 403, '该账号已被停用');
+    }
     const rbac = buildRbacContext(db, account.id);
     const userPayload = sanitizeUser(account, rbac);
     const token = jwt.sign({ id: account.id, username: account.login_id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
@@ -429,6 +606,15 @@ app.post('/api/login', (req, res) => {
         actionType: 'LOGIN',
         message: `用户登录 ${account.login_id}`,
         requestSummary: { username }
+    });
+    appendSecurityLog(req, {
+        eventType: 'LOGIN',
+        actionType: 'LOGIN_SUCCESS',
+        username,
+        userId: account.id,
+        result: 'SUCCESS',
+        moduleCode: 'auth',
+        message: `登录成功：${username}`
     });
     apiOk(res, req, { ...userPayload, token }, '登录成功');
 });
@@ -519,6 +705,15 @@ app.post('/api/reset-password', (req, res) => {
         actionType: 'RESET_PASSWORD',
         message: `重置密码 ${username}`,
         requestSummary: { username, smsCode: '***', helperCode: '***' }
+    });
+    appendSecurityLog(req, {
+        eventType: 'PASSWORD_RESET',
+        actionType: 'RESET_PASSWORD',
+        username,
+        userId: account.id,
+        result: 'SUCCESS',
+        moduleCode: 'auth',
+        message: `密码重置成功：${username}`
     });
     apiOk(res, req, { changed: true }, '密码重置成功');
 });
@@ -626,6 +821,22 @@ app.put('/api/accounts/:id', authRequired, (req, res) => {
         beforeSnapshot,
         afterSnapshot
     });
+    if (Array.isArray(payload.roleIds)) {
+        appendSecurityLog(req, {
+            eventType: 'PERMISSION_CHANGE',
+            actionType: 'ACCOUNT_ROLE_UPDATE',
+            username: afterSnapshot?.login_id || '',
+            userId: id,
+            result: 'SUCCESS',
+            moduleCode: 'account',
+            message: `变更用户角色：${afterSnapshot?.login_id || id}`,
+            metadata: {
+                accountId: id,
+                accountName: afterSnapshot?.login_id || '',
+                roleCount: payload.roleIds.length
+            }
+        });
+    }
     apiOk(res, req, true, '更新成功');
 });
 
@@ -1341,17 +1552,34 @@ app.get('/api/dict/lookup', authRequired, (req, res) => {
     apiOk(res, req, { list, map }, '获取成功');
 });
 
+const filterOperationLogRows = (rows, query = {}) => {
+    const {
+        keyword = '',
+        moduleCode = '',
+        actionType = '',
+        resultStatus = '',
+        operatorName = '',
+        bizObjectType = '',
+        bizObjectId = '',
+        dateFrom = '',
+        dateTo = ''
+    } = query || {};
+    let list = ensureArray(rows);
+    if (keyword) list = list.filter((row) => contains(row.message, keyword) || contains(row.biz_object_type, keyword) || contains(row.biz_object_id, keyword));
+    if (moduleCode) list = list.filter((row) => String(row.module_code) === String(moduleCode));
+    if (actionType) list = list.filter((row) => String(row.action_type) === String(actionType));
+    if (resultStatus) list = list.filter((row) => String(row.result_status) === String(resultStatus));
+    if (operatorName) list = list.filter((row) => contains(row.operator_name, operatorName));
+    if (bizObjectType) list = list.filter((row) => contains(row.biz_object_type, bizObjectType));
+    if (bizObjectId) list = list.filter((row) => contains(row.biz_object_id, bizObjectId));
+    if (dateFrom) list = list.filter((row) => String(row.created_at).slice(0, 10) >= String(dateFrom));
+    if (dateTo) list = list.filter((row) => String(row.created_at).slice(0, 10) <= String(dateTo));
+    return [...list].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+};
+
 app.get('/api/operation-logs', authRequired, (req, res) => {
-    const { page = 1, pageSize = 20, keyword = '', moduleCode = '', actionType = '', resultStatus = '', operatorName = '', dateFrom = '', dateTo = '' } = req.query || {};
-    let rows = ensureArray(readDb().platform?.operation_logs);
-    if (keyword) rows = rows.filter((row) => contains(row.message, keyword) || contains(row.biz_object_type, keyword) || contains(row.biz_object_id, keyword));
-    if (moduleCode) rows = rows.filter((row) => String(row.module_code) === String(moduleCode));
-    if (actionType) rows = rows.filter((row) => String(row.action_type) === String(actionType));
-    if (resultStatus) rows = rows.filter((row) => String(row.result_status) === String(resultStatus));
-    if (operatorName) rows = rows.filter((row) => contains(row.operator_name, operatorName));
-    if (dateFrom) rows = rows.filter((row) => String(row.created_at).slice(0, 10) >= String(dateFrom));
-    if (dateTo) rows = rows.filter((row) => String(row.created_at).slice(0, 10) <= String(dateTo));
-    rows = [...rows].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    const { page = 1, pageSize = 20 } = req.query || {};
+    const rows = filterOperationLogRows(readDb().platform?.operation_logs, req.query || {});
     apiOk(res, req, paginate(rows, page, pageSize), '获取成功');
 });
 
@@ -1446,6 +1674,464 @@ app.patch('/api/notifications/:id/read', authRequired, (req, res) => {
     apiOk(res, req, true, '已读成功');
 });
 
+app.get('/api/platform/audit-logs', authRequired, (req, res) => {
+    const { page = 1, pageSize = 20 } = req.query || {};
+    const rows = filterOperationLogRows(readDb().platform?.operation_logs, req.query || {}).map((row) => ({
+        ...row,
+        diff_summary: buildDiffSummary(row.before_snapshot, row.after_snapshot)
+    }));
+    apiOk(res, req, paginate(rows, page, pageSize), '获取成功');
+});
+
+app.get('/api/platform/audit-logs/export', authRequired, (req, res) => {
+    const rows = filterOperationLogRows(readDb().platform?.operation_logs, req.query || {});
+    const csvRows = rows.map((row) => {
+        const diff = buildDiffSummary(row.before_snapshot, row.after_snapshot);
+        return [
+            row.id,
+            row.module_code,
+            row.action_type,
+            row.biz_object_type,
+            row.biz_object_id,
+            row.operator_name,
+            row.result_status,
+            row.created_at,
+            String(row.message || '').replace(/"/g, '""'),
+            diff.changedCount,
+            diff.changedKeys.join('|')
+        ];
+    });
+    const lines = [
+        'id,module_code,action_type,biz_object_type,biz_object_id,operator_name,result_status,created_at,message,diff_count,diff_keys',
+        ...csvRows.map((row) => row.map((cell) => `"${String(cell ?? '')}"`).join(','))
+    ];
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=audit_logs_${Date.now()}.csv`);
+    res.send(`\uFEFF${lines.join('\n')}`);
+});
+
+app.get('/api/platform/audit-logs/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id, -1);
+    if (id < 0) return apiErr(res, req, 404, '审计记录不存在');
+    const row = ensureArray(readDb().platform?.operation_logs).find((item) => Number(item.id) === id);
+    if (!row) return apiErr(res, req, 404, '审计记录不存在');
+    apiOk(res, req, { ...row, diff_summary: buildDiffSummary(row.before_snapshot, row.after_snapshot) }, '获取成功');
+});
+
+const filterSecurityLogRows = (rows, query = {}) => {
+    const { eventType = '', result = '', riskLevel = '', username = '', dateFrom = '', dateTo = '' } = query || {};
+    let list = ensureArray(rows);
+    if (eventType) list = list.filter((row) => String(row.event_type) === String(eventType));
+    if (result) list = list.filter((row) => String(row.result) === String(result));
+    if (riskLevel) list = list.filter((row) => String(row.risk_level) === String(riskLevel));
+    if (username) list = list.filter((row) => contains(row.username, username));
+    if (dateFrom) list = list.filter((row) => String(row.created_at).slice(0, 10) >= String(dateFrom));
+    if (dateTo) list = list.filter((row) => String(row.created_at).slice(0, 10) <= String(dateTo));
+    return [...list].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+};
+
+app.get('/api/platform/security/summary', authRequired, (req, res) => {
+    const rows = ensureArray(readDb().platform?.security_logs);
+    const loginRows = rows.filter((row) => String(row.event_type) === 'LOGIN');
+    const loginSuccess = loginRows.filter((row) => String(row.result) === 'SUCCESS').length;
+    const loginFailed = loginRows.filter((row) => String(row.result) === 'FAILED').length;
+    const passwordResetCount = rows.filter((row) => String(row.event_type) === 'PASSWORD_RESET').length;
+    const permissionChangeCount = rows.filter((row) => String(row.event_type) === 'PERMISSION_CHANGE').length;
+    const abnormalLoginCount = loginRows.filter((row) => ['MEDIUM', 'HIGH', 'CRITICAL'].includes(String(row.risk_level))).length;
+    apiOk(res, req, {
+        loginSuccess,
+        loginFailed,
+        passwordResetCount,
+        permissionChangeCount,
+        abnormalLoginCount
+    }, '获取成功');
+});
+
+app.get('/api/platform/security/logs', authRequired, (req, res) => {
+    const { page = 1, pageSize = 20 } = req.query || {};
+    const rows = filterSecurityLogRows(readDb().platform?.security_logs, req.query || {});
+    apiOk(res, req, paginate(rows, page, pageSize), '获取成功');
+});
+
+app.get('/api/platform/system-configs', authRequired, (req, res) => {
+    const { configType = '', keyword = '' } = req.query || {};
+    let rows = ensureArray(readDb().platform?.system_configs);
+    if (configType) rows = rows.filter((row) => String(row.config_type) === String(configType));
+    if (keyword) rows = rows.filter((row) => contains(row.config_code, keyword) || contains(row.config_name, keyword));
+    rows = [...rows].sort((a, b) => String(a.config_code).localeCompare(String(b.config_code)));
+    apiOk(res, req, rows, '获取成功');
+});
+
+app.put('/api/platform/system-configs/:configCode', authRequired, (req, res) => {
+    const configCode = String(req.params.configCode || '');
+    const body = req.body || {};
+    let found = false;
+    let afterSnapshot = null;
+    updateDb((db) => {
+        if (!db.platform) db.platform = {};
+        const rows = ensureArray(db.platform.system_configs);
+        const versions = ensureArray(db.platform.system_config_versions);
+        db.platform.system_configs = rows;
+        db.platform.system_config_versions = versions;
+        const row = rows.find((item) => String(item.config_code) === configCode);
+        if (!row) return;
+        row.config_value = body.configValue !== undefined ? safeClone(body.configValue) : row.config_value;
+        row.status = body.status !== undefined ? normalizeBinaryStatus(body.status, row.status) : row.status;
+        row.version = toNum(row.version, 1) + 1;
+        row.updated_by = req.user?.username || 'system';
+        row.updated_at = nowIso();
+        versions.push({
+            id: nextId(versions),
+            config_id: row.id,
+            config_code: row.config_code,
+            version: row.version,
+            status: row.status,
+            config_value: safeClone(row.config_value),
+            change_note: String(body.changeNote || '配置更新'),
+            changed_by: req.user?.username || 'system',
+            changed_at: nowIso()
+        });
+        afterSnapshot = safeClone(row);
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '配置项不存在');
+    appendOperationLog(req, {
+        moduleCode: 'system_config',
+        bizObjectType: 'system_config',
+        bizObjectId: configCode,
+        actionType: 'UPDATE',
+        message: `更新系统配置 ${configCode}`,
+        requestSummary: { configCode, status: body.status },
+        afterSnapshot
+    });
+    apiOk(res, req, afterSnapshot, '更新成功');
+});
+
+app.get('/api/platform/system-configs/:configCode/versions', authRequired, (req, res) => {
+    const configCode = String(req.params.configCode || '');
+    const rows = ensureArray(readDb().platform?.system_config_versions)
+        .filter((row) => String(row.config_code) === configCode)
+        .sort((a, b) => Number(b.version) - Number(a.version));
+    apiOk(res, req, rows, '获取成功');
+});
+
+app.get('/api/platform/archive/policies', authRequired, (req, res) => {
+    const rows = ensureArray(readDb().platform?.archive_policies)
+        .sort((a, b) => String(a.policy_code).localeCompare(String(b.policy_code)));
+    apiOk(res, req, rows, '获取成功');
+});
+
+app.put('/api/platform/archive/policies/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const body = req.body || {};
+    let found = false;
+    let afterSnapshot = null;
+    updateDb((db) => {
+        if (!db.platform) db.platform = {};
+        const rows = ensureArray(db.platform.archive_policies);
+        db.platform.archive_policies = rows;
+        const row = rows.find((item) => Number(item.id) === id);
+        if (!row) return;
+        row.retention_days = body.retentionDays !== undefined ? Math.max(1, toNum(body.retentionDays, row.retention_days)) : row.retention_days;
+        row.status = body.status !== undefined ? normalizeBinaryStatus(body.status, row.status) : row.status;
+        row.updated_at = nowIso();
+        afterSnapshot = safeClone(row);
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '归档策略不存在');
+    apiOk(res, req, afterSnapshot, '更新成功');
+});
+
+const pickArchiveCandidates = (rows, retentionDays) => {
+    const cutoff = Date.now() - Math.max(1, toNum(retentionDays, 180)) * 24 * 60 * 60 * 1000;
+    return ensureArray(rows).filter((row) => {
+        const timeSource = row.created_at || row.create_time || row.updated_at || row.finished_at || '';
+        const millis = new Date(timeSource).getTime();
+        if (Number.isNaN(millis) || millis <= 0) return false;
+        if (row.archived_at) return false;
+        return millis <= cutoff;
+    });
+};
+
+app.post('/api/platform/archive/run', authRequired, (req, res) => {
+    const policyCode = String(req.body?.policyCode || '');
+    if (!policyCode) return apiErr(res, req, 400, 'policyCode 不能为空');
+    let createdJob = null;
+    let archivedCount = 0;
+    updateDb((db) => {
+        if (!db.platform) db.platform = {};
+        const policies = ensureArray(db.platform.archive_policies);
+        const jobs = ensureArray(db.platform.archive_jobs);
+        db.platform.archive_policies = policies;
+        db.platform.archive_jobs = jobs;
+        const policy = policies.find((item) => String(item.policy_code) === policyCode);
+        if (!policy || Number(policy.status) !== 1) return;
+        const retentionDays = Math.max(1, toNum(policy.retention_days, 180));
+        const archivedAt = nowIso();
+
+        if (String(policy.target_type) === 'ORDER') {
+            const targets = pickArchiveCandidates(db.biz?.orders, retentionDays);
+            targets.forEach((row) => { row.archived_at = archivedAt; row.archive_policy = policyCode; });
+            archivedCount += targets.length;
+        } else if (String(policy.target_type) === 'LOG') {
+            const targets = pickArchiveCandidates(db.platform?.operation_logs, retentionDays);
+            targets.forEach((row) => { row.archived_at = archivedAt; row.archive_policy = policyCode; });
+            archivedCount += targets.length;
+        } else if (String(policy.target_type) === 'IMPORT_EXPORT') {
+            const importTargets = pickArchiveCandidates(db.platform?.import_tasks, retentionDays);
+            const exportTargets = pickArchiveCandidates(db.platform?.export_tasks, retentionDays);
+            importTargets.forEach((row) => { row.archived_at = archivedAt; row.archive_policy = policyCode; });
+            exportTargets.forEach((row) => { row.archived_at = archivedAt; row.archive_policy = policyCode; });
+            archivedCount += importTargets.length + exportTargets.length;
+        }
+
+        policy.last_run_at = archivedAt;
+        policy.updated_at = archivedAt;
+        createdJob = {
+            id: nextId(jobs),
+            policy_code: policy.policy_code,
+            policy_name: policy.policy_name,
+            target_type: policy.target_type,
+            retention_days: retentionDays,
+            archived_count: archivedCount,
+            status: 'SUCCESS',
+            operator_name: req.user?.nickname || req.user?.username || 'system',
+            started_at: archivedAt,
+            finished_at: nowIso(),
+            message: `归档完成，共处理 ${archivedCount} 条`
+        };
+        jobs.push(createdJob);
+    });
+    if (!createdJob) return apiErr(res, req, 400, '策略不存在或已停用');
+    appendOperationLog(req, {
+        moduleCode: 'archive',
+        bizObjectType: 'archive_job',
+        bizObjectId: createdJob.id,
+        actionType: 'ARCHIVE_RUN',
+        message: `执行归档策略 ${createdJob.policy_code}`,
+        afterSnapshot: createdJob
+    });
+    apiOk(res, req, createdJob, '执行成功');
+});
+
+app.get('/api/platform/archive/jobs', authRequired, (req, res) => {
+    const { page = 1, pageSize = 20, policyCode = '', targetType = '' } = req.query || {};
+    let rows = ensureArray(readDb().platform?.archive_jobs);
+    if (policyCode) rows = rows.filter((row) => String(row.policy_code) === String(policyCode));
+    if (targetType) rows = rows.filter((row) => String(row.target_type) === String(targetType));
+    rows = [...rows].sort((a, b) => String(b.started_at || b.created_at).localeCompare(String(a.started_at || a.created_at)));
+    apiOk(res, req, paginate(rows, page, pageSize), '获取成功');
+});
+
+app.get('/api/platform/monitor/overview', authRequired, (req, res) => {
+    const windowMinutes = Math.max(1, toNum(req.query?.windowMinutes, 1440));
+    const fromMillis = Date.now() - windowMinutes * 60 * 1000;
+    const metrics = runtimeApiMetrics.filter((item) => new Date(item.created_at).getTime() >= fromMillis);
+    const totalCalls = metrics.length;
+    const errorCalls = metrics.filter((item) => toNum(item.status, 200) >= 400).length;
+    const errorRate = totalCalls > 0 ? Number(((errorCalls / totalCalls) * 100).toFixed(2)) : 0;
+
+    const grouped = {};
+    metrics.forEach((item) => {
+        const key = `${item.method} ${item.path}`;
+        if (!grouped[key]) {
+            grouped[key] = {
+                api: key,
+                call_count: 0,
+                error_count: 0,
+                total_duration_ms: 0,
+                max_duration_ms: 0
+            };
+        }
+        grouped[key].call_count += 1;
+        grouped[key].total_duration_ms += toNum(item.duration_ms, 0);
+        grouped[key].max_duration_ms = Math.max(grouped[key].max_duration_ms, toNum(item.duration_ms, 0));
+        if (toNum(item.status, 200) >= 400) grouped[key].error_count += 1;
+    });
+
+    const apiTop = Object.values(grouped)
+        .map((item) => ({
+            ...item,
+            avg_duration_ms: item.call_count > 0 ? Number((item.total_duration_ms / item.call_count).toFixed(1)) : 0,
+            error_rate: item.call_count > 0 ? Number(((item.error_count / item.call_count) * 100).toFixed(2)) : 0
+        }))
+        .sort((a, b) => b.call_count - a.call_count)
+        .slice(0, 12);
+
+    const slowApis = [...apiTop]
+        .filter((item) => item.avg_duration_ms >= 800 || item.max_duration_ms >= 1200)
+        .sort((a, b) => b.avg_duration_ms - a.avg_duration_ms)
+        .slice(0, 8);
+
+    const db = readDb();
+    const allTasks = [
+        ...ensureArray(db.platform?.import_tasks),
+        ...ensureArray(db.platform?.export_tasks),
+        ...ensureArray(db.platform?.workflow_tasks),
+        ...ensureArray(db.platform?.task_runs)
+    ];
+    const successTasks = allTasks.filter((item) => String(item.status) === 'SUCCESS').length;
+    const failedTasks = allTasks.filter((item) => String(item.status) === 'FAILED').length;
+    const runningTasks = allTasks.filter((item) => String(item.status) === 'RUNNING').length;
+    const finishedTasks = successTasks + failedTasks;
+    const taskSuccessRate = finishedTasks > 0 ? Number(((successTasks / finishedTasks) * 100).toFixed(2)) : 0;
+
+    apiOk(res, req, {
+        windowMinutes,
+        totalCalls,
+        errorCalls,
+        errorRate,
+        slowApiCount: slowApis.length,
+        apiTop,
+        slowApis,
+        taskSummary: {
+            totalTasks: allTasks.length,
+            successTasks,
+            failedTasks,
+            runningTasks,
+            taskSuccessRate
+        }
+    }, '获取成功');
+});
+
+app.get('/api/platform/fine-permissions', authRequired, (req, res) => {
+    const { roleId = '', modulePath = '' } = req.query || {};
+    let rows = ensureArray(readDb().platform?.fine_permissions);
+    if (roleId) rows = rows.filter((row) => Number(row.role_id) === toNum(roleId, -1));
+    if (modulePath) rows = rows.filter((row) => String(row.module_path) === String(modulePath));
+    rows = [...rows].sort((a, b) => Number(a.role_id) - Number(b.role_id) || String(a.module_path).localeCompare(String(b.module_path)));
+    apiOk(res, req, rows, '获取成功');
+});
+
+app.put('/api/platform/fine-permissions/:id', authRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    const body = req.body || {};
+    let found = false;
+    let beforeSnapshot = null;
+    let afterSnapshot = null;
+    updateDb((db) => {
+        if (!db.platform) db.platform = {};
+        const rows = ensureArray(db.platform.fine_permissions);
+        db.platform.fine_permissions = rows;
+        const row = rows.find((item) => Number(item.id) === id);
+        if (!row) return;
+        beforeSnapshot = safeClone(row);
+        if (body.buttonCodes !== undefined) {
+            if (Array.isArray(body.buttonCodes)) {
+                row.button_codes = [...new Set(body.buttonCodes.map((item) => String(item).trim()).filter(Boolean))];
+            } else {
+                row.button_codes = [...new Set(String(body.buttonCodes).split(',').map((item) => item.trim()).filter(Boolean))];
+            }
+        }
+        if (body.dataScopeType !== undefined) row.data_scope_type = String(body.dataScopeType || 'ALL');
+        if (body.dataScopeConfig !== undefined) row.data_scope_config = toSafeObject(body.dataScopeConfig, {});
+        if (body.fieldPermissions !== undefined) {
+            row.field_permissions = ensureArray(body.fieldPermissions).map((item) => ({
+                field: String(item.field || ''),
+                label: String(item.label || item.field || ''),
+                visible: normalizeBinaryStatus(item.visible, 1),
+                editable: normalizeBinaryStatus(item.editable, 1)
+            })).filter((item) => item.field);
+        }
+        row.updated_at = nowIso();
+        afterSnapshot = safeClone(row);
+        found = true;
+    });
+    if (!found) return apiErr(res, req, 404, '权限配置不存在');
+    appendOperationLog(req, {
+        moduleCode: 'fine_permission',
+        bizObjectType: 'fine_permission',
+        bizObjectId: id,
+        actionType: 'UPDATE',
+        message: `更新精细权限配置 ${id}`,
+        beforeSnapshot,
+        afterSnapshot
+    });
+    appendSecurityLog(req, {
+        eventType: 'PERMISSION_CHANGE',
+        actionType: 'FINE_PERMISSION_UPDATE',
+        username: req.user?.username || '',
+        userId: req.user?.id ?? null,
+        result: 'SUCCESS',
+        moduleCode: 'fine_permission',
+        message: `更新精细权限配置 ${id}`,
+        metadata: { configId: id, roleId: afterSnapshot?.role_id, modulePath: afterSnapshot?.module_path }
+    });
+    apiOk(res, req, afterSnapshot, '更新成功');
+});
+
+app.get('/api/platform/health', authRequired, (req, res) => {
+    let dbFileSizeBytes = 0;
+    let storageStatus = 'UP';
+    try {
+        const stat = fs.statSync(DB_FILE);
+        dbFileSizeBytes = Number(stat.size || 0);
+    } catch (error) {
+        storageStatus = 'DOWN';
+    }
+
+    const db = readDb();
+    const allTasks = [
+        ...ensureArray(db.platform?.import_tasks),
+        ...ensureArray(db.platform?.export_tasks),
+        ...ensureArray(db.platform?.workflow_tasks),
+        ...ensureArray(db.platform?.task_runs)
+    ];
+    const successTasks = allTasks.filter((item) => String(item.status) === 'SUCCESS').length;
+    const failedTasks = allTasks.filter((item) => String(item.status) === 'FAILED').length;
+    const runningTasks = allTasks.filter((item) => String(item.status) === 'RUNNING').length;
+    const recentApiErrors = runtimeApiMetrics
+        .filter((item) => toNum(item.status, 200) >= 500)
+        .slice(-10)
+        .reverse()
+        .map((item) => ({
+            type: 'API',
+            message: `${item.method} ${item.path} => ${item.status}`,
+            created_at: item.created_at,
+            trace_id: item.trace_id || ''
+        }));
+    const recentBizErrors = ensureArray(db.platform?.operation_logs)
+        .filter((item) => String(item.result_status) === 'FAILED')
+        .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+        .slice(0, 10)
+        .map((item) => ({
+            type: 'BIZ',
+            message: `${item.module_code}:${item.action_type} ${item.message || ''}`,
+            created_at: item.created_at,
+            trace_id: item.trace_id || ''
+        }));
+
+    const services = [
+        { service_key: 'api-service', service_name: 'API 服务', status: 'UP', message: '运行正常' },
+        { service_key: 'auth-service', service_name: '认证服务', status: ensureArray(db.system?.accounts).length > 0 ? 'UP' : 'DOWN', message: ensureArray(db.system?.accounts).length > 0 ? '账号数据可用' : '账号数据缺失' },
+        { service_key: 'storage-service', service_name: '存储服务', status: storageStatus, message: storageStatus === 'UP' ? '本地数据文件可访问' : '本地数据文件不可访问' },
+        { service_key: 'task-service', service_name: '任务服务', status: failedTasks > successTasks && failedTasks > 0 ? 'WARN' : 'UP', message: failedTasks > 0 ? `失败任务 ${failedTasks} 条` : '任务执行稳定' }
+    ];
+
+    apiOk(res, req, {
+        runtime: {
+            uptime_seconds: Math.floor(process.uptime()),
+            node_version: process.version
+        },
+        services,
+        task_status: {
+            total: allTasks.length,
+            running: runningTasks,
+            success: successTasks,
+            failed: failedTasks
+        },
+        storage: {
+            db_file: DB_FILE,
+            db_file_size_bytes: dbFileSizeBytes,
+            db_file_size_mb: Number((dbFileSizeBytes / 1024 / 1024).toFixed(3)),
+            rss_memory_mb: Number((process.memoryUsage().rss / 1024 / 1024).toFixed(2))
+        },
+        recent_errors: [...recentApiErrors, ...recentBizErrors]
+            .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+            .slice(0, 20)
+    }, '获取成功');
+});
+
 app.get('/api/roles', authRequired, (req, res) => {
     const db = readDb();
     const list = db.system.roles.map((role) => {
@@ -1497,6 +2183,20 @@ app.post('/api/roles', authRequired, (req, res) => {
         message: `新增角色 ${createdRole?.name || ''}`,
         requestSummary: body,
         afterSnapshot: createdRole
+    });
+    appendSecurityLog(req, {
+        eventType: 'PERMISSION_CHANGE',
+        actionType: 'ROLE_CREATE',
+        username: req.user?.username || '',
+        userId: req.user?.id ?? null,
+        result: 'SUCCESS',
+        moduleCode: 'role',
+        message: `新增角色并初始化权限：${createdRole?.name || ''}`,
+        metadata: {
+            roleId: createdRole?.id,
+            roleName: createdRole?.name || '',
+            permissionCount: Array.isArray(body.permissionIds) ? body.permissionIds.length : 0
+        }
     });
     apiOk(res, req, true, '新增成功');
 });
@@ -1551,6 +2251,23 @@ app.put('/api/roles/:id', authRequired, (req, res) => {
         beforeSnapshot,
         afterSnapshot
     });
+    if (body.permissionIds !== undefined || body.dataScopeType !== undefined || body.dataScopeConfig !== undefined) {
+        appendSecurityLog(req, {
+            eventType: 'PERMISSION_CHANGE',
+            actionType: 'ROLE_PERMISSION_UPDATE',
+            username: req.user?.username || '',
+            userId: req.user?.id ?? null,
+            result: 'SUCCESS',
+            moduleCode: 'role',
+            message: `更新角色权限：${afterSnapshot?.name || id}`,
+            metadata: {
+                roleId: id,
+                roleName: afterSnapshot?.name || '',
+                permissionCount: Array.isArray(body.permissionIds) ? body.permissionIds.length : null,
+                dataScopeType: body.dataScopeType !== undefined ? body.dataScopeType : null
+            }
+        });
+    }
     apiOk(res, req, true, '更新成功');
 });
 
@@ -1573,6 +2290,16 @@ app.delete('/api/roles/:id', authRequired, (req, res) => {
         actionType: 'DELETE',
         message: `删除角色 ${target.name || id}`,
         beforeSnapshot: target
+    });
+    appendSecurityLog(req, {
+        eventType: 'PERMISSION_CHANGE',
+        actionType: 'ROLE_DELETE',
+        username: req.user?.username || '',
+        userId: req.user?.id ?? null,
+        result: 'SUCCESS',
+        moduleCode: 'role',
+        message: `删除角色：${target.name || id}`,
+        metadata: { roleId: id, roleName: target.name || '' }
     });
     apiOk(res, req, true, '删除成功');
 });
@@ -1777,6 +2504,31 @@ registerInventoryOpsRoutes({
     apiErr,
     paginate,
     contains
+});
+
+registerChannelDealerOpsRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate,
+    contains
+});
+
+registerWorkflowCenterRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate
+});
+
+registerManagementCockpitRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate
 });
 
 registerMdmGovernanceRoutes({

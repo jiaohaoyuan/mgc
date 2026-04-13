@@ -1,10 +1,12 @@
 ﻿<script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import axios from 'axios'
 import * as echarts from 'echarts'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRoute } from 'vue-router'
 
 const activeTab = ref('ledger')
+const route = useRoute()
 
 const options = reactive<any>({
   tx_types: [],
@@ -68,7 +70,8 @@ const ledgerTotal = ref(0)
 const ledgerPage = ref(1)
 const ledgerPageSize = ref(10)
 const ledgerLoading = ref(false)
-const ledgerQuery = reactive<any>({ warehouseCode: '', skuCode: '', keyword: '', nearExpiry: '', unsellable: '' })
+const ledgerQuery = reactive<any>({ warehouseCode: '', skuCode: '', batchNo: '', keyword: '', nearExpiry: '', unsellable: '', dateField: 'updated_at' })
+const ledgerDateRange = ref<string[]>([])
 
 const txRows = ref<any[]>([])
 const txTotal = ref(0)
@@ -76,6 +79,7 @@ const txPage = ref(1)
 const txPageSize = ref(10)
 const txLoading = ref(false)
 const txQuery = reactive<any>({ txType: '', keyword: '' })
+const txDateRange = ref<string[]>([])
 
 const transferRows = ref<any[]>([])
 const transferTotal = ref(0)
@@ -150,6 +154,7 @@ const transferDrawerVisible = ref(false)
 const transferDetailLoading = ref(false)
 const currentTransferDetail = ref<any>(null)
 const currentTransferTracks = ref<any[]>([])
+const lastRoutedTransferNo = ref('')
 
 const warehouseNameMap = computed(() => Object.fromEntries((options.warehouses || []).map((item: any) => [item.warehouse_code, item.warehouse_name])))
 const skuNameMap = computed(() => Object.fromEntries((options.skus || []).map((item: any) => [item.sku_code, item.sku_name])))
@@ -183,7 +188,34 @@ const warningLevelLabelMap: Record<string, string> = {
   CRITICAL: '严重'
 }
 
+const txTypeLabelMap: Record<string, string> = {
+  INBOUND: '入库',
+  OUTBOUND: '出库',
+  TRANSFER_OUT: '调拨调出',
+  TRANSFER_IN: '调拨调入',
+  FREEZE: '冻结',
+  UNFREEZE: '解冻',
+  ADJUST: '盘点调整',
+  DAMAGE: '报损'
+}
+
 const formatNumber = (value: number | string) => Number(value || 0).toLocaleString('zh-CN')
+const getErrorMessage = (error: any, fallback = '请求失败') => error?.response?.data?.message || error?.message || fallback
+const normalizeSilentFlag = (value: unknown) => typeof value === 'boolean' ? value : false
+const formatTxType = (txType: string) => txTypeLabelMap[String(txType || '').toUpperCase()] || txType
+const formatTransferStatus = (status: string) => transferStatusLabelMap[String(status || '').toUpperCase()] || status
+const formatWarningType = (type: string) => warningTypeLabelMap[String(type || '').toUpperCase()] || type
+const formatWarningLevel = (level: string) => warningLevelLabelMap[String(level || '').toUpperCase()] || level
+const formatWarningStatus = (status: string) => warningStatusLabelMap[String(status || '').toUpperCase()] || status
+const getLedgerShelfStatus = (row: any) => {
+  if (Number(row?.unsellable_flag) === 1 || Number(row?.remaining_days || 0) <= 0) return { type: 'danger', text: '不可售' }
+  if (Number(row?.near_expiry_flag) === 1 || Number(row?.remaining_days || 0) <= 7) return { type: 'warning', text: '临期' }
+  return { type: 'success', text: '正常' }
+}
+const getDateRangeParams = (range: string[] = []) => ({
+  dateFrom: range?.[0] || '',
+  dateTo: range?.[1] || ''
+})
 
 const overviewCards = computed(() => [
   {
@@ -338,26 +370,35 @@ const fetchOptions = async () => {
   Object.assign(options, res.data.data || {})
 }
 
-const fetchDashboard = async () => {
-  const res = await axios.get('/inventory-ops/dashboard')
-  const data = res.data.data || {}
-  dashboard.summary = { ...dashboard.summary, ...(data.summary || {}) }
-  dashboard.trend = data.trend || []
-  dashboard.transfer_status = data.transfer_status || []
-  dashboard.warning_status = data.warning_status || []
-  dashboard.warning_level = data.warning_level || []
-  dashboard.warning_type = data.warning_type || []
-  dashboard.warning_hotspots = data.warning_hotspots || []
-  await nextTick()
-  renderCharts()
+const fetchDashboard = async (silentInput: boolean | number = false) => {
+  const silent = normalizeSilentFlag(silentInput)
+  try {
+    const res = await axios.get('/inventory-ops/dashboard')
+    const data = res.data.data || {}
+    dashboard.summary = { ...dashboard.summary, ...(data.summary || {}) }
+    dashboard.trend = data.trend || []
+    dashboard.transfer_status = data.transfer_status || []
+    dashboard.warning_status = data.warning_status || []
+    dashboard.warning_level = data.warning_level || []
+    dashboard.warning_type = data.warning_type || []
+    dashboard.warning_hotspots = data.warning_hotspots || []
+    await nextTick()
+    renderCharts()
+    return true
+  } catch (error: any) {
+    if (!silent) ElMessage.error(getErrorMessage(error, '库存看板加载失败'))
+    return false
+  }
 }
 
-const fetchLedger = async () => {
+const fetchLedger = async (silentInput: boolean | number = false) => {
+  const silent = normalizeSilentFlag(silentInput)
   ledgerLoading.value = true
   try {
     const res = await axios.get('/inventory-ops/ledger/list', {
       params: {
         ...ledgerQuery,
+        ...getDateRangeParams(ledgerDateRange.value),
         page: ledgerPage.value,
         pageSize: ledgerPageSize.value
       }
@@ -365,29 +406,40 @@ const fetchLedger = async () => {
     ledgerRows.value = (res.data.data?.list || []).map(enrichByCode)
     ledgerTotal.value = res.data.data?.total || 0
     Object.assign(ledgerSummary, res.data.data?.summary || {})
+    return true
+  } catch (error: any) {
+    if (!silent) ElMessage.error(getErrorMessage(error, '库存台账加载失败'))
+    return false
   } finally {
     ledgerLoading.value = false
   }
 }
 
-const fetchTransactions = async () => {
+const fetchTransactions = async (silentInput: boolean | number = false) => {
+  const silent = normalizeSilentFlag(silentInput)
   txLoading.value = true
   try {
     const res = await axios.get('/inventory-ops/transactions/list', {
       params: {
         ...txQuery,
+        ...getDateRangeParams(txDateRange.value),
         page: txPage.value,
         pageSize: txPageSize.value
       }
     })
     txRows.value = (res.data.data?.list || []).map(enrichByCode)
     txTotal.value = res.data.data?.total || 0
+    return true
+  } catch (error: any) {
+    if (!silent) ElMessage.error(getErrorMessage(error, '出入库流水加载失败'))
+    return false
   } finally {
     txLoading.value = false
   }
 }
 
-const fetchTransfers = async () => {
+const fetchTransfers = async (silentInput: boolean | number = false) => {
+  const silent = normalizeSilentFlag(silentInput)
   transferLoading.value = true
   try {
     const res = await axios.get('/inventory-ops/transfers/list', {
@@ -399,12 +451,17 @@ const fetchTransfers = async () => {
     })
     transferRows.value = (res.data.data?.list || []).map(enrichByCode)
     transferTotal.value = res.data.data?.total || 0
+    return true
+  } catch (error: any) {
+    if (!silent) ElMessage.error(getErrorMessage(error, '调拨单加载失败'))
+    return false
   } finally {
     transferLoading.value = false
   }
 }
 
-const fetchWarnings = async () => {
+const fetchWarnings = async (silentInput: boolean | number = false) => {
+  const silent = normalizeSilentFlag(silentInput)
   warningLoading.value = true
   try {
     const res = await axios.get('/inventory-ops/warnings/list', {
@@ -416,12 +473,17 @@ const fetchWarnings = async () => {
     })
     warningRows.value = (res.data.data?.list || []).map(enrichByCode)
     warningTotal.value = res.data.data?.total || 0
+    return true
+  } catch (error: any) {
+    if (!silent) ElMessage.error(getErrorMessage(error, '预警中心加载失败'))
+    return false
   } finally {
     warningLoading.value = false
   }
 }
 
-const fetchCapabilities = async () => {
+const fetchCapabilities = async (silentInput: boolean | number = false) => {
+  const silent = normalizeSilentFlag(silentInput)
   capabilityLoading.value = true
   try {
     const res = await axios.get('/inventory-ops/capabilities/list', {
@@ -433,12 +495,17 @@ const fetchCapabilities = async () => {
     })
     capabilityRows.value = res.data.data?.list || []
     capabilityTotal.value = res.data.data?.total || 0
+    return true
+  } catch (error: any) {
+    if (!silent) ElMessage.error(getErrorMessage(error, '仓配能力加载失败'))
+    return false
   } finally {
     capabilityLoading.value = false
   }
 }
 
-const fetchLocks = async () => {
+const fetchLocks = async (silentInput: boolean | number = false) => {
+  const silent = normalizeSilentFlag(silentInput)
   lockLoading.value = true
   try {
     const res = await axios.get('/inventory-ops/locks/list', {
@@ -450,6 +517,10 @@ const fetchLocks = async () => {
     })
     lockRows.value = (res.data.data?.list || []).map(enrichByCode)
     lockTotal.value = res.data.data?.total || 0
+    return true
+  } catch (error: any) {
+    if (!silent) ElMessage.error(getErrorMessage(error, '锁定记录加载失败'))
+    return false
   } finally {
     lockLoading.value = false
   }
@@ -485,6 +556,30 @@ const submitTx = async () => {
   } finally {
     txSubmitting.value = false
   }
+}
+const searchLedger = () => {
+  ledgerPage.value = 1
+  fetchLedger()
+}
+const searchTransactions = () => {
+  txPage.value = 1
+  fetchTransactions()
+}
+const searchTransfers = () => {
+  transferPage.value = 1
+  fetchTransfers()
+}
+const searchWarnings = () => {
+  warningPage.value = 1
+  fetchWarnings()
+}
+const searchCapabilities = () => {
+  capabilityPage.value = 1
+  fetchCapabilities()
+}
+const searchLocks = () => {
+  lockPage.value = 1
+  fetchLocks()
 }
 
 const openTransferDialog = () => {
@@ -610,14 +705,60 @@ const releaseLocksByOrder = async (orderNo: string) => {
 }
 
 const init = async () => {
-  await fetchOptions()
-  await Promise.all([fetchDashboard(), fetchLedger(), fetchTransactions(), fetchTransfers(), fetchWarnings(), fetchCapabilities(), fetchLocks()])
+  try {
+    await fetchOptions()
+  } catch (error: any) {
+    ElMessage.error(getErrorMessage(error, '基础选项加载失败'))
+    return
+  }
+
+  const tasks = [
+    { name: '库存看板', run: () => fetchDashboard(true) },
+    { name: '库存台账', run: () => fetchLedger(true) },
+    { name: '出入库流水', run: () => fetchTransactions(true) },
+    { name: '调拨单', run: () => fetchTransfers(true) },
+    { name: '预警中心', run: () => fetchWarnings(true) },
+    { name: '仓配能力', run: () => fetchCapabilities(true) },
+    { name: '锁定记录', run: () => fetchLocks(true) }
+  ]
+
+  const results = await Promise.all(tasks.map((task) => task.run()))
+  const failed = tasks
+    .map((task, index) => (!results[index] ? task.name : ''))
+    .filter(Boolean)
+
+  if (failed.length) {
+    ElMessage.warning(`部分模块加载失败：${failed.join('、')}`)
+  }
 }
 
-onMounted(() => {
+const openTransferDetailByRoute = async () => {
+  const transferNo = String(route.query.transferNo || '').trim()
+  if (!transferNo || transferNo === lastRoutedTransferNo.value) return
+  lastRoutedTransferNo.value = transferNo
+  try {
+    activeTab.value = 'transfers'
+    transferQuery.keyword = transferNo
+    transferPage.value = 1
+    await fetchTransfers()
+    await openTransferDetail(transferNo)
+  } catch {
+    ElMessage.warning(`未找到调拨单 ${transferNo}`)
+  }
+}
+
+onMounted(async () => {
   window.addEventListener('resize', resizeCharts)
-  void init()
+  await init()
+  await openTransferDetailByRoute()
 })
+
+watch(
+  () => route.query.transferNo,
+  () => {
+    void openTransferDetailByRoute()
+  }
+)
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', resizeCharts)
@@ -752,10 +893,17 @@ onBeforeUnmount(() => {
         <div class="toolbar" style="margin-bottom: 12px">
           <el-select v-model="ledgerQuery.warehouseCode" placeholder="仓库" clearable style="width: 180px"><el-option v-for="w in options.warehouses" :key="w.warehouse_code" :label="w.warehouse_name" :value="w.warehouse_code" /></el-select>
           <el-select v-model="ledgerQuery.skuCode" placeholder="SKU" clearable style="width: 220px"><el-option v-for="s in options.skus" :key="s.sku_code" :label="`${s.sku_code} / ${s.sku_name}`" :value="s.sku_code" /></el-select>
+          <el-input v-model="ledgerQuery.batchNo" placeholder="批次号" clearable style="width: 170px" />
           <el-select v-model="ledgerQuery.nearExpiry" placeholder="临期" clearable style="width: 120px"><el-option label="临期" value="1" /></el-select>
           <el-select v-model="ledgerQuery.unsellable" placeholder="不可售" clearable style="width: 120px"><el-option label="不可售" value="1" /></el-select>
+          <el-select v-model="ledgerQuery.dateField" placeholder="日期字段" style="width: 130px">
+            <el-option label="变更日期" value="updated_at" />
+            <el-option label="生产日期" value="production_date" />
+            <el-option label="到期日期" value="expiry_date" />
+          </el-select>
+          <el-date-picker v-model="ledgerDateRange" type="daterange" value-format="YYYY-MM-DD" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 260px" />
           <el-input v-model="ledgerQuery.keyword" placeholder="仓库/SKU/批次" clearable style="width: 220px" />
-          <el-button type="primary" @click="fetchLedger">查询</el-button>
+          <el-button type="primary" @click="searchLedger">查询</el-button>
         </div>
 
         <div class="stat-cards" style="margin-bottom:12px">
@@ -763,6 +911,7 @@ onBeforeUnmount(() => {
           <div class="stat-card"><div class="stat-card-info"><h3>{{ ledgerSummary.available_qty || 0 }}</h3><p>可用库存</p></div></div>
           <div class="stat-card"><div class="stat-card-info"><h3>{{ ledgerSummary.locked_qty || 0 }}</h3><p>锁定库存</p></div></div>
           <div class="stat-card"><div class="stat-card-info"><h3>{{ ledgerSummary.in_transit_qty || 0 }}</h3><p>在途库存</p></div></div>
+          <div class="stat-card"><div class="stat-card-info"><h3>{{ ledgerSummary.safety_qty || 0 }}</h3><p>安全库存</p></div></div>
         </div>
 
         <el-table :data="ledgerRows" v-loading="ledgerLoading" border stripe>
@@ -770,11 +919,20 @@ onBeforeUnmount(() => {
           <el-table-column prop="sku_code" label="SKU" width="150" />
           <el-table-column prop="sku_name" label="SKU名称" min-width="180" show-overflow-tooltip />
           <el-table-column prop="batch_no" label="批次" min-width="180" />
+          <el-table-column prop="production_date" label="生产日期" width="120" />
           <el-table-column prop="expiry_date" label="效期" width="120" />
           <el-table-column prop="remaining_days" label="剩余天数" width="110" align="right" />
+          <el-table-column label="效期状态" width="100" align="center">
+            <template #default="{ row }">
+              <el-tag :type="getLedgerShelfStatus(row).type" effect="plain">{{ getLedgerShelfStatus(row).text }}</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="total_qty" label="总量" width="100" align="right" />
           <el-table-column prop="available_qty" label="可用" width="100" align="right" />
           <el-table-column prop="locked_qty" label="锁定" width="100" align="right" />
+          <el-table-column prop="in_transit_qty" label="在途" width="100" align="right" />
+          <el-table-column prop="safety_qty" label="安全库存" width="110" align="right" />
+          <el-table-column prop="last_change_source" label="变化来源" min-width="170" show-overflow-tooltip />
           <el-table-column label="操作" width="110"><template #default="{ row }"><el-button link type="primary" @click="openLedgerDetail(row.id)">明细</el-button></template></el-table-column>
         </el-table>
         <div style="display:flex;justify-content:flex-end;margin-top:12px"><el-pagination v-model:current-page="ledgerPage" v-model:page-size="ledgerPageSize" layout="total, prev, pager, next" :total="ledgerTotal" @current-change="fetchLedger" /></div>
@@ -782,12 +940,16 @@ onBeforeUnmount(() => {
       <el-tab-pane label="出入库流水" name="transactions">
         <div class="toolbar" style="margin-bottom: 12px">
           <el-select v-model="txQuery.txType" placeholder="交易类型" clearable style="width: 180px"><el-option v-for="t in options.tx_types" :key="t" :label="t" :value="t" /></el-select>
+          <el-date-picker v-model="txDateRange" type="daterange" value-format="YYYY-MM-DD" range-separator="至" start-placeholder="业务开始" end-placeholder="业务结束" style="width: 260px" />
           <el-input v-model="txQuery.keyword" placeholder="单据号/仓库/SKU" clearable style="width: 240px" />
-          <el-button type="primary" @click="fetchTransactions">查询</el-button>
+          <el-button type="primary" @click="searchTransactions">查询</el-button>
         </div>
         <el-table :data="txRows" v-loading="txLoading" border stripe>
           <el-table-column prop="biz_time" label="业务时间" min-width="170" />
-          <el-table-column prop="tx_type" label="类型" width="130" />
+          <el-table-column label="类型" width="130">
+            <template #default="{ row }">{{ formatTxType(row.tx_type) }}</template>
+          </el-table-column>
+          <el-table-column prop="source_doc_type" label="来源类型" width="110" />
           <el-table-column prop="source_doc_no" label="来源单据" min-width="160" />
           <el-table-column prop="warehouse_name" label="仓库" min-width="160" />
           <el-table-column prop="sku_name" label="SKU" min-width="180" show-overflow-tooltip />
@@ -802,7 +964,7 @@ onBeforeUnmount(() => {
         <div class="toolbar" style="margin-bottom: 12px">
           <el-select v-model="transferQuery.status" placeholder="状态" clearable style="width: 180px"><el-option v-for="s in options.transfer_status" :key="s" :label="s" :value="s" /></el-select>
           <el-input v-model="transferQuery.keyword" placeholder="调拨单号/SKU/仓库" clearable style="width: 240px" />
-          <el-button type="primary" @click="fetchTransfers">查询</el-button>
+          <el-button type="primary" @click="searchTransfers">查询</el-button>
         </div>
         <el-table :data="transferRows" v-loading="transferLoading" border stripe>
           <el-table-column prop="transfer_no" label="调拨单号" min-width="170" />
@@ -811,7 +973,9 @@ onBeforeUnmount(() => {
           <el-table-column prop="sku_name" label="SKU" min-width="170" show-overflow-tooltip />
           <el-table-column prop="batch_no" label="批次" min-width="170" />
           <el-table-column prop="qty" label="数量" width="100" align="right" />
-          <el-table-column prop="status" label="状态" width="140" />
+          <el-table-column label="状态" width="140">
+            <template #default="{ row }">{{ formatTransferStatus(row.status) }}</template>
+          </el-table-column>
           <el-table-column label="操作" min-width="280">
             <template #default="{ row }">
               <el-button link type="primary" @click="openTransferDetail(row.transfer_no)">详情</el-button>
@@ -833,12 +997,12 @@ onBeforeUnmount(() => {
           <el-select v-model="warningQuery.level" placeholder="预警级别" clearable style="width: 140px"><el-option v-for="lv in options.warning_level" :key="lv" :label="lv" :value="lv" /></el-select>
           <el-select v-model="warningQuery.status" placeholder="状态" clearable style="width: 140px"><el-option v-for="st in options.warning_status" :key="st" :label="st" :value="st" /></el-select>
           <el-input v-model="warningQuery.keyword" placeholder="仓库/SKU/批次" clearable style="width: 220px" />
-          <el-button type="primary" @click="fetchWarnings">查询</el-button>
+          <el-button type="primary" @click="searchWarnings">查询</el-button>
         </div>
         <el-table :data="warningRows" v-loading="warningLoading" border stripe>
-          <el-table-column prop="type" label="预警类型" width="140" />
-          <el-table-column prop="level" label="级别" width="120" />
-          <el-table-column prop="status" label="状态" width="120" />
+          <el-table-column label="预警类型" width="140"><template #default="{ row }">{{ formatWarningType(row.type) }}</template></el-table-column>
+          <el-table-column label="级别" width="120"><template #default="{ row }">{{ formatWarningLevel(row.level) }}</template></el-table-column>
+          <el-table-column label="状态" width="120"><template #default="{ row }">{{ formatWarningStatus(row.status) }}</template></el-table-column>
           <el-table-column prop="warehouse_name" label="仓库" min-width="150" />
           <el-table-column prop="sku_name" label="SKU" min-width="180" />
           <el-table-column prop="batch_no" label="批次" min-width="170" />
@@ -851,7 +1015,7 @@ onBeforeUnmount(() => {
       <el-tab-pane label="仓配能力" name="capability">
         <div class="toolbar" style="margin-bottom: 12px">
           <el-input v-model="capabilityQuery.keyword" placeholder="仓库/服务区域" clearable style="width: 240px" />
-          <el-button type="primary" @click="fetchCapabilities">查询</el-button>
+          <el-button type="primary" @click="searchCapabilities">查询</el-button>
         </div>
         <el-table :data="capabilityRows" v-loading="capabilityLoading" border stripe>
           <el-table-column prop="warehouse_name" label="仓库" min-width="170" />
@@ -870,15 +1034,19 @@ onBeforeUnmount(() => {
           <el-input v-model="lockQuery.orderNo" placeholder="订单号" clearable style="width: 200px" />
           <el-select v-model="lockQuery.status" placeholder="状态" clearable style="width: 140px"><el-option label="ACTIVE" value="ACTIVE" /><el-option label="RELEASED" value="RELEASED" /></el-select>
           <el-input v-model="lockQuery.keyword" placeholder="仓库/SKU/批次" clearable style="width: 220px" />
-          <el-button type="primary" @click="fetchLocks">查询</el-button>
+          <el-button type="primary" @click="searchLocks">查询</el-button>
         </div>
         <el-table :data="lockRows" v-loading="lockLoading" border stripe>
           <el-table-column prop="order_no" label="订单号" min-width="170" />
+          <el-table-column prop="line_id" label="订单行ID" width="100" align="right" />
           <el-table-column prop="sku_name" label="SKU" min-width="170" />
           <el-table-column prop="warehouse_name" label="仓库" min-width="150" />
           <el-table-column prop="batch_no" label="批次" min-width="170" />
           <el-table-column prop="lock_qty" label="锁定数量" width="100" align="right" />
           <el-table-column prop="status" label="状态" width="110" />
+          <el-table-column prop="reason" label="锁定原因" min-width="130" show-overflow-tooltip />
+          <el-table-column prop="release_reason" label="释放原因" min-width="130" show-overflow-tooltip />
+          <el-table-column prop="created_at" label="锁定时间" min-width="170" />
           <el-table-column prop="updated_at" label="更新时间" min-width="170" />
           <el-table-column label="操作" width="130"><template #default="{ row }"><el-button link type="danger" @click="releaseLocksByOrder(row.order_no)" :disabled="row.status !== 'ACTIVE'">释放订单锁定</el-button></template></el-table-column>
         </el-table>

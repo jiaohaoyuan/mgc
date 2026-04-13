@@ -1,22 +1,25 @@
 ﻿<script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/appStore'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
+import {
+  SIDEBAR_ROOT_ONLY_ONE_OPEN,
+  webSidebarConfig,
+  type SidebarMenuGroup,
+  type SidebarMenuItem,
+  type SidebarSection
+} from '@/data/webSidebarConfig'
 
-interface NavItem {
-  path: string
-  label: string
-  icon: string
-  disabled?: boolean
+interface VisibleSidebarGroup extends Omit<SidebarMenuGroup, 'children'> {
+  isOpen: boolean
+  children: SidebarMenuItem[]
 }
 
-interface MdmGroup {
-  title: string
-  icon: string
+interface VisibleSidebarSection extends Omit<SidebarSection, 'children'> {
   isOpen: boolean
-  children: Array<{ path: string; label: string }>
+  children: Array<SidebarMenuItem | VisibleSidebarGroup>
 }
 
 const route = useRoute()
@@ -24,6 +27,65 @@ const router = useRouter()
 const appStore = useAppStore()
 const appReady = ref(false)
 const unreadCount = ref(0)
+const AUTH_ROUTE_SET = new Set(['/login', '/forgot-password'])
+const sectionOpenState = ref<Record<string, boolean>>({})
+const groupOpenState = ref<Record<string, boolean>>({})
+const sidebarNavRef = ref<HTMLElement | null>(null)
+
+const COMMON_ROUTE_PRELOADERS: Array<() => Promise<unknown>> = [
+  () => import('@/views/WorkflowCenter.vue'),
+  () => import('@/views/ManagementCockpit.vue'),
+  () => import('@/views/IntelligentOrdering.vue'),
+  () => import('@/views/InventoryOpsCenter.vue'),
+  () => import('@/views/ChannelDealerOpsCenter.vue'),
+  () => import('@/views/OrderClosedLoopCenter.vue'),
+  () => import('@/views/PastureOverview.vue'),
+  () => import('@/views/DictCenter.vue'),
+  () => import('@/views/PlatformAuditLogPage.vue'),
+  () => import('@/views/PlatformSecurityCenterPage.vue'),
+  () => import('@/views/PlatformConfigCenterPage.vue'),
+  () => import('@/views/PlatformArchiveStrategyPage.vue'),
+  () => import('@/views/PlatformMonitorPage.vue'),
+  () => import('@/views/PlatformFinePermissionPage.vue'),
+  () => import('@/views/PlatformHealthViewPage.vue')
+]
+
+let chunksWarmedUp = false
+
+const runWhenIdle = (task: () => void, timeout = 2500) => {
+  const win = window as Window & {
+    requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number
+  }
+  if (typeof win.requestIdleCallback === 'function') {
+    win.requestIdleCallback(() => task(), { timeout })
+    return
+  }
+  window.setTimeout(task, 600)
+}
+
+const warmupCommonRouteChunks = () => {
+  if (chunksWarmedUp) return
+  chunksWarmedUp = true
+
+  runWhenIdle(async () => {
+    for (let i = 0; i < COMMON_ROUTE_PRELOADERS.length; i += 1) {
+      const preload = COMMON_ROUTE_PRELOADERS[i]
+      if (!preload) continue
+      try {
+        await preload()
+      } catch {}
+      if (i < COMMON_ROUTE_PRELOADERS.length - 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 120))
+      }
+    }
+  })
+}
+
+const tryTriggerChunkWarmup = () => {
+  if (!localStorage.getItem('accessToken')) return
+  if (AUTH_ROUTE_SET.has(route.path)) return
+  warmupCommonRouteChunks()
+}
 
 const fetchNotificationCount = async () => {
   try {
@@ -33,6 +95,187 @@ const fetchNotificationCount = async () => {
   } catch {
     unreadCount.value = 0
   }
+}
+
+const loadUser = () => {
+  try {
+    const raw = localStorage.getItem('currentUser')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+const currentUser = ref(loadUser())
+const isSuperAdmin = computed(() => appStore.isSuperAdmin || currentUser.value?.role === '超级管理员')
+
+const hasSuperAdminAccess = (requiresSuperAdmin?: boolean) => {
+  return !requiresSuperAdmin || isSuperAdmin.value
+}
+
+const isConfigGroup = (node: SidebarMenuItem | SidebarMenuGroup): node is SidebarMenuGroup => {
+  return node.type === 'group'
+}
+
+const canAccessItem = (item: SidebarMenuItem) => {
+  return hasSuperAdminAccess(item.requiresSuperAdmin) && appStore.canAccessPath(item.path)
+}
+
+for (const section of webSidebarConfig) {
+  sectionOpenState.value[section.id] = section.defaultOpen !== false
+  for (const child of section.children) {
+    if (isConfigGroup(child)) {
+      groupOpenState.value[child.id] = Boolean(child.defaultOpen)
+    }
+  }
+}
+
+const visibleSidebarSections = computed<VisibleSidebarSection[]>(() => {
+  return webSidebarConfig
+    .map((section) => {
+      if (!hasSuperAdminAccess(section.requiresSuperAdmin)) return null
+
+      const visibleChildren: Array<SidebarMenuItem | VisibleSidebarGroup> = []
+      for (const child of section.children) {
+        if (isConfigGroup(child)) {
+          if (!hasSuperAdminAccess(child.requiresSuperAdmin)) continue
+          const groupChildren = child.children.filter(canAccessItem)
+          if (!groupChildren.length) continue
+          visibleChildren.push({
+            ...child,
+            children: groupChildren,
+            isOpen: Boolean(groupOpenState.value[child.id])
+          })
+          continue
+        }
+
+        if (canAccessItem(child)) {
+          visibleChildren.push(child)
+        }
+      }
+
+      if (!visibleChildren.length) return null
+      return {
+        ...section,
+        children: visibleChildren,
+        isOpen: Boolean(sectionOpenState.value[section.id])
+      }
+    })
+    .filter((section): section is VisibleSidebarSection => Boolean(section))
+})
+
+const routeLabelMap = computed(() => {
+  const map = new Map<string, string>()
+  for (const section of visibleSidebarSections.value) {
+    for (const child of section.children) {
+      if (child.type === 'group') {
+        for (const item of child.children) {
+          map.set(item.path, item.label)
+        }
+      } else {
+        map.set(child.path, child.label)
+      }
+    }
+  }
+  return map
+})
+
+const findRouteLocation = (path: string) => {
+  for (const section of visibleSidebarSections.value) {
+    for (const child of section.children) {
+      if (child.type === 'group') {
+        const matched = child.children.find((item) => item.path === path)
+        if (matched) {
+          return { sectionTitle: section.title, itemLabel: matched.label }
+        }
+      } else if (child.path === path) {
+        return { sectionTitle: section.title, itemLabel: child.label }
+      }
+    }
+  }
+  return null
+}
+
+const currentTitle = computed(() => routeLabelMap.value.get(route.path) || '首页')
+const currentSectionTitle = computed(() => findRouteLocation(route.path)?.sectionTitle || '工作台')
+
+const ensureOpenStateForRoute = (path: string) => {
+  let matchedSectionId = ''
+  let matchedGroupId = ''
+
+  for (const section of webSidebarConfig) {
+    if (!hasSuperAdminAccess(section.requiresSuperAdmin)) continue
+
+    let sectionMatched = false
+    for (const child of section.children) {
+      if (isConfigGroup(child)) {
+        if (!hasSuperAdminAccess(child.requiresSuperAdmin)) continue
+        const matched = child.children.find((item) => item.path === path && canAccessItem(item))
+        if (matched) {
+          sectionMatched = true
+          matchedGroupId = child.id
+          break
+        }
+      } else if (child.path === path && canAccessItem(child)) {
+        sectionMatched = true
+      }
+    }
+
+    if (sectionMatched) {
+      matchedSectionId = section.id
+      break
+    }
+  }
+
+  if (!matchedSectionId) return
+
+  if (SIDEBAR_ROOT_ONLY_ONE_OPEN) {
+    for (const id of Object.keys(sectionOpenState.value)) {
+      sectionOpenState.value[id] = id === matchedSectionId
+    }
+  } else {
+    sectionOpenState.value[matchedSectionId] = true
+  }
+
+  if (matchedGroupId) {
+    groupOpenState.value[matchedGroupId] = true
+  }
+}
+
+const toggleSection = (sectionId: string) => {
+  const nextOpen = !sectionOpenState.value[sectionId]
+  if (SIDEBAR_ROOT_ONLY_ONE_OPEN && nextOpen) {
+    for (const id of Object.keys(sectionOpenState.value)) {
+      sectionOpenState.value[id] = id === sectionId
+    }
+    return
+  }
+  sectionOpenState.value[sectionId] = nextOpen
+}
+
+const toggleGroup = (groupId: string) => {
+  groupOpenState.value[groupId] = !groupOpenState.value[groupId]
+}
+
+const scrollActiveParentIntoView = async () => {
+  if (!appReady.value) return
+  await nextTick()
+
+  const nav = sidebarNavRef.value
+  if (!nav) return
+
+  const activeItem = nav.querySelector('.nav-subitem.active, .nav-item.active') as HTMLElement | null
+  if (!activeItem) return
+
+  const parentGroupTitle = activeItem.closest('.nav-group')?.querySelector('.nav-group-title') as HTMLElement | null
+  const parentSectionTitle = activeItem.closest('.nav-section')?.querySelector('.nav-section-header') as HTMLElement | null
+  const target = parentGroupTitle || parentSectionTitle || activeItem
+
+  target.scrollIntoView({
+    behavior: 'smooth',
+    block: 'nearest',
+    inline: 'nearest'
+  })
 }
 
 onMounted(async () => {
@@ -47,113 +290,31 @@ onMounted(async () => {
     void fetchNotificationCount()
   }
   appReady.value = true
-})
-
-const navItems: NavItem[] = [
-  { path: '/department', label: '部门管理', icon: 'OfficeBuilding' },
-  { path: '/user', label: '用户管理', icon: 'User' },
-  { path: '/role', label: '角色管理', icon: 'Key' },
-  { path: '/post', label: '岗位管理', icon: 'Stamp' },
-  { path: '/permission', label: '权限管理', icon: 'Lock' },
-  { path: '/dict-center', label: '字典中心', icon: 'CollectionTag' },
-  { path: '/operation-log', label: '操作日志', icon: 'Document' },
-  { path: '/import-task', label: '导入任务', icon: 'UploadFilled' },
-  { path: '/export-task', label: '导出任务', icon: 'Download' }
-]
-
-const businessItems: NavItem[] = [
-  { path: '/pasture', label: '牧场概览', icon: 'Van' },
-  { path: '/intelligent', label: '智能订购中心', icon: 'Cpu' },
-  { path: '/intelligent-closed-loop', label: '订单闭环中心', icon: 'Finished' },
-  { path: '/inventory-ops', label: '库存与仓配运营中心', icon: 'Box' }
-]
-
-const mdmGroups = ref<MdmGroup[]>([
-  {
-    title: '商品管理', icon: 'Goods', isOpen: true,
-    children: [
-      { path: '/mdm/sku', label: 'SKU管理' },
-      { path: '/mdm/category', label: '品类管理' }
-    ]
-  },
-  {
-    title: '仓库管理', icon: 'HomeFilled', isOpen: false,
-    children: [
-      { path: '/mdm/warehouse', label: '仓库管理' },
-      { path: '/mdm/factory', label: '工厂管理' }
-    ]
-  },
-  {
-    title: '渠道管理', icon: 'DataAnalysis', isOpen: false,
-    children: [
-      { path: '/mdm/channel', label: '渠道管理' },
-      { path: '/mdm/reseller', label: '经销商管理' }
-    ]
-  },
-  {
-    title: '组织与日历', icon: 'OfficeBuilding', isOpen: false,
-    children: [
-      { path: '/mdm/org', label: '组织机构' },
-      { path: '/mdm/calendar', label: '业务日历' }
-    ]
-  },
-  {
-    title: '关系配置', icon: 'Connection', isOpen: false,
-    children: [
-      { path: '/mdm/rltn/warehouse-sku', label: '仓库-SKU关系' },
-      { path: '/mdm/reseller-relation', label: 'SKU-经销关系' },
-      { path: '/mdm/rltn/org-reseller', label: '组织-经销关系' },
-      { path: '/mdm/rltn/product-sku', label: '产品-SKU转换关系' }
-    ]
-  },
-  {
-    title: '治理平台', icon: 'DataBoard', isOpen: false,
-    children: [
-      { path: '/mdm/governance', label: '主数据治理平台' }
-    ]
-  }
-])
-
-const visibleNavItems = computed(() => appStore.filterNavItems(navItems))
-const visibleBusinessItems = computed(() => appStore.filterNavItems(businessItems))
-const isSuperAdmin = computed(() => appStore.isSuperAdmin || currentUser.value?.role === '超级管理员')
-
-const visibleMdmGroups = computed(() => {
-  if (!isSuperAdmin.value) return []
-  return mdmGroups.value
-})
-
-const currentTitle = computed(() => {
-  const allItems: Array<{ path: string; label: string }> = [...navItems, ...businessItems]
-  mdmGroups.value.forEach(group => {
-    if (group.children.some(child => child.path === route.path)) {
-      group.isOpen = true
-    }
-    allItems.push(...group.children)
-  })
-
-  const current = allItems.find(item => item.path === route.path)
-  return current ? current.label : '首页'
+  tryTriggerChunkWarmup()
+  ensureOpenStateForRoute(route.path)
+  void scrollActiveParentIntoView()
 })
 
 const currentTime = ref(new Date().toLocaleString('zh-CN'))
-setInterval(() => {
+const clockTimer = setInterval(() => {
   currentTime.value = new Date().toLocaleString('zh-CN')
 }, 1000)
 
-const loadUser = () => {
-  try {
-    const raw = localStorage.getItem('currentUser')
-    return raw ? JSON.parse(raw) : null
-  } catch {
-    return null
-  }
-}
-
-const currentUser = ref(loadUser())
-
 watch(() => route.path, () => {
   currentUser.value = loadUser()
+  tryTriggerChunkWarmup()
+  ensureOpenStateForRoute(route.path)
+  void scrollActiveParentIntoView()
+}, { immediate: true })
+
+const permissionSignature = computed(() => appStore.authContext.permissionPaths.join('|'))
+watch(() => [permissionSignature.value, isSuperAdmin.value], () => {
+  ensureOpenStateForRoute(route.path)
+  void scrollActiveParentIntoView()
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  clearInterval(clockTimer)
 })
 
 const helperCodeDialogVisible = ref(false)
@@ -229,56 +390,48 @@ const handleLogout = () => {
         </div>
       </div>
 
-      <nav class="sidebar-nav">
-        <div class="nav-section-title">组织权限</div>
-        <router-link
-          v-for="item in visibleNavItems"
-          :key="item.path"
-          :to="item.path"
-          class="nav-item"
-          :class="{ active: route.path === item.path }"
-        >
-          <span class="nav-icon">
-            <el-icon><component :is="item.icon" /></el-icon>
-          </span>
-          {{ item.label }}
-        </router-link>
-
-        <div class="nav-section-title" style="margin-top: 12px">业务模块</div>
-        <router-link
-          v-for="item in visibleBusinessItems"
-          :key="item.path"
-          :to="item.disabled ? '#' : item.path"
-          class="nav-item"
-          :class="{ active: route.path === item.path }"
-          :style="item.disabled ? 'opacity: 0.5; cursor: default' : ''"
-        >
-          <span class="nav-icon"><el-icon><component :is="item.icon" /></el-icon></span>
-          {{ item.label }}
-        </router-link>
-
-        <template v-if="isSuperAdmin">
-          <div class="nav-section-title" style="margin-top: 12px">主数据管理(MDM)</div>
-          <div v-for="group in visibleMdmGroups" :key="group.title" class="nav-group">
-            <div class="nav-group-title" @click="group.isOpen = !group.isOpen" :class="{ 'is-open': group.isOpen }">
-              <span class="nav-icon"><el-icon><component :is="group.icon" /></el-icon></span>
-              <span style="flex: 1">{{ group.title }}</span>
-              <span class="nav-arrow" :class="{ 'rotate': group.isOpen }">▾</span>
-            </div>
-            <div v-show="group.isOpen" class="nav-group-content">
-              <router-link
-                v-for="item in group.children"
-                :key="item.path"
-                :to="item.path"
-                class="nav-subitem"
-                :class="{ active: route.path === item.path }"
-              >
-                <div class="nav-dot"></div>
-                {{ item.label }}
-              </router-link>
-            </div>
+      <nav ref="sidebarNavRef" class="sidebar-nav">
+        <div v-for="section in visibleSidebarSections" :key="section.id" class="nav-section">
+          <div class="nav-section-header" :class="{ 'is-open': section.isOpen }" @click="toggleSection(section.id)">
+            <span class="nav-icon"><el-icon><component :is="section.icon" /></el-icon></span>
+            <span style="flex: 1">{{ section.title }}</span>
+            <span class="nav-arrow" :class="{ rotate: section.isOpen }">▾</span>
           </div>
-        </template>
+
+          <div v-show="section.isOpen" class="nav-section-content">
+            <template v-for="child in section.children" :key="child.id">
+              <div v-if="child.type === 'group'" class="nav-group">
+                <div class="nav-group-title" @click="toggleGroup(child.id)" :class="{ 'is-open': child.isOpen }">
+                  <span class="nav-icon"><el-icon><component :is="child.icon" /></el-icon></span>
+                  <span style="flex: 1">{{ child.title }}</span>
+                  <span class="nav-arrow" :class="{ rotate: child.isOpen }">▾</span>
+                </div>
+                <div v-show="child.isOpen" class="nav-group-content">
+                  <router-link
+                    v-for="item in child.children"
+                    :key="item.path"
+                    :to="item.path"
+                    class="nav-subitem"
+                    :class="{ active: route.path === item.path }"
+                  >
+                    <div class="nav-dot"></div>
+                    {{ item.label }}
+                  </router-link>
+                </div>
+              </div>
+
+              <router-link
+                v-else
+                :to="child.path"
+                class="nav-item"
+                :class="{ active: route.path === child.path }"
+              >
+                <span class="nav-icon"><el-icon><component :is="child.icon" /></el-icon></span>
+                {{ child.label }}
+              </router-link>
+            </template>
+          </div>
+        </div>
       </nav>
 
       <div style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
@@ -299,14 +452,14 @@ const handleLogout = () => {
         <div class="topbar-breadcrumb">
           <el-icon><HomeFilled /></el-icon>
           <span>/</span>
-          <span>组织权限</span>
+          <span>{{ currentSectionTitle }}</span>
           <span>/</span>
           <span class="current">{{ currentTitle }}</span>
         </div>
         <div class="topbar-actions">
           <span style="font-size: 13px; color: var(--text-secondary)">{{ currentTime }}</span>
           <el-badge :value="unreadCount" :max="99">
-            <el-icon :size="20" style="cursor: pointer; color: var(--text-secondary)"><Bell /></el-icon>
+            <el-icon :size="20" style="cursor: pointer; color: var(--text-secondary)" @click="router.push('/workflow-center')"><Bell /></el-icon>
           </el-badge>
           <el-dropdown>
             <div class="topbar-avatar">{{ currentUser?.nickname?.slice(0,1) || '用' }}</div>
@@ -325,8 +478,8 @@ const handleLogout = () => {
 
       <main class="content-area">
         <router-view v-slot="{ Component, route }">
-          <transition name="fade" mode="out-in">
-            <keep-alive max="10">
+          <transition name="fade">
+            <keep-alive max="20">
               <component :is="Component" :key="route.path" />
             </keep-alive>
           </transition>
@@ -396,6 +549,26 @@ const handleLogout = () => {
   user-select: all;
 }
 
+.nav-section { margin-bottom: 6px; }
+.nav-section-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.2px;
+  user-select: none;
+}
+.nav-section-header:hover { background: rgba(255,255,255,0.04); color: #e2e8f0; }
+.nav-section-header.is-open { color: #f8fafc; }
+.nav-section-content { margin-top: 4px; }
+.nav-section-content .nav-item,
+.nav-section-content .nav-group { margin-left: 8px; }
+
 .nav-group { margin-bottom: 4px; }
 .nav-group-title {
   display: flex;
@@ -430,4 +603,3 @@ const handleLogout = () => {
 .nav-subitem.active { color: #fff; background: rgba(59, 130, 246, 0.15); font-weight: 500; }
 .nav-subitem.active .nav-dot { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.6); }
 </style>
-

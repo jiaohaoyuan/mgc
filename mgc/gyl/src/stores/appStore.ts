@@ -171,6 +171,10 @@ export const useAppStore = defineStore('app', () => {
             return true
         }
 
+        if (path.startsWith('/platform/') && permissionPathSet.value.has('/enterprise-platform')) {
+            return true
+        }
+
         return permissionPathSet.value.has(path)
     }
 
@@ -187,12 +191,22 @@ export const useAppStore = defineStore('app', () => {
             '/permission',
             '/dict-center',
             '/operation-log',
+            '/platform/audit-log',
+            '/platform/security-center',
+            '/platform/config-center',
+            '/platform/archive-strategy',
+            '/platform/monitor',
+            '/platform/fine-permission',
+            '/platform/health-view',
             '/import-task',
             '/export-task',
             '/pasture',
             '/intelligent',
             '/intelligent-closed-loop',
             '/inventory-ops',
+            '/channel-dealer-ops',
+            '/workflow-center',
+            '/management-cockpit',
             '/mdm/sku',
             '/mdm/reseller-relation',
             '/mdm/category',

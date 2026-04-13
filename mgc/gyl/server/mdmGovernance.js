@@ -8,6 +8,7 @@ const EFFECTIVE_STATES = ['UPCOMING', 'ACTIVE', 'NEAR_EXPIRY', 'EXPIRED'];
 const CONFLICT_STATUS = ['OPEN', 'PROCESSING', 'RESOLVED'];
 const CONFLICT_TASK_STATUS = ['RUNNING', 'DONE'];
 const QUALITY_ISSUE_STATUS = ['OPEN', 'RESOLVED'];
+const OBJECT_ITEMS_MAX_LIMIT = 200;
 
 const OBJECT_CONFIG = {
   SKU: { label: 'SKU', table: 'sku', codeField: 'sku_code', nameField: 'sku_name', relation: false },
@@ -41,6 +42,21 @@ const arr = (v) => (Array.isArray(v) ? v : []);
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
 const dateText = (v) => String(v || '').slice(0, 10);
 const containsText = (src, key) => String(src || '').toLowerCase().includes(String(key || '').trim().toLowerCase());
+const normalizeStringList = (list) => arr(list).map((item) => normalize(item)).filter(Boolean);
+const normalizeAttachmentList = (items) => arr(items)
+  .map((item) => {
+    if (typeof item === 'string') {
+      const url = normalize(item);
+      if (!url) return null;
+      return { name: url, url };
+    }
+    if (!item || typeof item !== 'object') return null;
+    const name = normalize(item.name || item.file_name || item.label || item.url);
+    const url = normalize(item.url || item.link || item.path);
+    if (!url) return null;
+    return { name: name || url, url };
+  })
+  .filter(Boolean);
 
 const paginateRows = (rows, page = 1, pageSize = 20) => {
   const p = Math.max(1, toNum(page, 1));
@@ -248,6 +264,39 @@ const buildDisableRisk = (referenceUsage) => {
   if (toNum(referenceUsage?.summary?.relation_refs, 0) > 0) messages.push('存在主数据关系引用，建议先解除关联');
   if (!messages.length) messages.push('未发现强依赖引用，可发起停用审批');
   return { level, messages, checked_at: nowIso() };
+};
+
+const buildObjectItems = (db, objectType, keyword = '', includeDisabled = false, limit = OBJECT_ITEMS_MAX_LIMIT) => {
+  const cfg = getObjectConfig(objectType);
+  if (!cfg) return [];
+
+  const today = getNowDate();
+  return getObjectRows(db, objectType)
+    .filter((row) => includeDisabled || isActiveRow(row))
+    .map((row) => {
+      const beginDate = dateText(row?.begin_date);
+      const endDate = dateText(row?.end_date);
+      const daysToExpiry = endDate
+        ? Math.floor((new Date(`${endDate}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) / 86400000)
+        : null;
+      return {
+        id: toNum(row.id, 0),
+        code: getRowCode(cfg, row),
+        name: getRowName(cfg, row),
+        status: toNum(row.status, 1),
+        effective_state: cfg.relation ? relationState(row) : '',
+        begin_date: beginDate,
+        end_date: endDate,
+        days_to_expiry: daysToExpiry
+      };
+    })
+    .filter((item) => (
+      !keyword
+      || containsText(item.code, keyword)
+      || containsText(item.name, keyword)
+    ))
+    .sort((a, b) => String(a.code).localeCompare(String(b.code)))
+    .slice(0, Math.max(1, toNum(limit, OBJECT_ITEMS_MAX_LIMIT)));
 };
 
 const createVersion = (db, payload) => {
@@ -621,6 +670,8 @@ const createRequestCore = (db, body, operator) => {
     target = findTargetRow(db, objectType, body.target_id, body.target_code);
     if (!target) throw new Error('目标对象不存在');
   }
+  if (action === 'UPDATE' && Number(target?.status ?? 1) === 0) throw new Error('目标对象已停用，不允许修改');
+  if (action === 'DISABLE' && Number(target?.status ?? 1) === 0) throw new Error('目标对象已停用');
 
   const now = nowIso();
   const requestNo = buildNo('CR', db.platform.mdm_change_requests, 'request_no');
@@ -628,6 +679,24 @@ const createRequestCore = (db, body, operator) => {
   const changeAfter = action === 'DISABLE'
     ? clone(target)
     : clone(body.change_after || (action === 'UPDATE' ? target : {}));
+  let impactObjects = normalizeStringList(body.impact_objects);
+  const attachments = normalizeAttachmentList(body.attachments);
+  let riskSummary = clone(body.risk_summary || null);
+
+  if (action === 'DISABLE' && target) {
+    const code = getRowCode(cfg, target);
+    const usage = buildReferenceUsage(db, objectType, code);
+    const risk = buildDisableRisk(usage);
+    riskSummary = { risk, usage_summary: usage.summary };
+    if (!impactObjects.length) {
+      const generatedImpact = [];
+      if (toNum(usage.summary.order_refs, 0) > 0) generatedImpact.push('ORDER');
+      if (toNum(usage.summary.inventory_refs, 0) > 0) generatedImpact.push('INVENTORY');
+      if (toNum(usage.summary.relation_refs, 0) > 0) generatedImpact.push('RELATION');
+      if (toNum(usage.summary.transfer_refs, 0) > 0) generatedImpact.push('TRANSFER');
+      impactObjects = generatedImpact;
+    }
+  }
 
   const row = {
     id: nextId(db.platform.mdm_change_requests),
@@ -639,12 +708,12 @@ const createRequestCore = (db, body, operator) => {
     target_code: target ? getRowCode(cfg, target) : normalize(body.target_code),
     target_name: target ? getRowName(cfg, target) : normalize(body.target_name),
     reason,
-    impact_objects: arr(body.impact_objects),
-    attachments: arr(body.attachments),
+    impact_objects: impactObjects,
+    attachments,
     change_before: changeBefore,
     change_after: changeAfter,
     changed_fields: buildChangedFields(changeBefore, changeAfter),
-    risk_summary: clone(body.risk_summary || null),
+    risk_summary: riskSummary,
     submitter: submit ? operator : '',
     submitted_at: submit ? now : '',
     reviewer: '',
@@ -694,6 +763,19 @@ const registerMdmGovernanceRoutes = ({ app, superAdminRequired, apiOk, apiErr })
         relation: cfg.relation
       }))
     }, '获取成功');
+  });
+
+  app.get('/api/master/governance/object-items', superAdminRequired, (req, res) => {
+    const db = readDb();
+    ensureMdmGovernanceStructures(db);
+    const objectType = normalize(req.query?.objectType).toUpperCase();
+    const keyword = normalize(req.query?.keyword);
+    const includeDisabled = String(req.query?.includeDisabled) === '1';
+    const limit = toNum(req.query?.limit, OBJECT_ITEMS_MAX_LIMIT);
+    if (!getObjectConfig(objectType)) return apiErr(res, req, 400, '对象类型不支持');
+
+    const list = buildObjectItems(db, objectType, keyword, includeDisabled, limit);
+    apiOk(res, req, { list, total: list.length }, '获取成功');
   });
 
   app.get('/api/master/governance/requests', superAdminRequired, (req, res) => {
@@ -763,8 +845,8 @@ const registerMdmGovernanceRoutes = ({ app, superAdminRequired, apiOk, apiErr })
         if (!['DRAFT', 'REJECTED'].includes(String(row.status))) throw new Error('当前状态不允许编辑');
 
         if (body.reason !== undefined) row.reason = normalize(body.reason);
-        if (body.impact_objects !== undefined) row.impact_objects = arr(body.impact_objects);
-        if (body.attachments !== undefined) row.attachments = arr(body.attachments);
+        if (body.impact_objects !== undefined) row.impact_objects = normalizeStringList(body.impact_objects);
+        if (body.attachments !== undefined) row.attachments = normalizeAttachmentList(body.attachments);
         if (body.change_after !== undefined) row.change_after = clone(body.change_after);
 
         const target = findTargetRow(db, row.object_type, row.target_id, row.target_code);
@@ -873,6 +955,7 @@ const registerMdmGovernanceRoutes = ({ app, superAdminRequired, apiOk, apiErr })
         row.updated_at = nowIso();
 
         if (action === 'REJECT') {
+          if (!comment) throw new Error('驳回时请填写审批意见');
           row.status = 'REJECTED';
           appendRequestLog(db, {
             request_id: row.id,
@@ -915,6 +998,16 @@ const registerMdmGovernanceRoutes = ({ app, superAdminRequired, apiOk, apiErr })
       targetId = ''
     } = req.query || {};
     let rows = arr(db.platform.mdm_versions).map((row) => ({ ...row }));
+    const latestVersionMap = arr(db.platform.mdm_versions).reduce((acc, row) => {
+      const key = `${row.object_type}::${row.target_code}`;
+      const versionNo = toNum(row.version_no, 0);
+      if (!acc[key] || versionNo > acc[key]) acc[key] = versionNo;
+      return acc;
+    }, {});
+    rows = rows.map((row) => ({
+      ...row,
+      is_current: toNum(row.version_no, 0) === toNum(latestVersionMap[`${row.object_type}::${row.target_code}`], 0)
+    }));
     if (objectType) rows = rows.filter((row) => String(row.object_type) === String(objectType).toUpperCase());
     if (targetCode) rows = rows.filter((row) => String(row.target_code) === String(targetCode));
     if (targetId !== '') rows = rows.filter((row) => Number(row.target_id) === toNum(targetId, 0));
@@ -950,6 +1043,7 @@ const registerMdmGovernanceRoutes = ({ app, superAdminRequired, apiOk, apiErr })
     const targetTypes = objectType
       ? [String(objectType).toUpperCase()]
       : RELATION_OBJECT_TYPES;
+    const today = getNowDate();
 
     let rows = [];
     targetTypes.forEach((type) => {
@@ -973,6 +1067,7 @@ const registerMdmGovernanceRoutes = ({ app, superAdminRequired, apiOk, apiErr })
           target_name: name,
           begin_date: begin,
           end_date: end,
+          days_to_expiry: end ? Math.floor((new Date(`${end}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) / 86400000) : null,
           status: row.status,
           effective_state: itemState,
           detail: row
@@ -1365,8 +1460,8 @@ const registerMdmGovernanceRoutes = ({ app, superAdminRequired, apiOk, apiErr })
           target_id: target.id,
           target_code: code,
           target_name: getRowName(cfg, target),
-          impact_objects: arr(body.impact_objects),
-          attachments: arr(body.attachments),
+          impact_objects: normalizeStringList(body.impact_objects),
+          attachments: normalizeAttachmentList(body.attachments),
           change_after: clone(target),
           risk_summary: { risk, usage_summary: usage.summary },
           submit: body.submit === undefined ? true : Boolean(body.submit)

@@ -57,6 +57,52 @@ const router = createRouter({
             meta: { title: '操作日志', icon: 'Document', permissionPath: '/operation-log' }
         },
         {
+            path: '/enterprise-platform',
+            redirect: '/platform/audit-log'
+        },
+        {
+            path: '/platform/audit-log',
+            name: 'PlatformAuditLog',
+            component: () => import('@/views/PlatformAuditLogPage.vue'),
+            meta: { title: '审计日志查询页', icon: 'Document', permissionPath: '/enterprise-platform' }
+        },
+        {
+            path: '/platform/security-center',
+            name: 'PlatformSecurityCenter',
+            component: () => import('@/views/PlatformSecurityCenterPage.vue'),
+            meta: { title: '登录日志与安全中心', icon: 'Lock', permissionPath: '/enterprise-platform' }
+        },
+        {
+            path: '/platform/config-center',
+            name: 'PlatformConfigCenter',
+            component: () => import('@/views/PlatformConfigCenterPage.vue'),
+            meta: { title: '系统配置中心', icon: 'Setting', permissionPath: '/enterprise-platform' }
+        },
+        {
+            path: '/platform/archive-strategy',
+            name: 'PlatformArchiveStrategy',
+            component: () => import('@/views/PlatformArchiveStrategyPage.vue'),
+            meta: { title: '数据归档策略', icon: 'FolderOpened', permissionPath: '/enterprise-platform' }
+        },
+        {
+            path: '/platform/monitor',
+            name: 'PlatformMonitor',
+            component: () => import('@/views/PlatformMonitorPage.vue'),
+            meta: { title: '接口与任务监控', icon: 'DataAnalysis', permissionPath: '/enterprise-platform' }
+        },
+        {
+            path: '/platform/fine-permission',
+            name: 'PlatformFinePermission',
+            component: () => import('@/views/PlatformFinePermissionPage.vue'),
+            meta: { title: '权限精细化控制', icon: 'Key', permissionPath: '/enterprise-platform' }
+        },
+        {
+            path: '/platform/health-view',
+            name: 'PlatformHealthView',
+            component: () => import('@/views/PlatformHealthViewPage.vue'),
+            meta: { title: '系统健康与运维视图', icon: 'Monitor', permissionPath: '/enterprise-platform' }
+        },
+        {
             path: '/import-task',
             name: 'ImportTask',
             component: () => import('@/views/ImportTaskCenter.vue'),
@@ -87,10 +133,28 @@ const router = createRouter({
             meta: { title: '库存与仓配运营中心', icon: 'Box', permissionPath: '/inventory-ops' }
         },
         {
+            path: '/channel-dealer-ops',
+            name: 'ChannelDealerOps',
+            component: () => import('@/views/ChannelDealerOpsCenter.vue'),
+            meta: { title: '渠道与经销商经营中心', icon: 'DataLine', permissionPath: '/channel-dealer-ops' }
+        },
+        {
+            path: '/workflow-center',
+            name: 'WorkflowCenter',
+            component: () => import('@/views/WorkflowCenter.vue'),
+            meta: { title: '流程协同与待办中心', icon: 'Bell', permissionPath: '/workflow-center' }
+        },
+        {
+            path: '/management-cockpit',
+            name: 'ManagementCockpit',
+            component: () => import('@/views/ManagementCockpit.vue'),
+            meta: { title: '经营分析与管理驾驶舱', icon: 'DataBoard', permissionPath: '/management-cockpit' }
+        },
+        {
             path: '/pasture',
             name: 'PastureOverview',
             component: () => import('@/views/PastureOverview.vue'),
-            meta: { title: '牧场概览', icon: 'Van', permissionPath: '/pasture' }
+            meta: { title: '牧场与奶源运营中心', icon: 'Van', permissionPath: '/pasture' }
         },
         {
             path: '/profile',
@@ -199,49 +263,53 @@ const clearSession = () => {
     localStorage.removeItem('accessToken')
 }
 
+const buildLoginRedirect = (fullPath: string) => {
+    const redirectPath = sanitizeRedirectPath(fullPath)
+    return {
+        path: '/login',
+        query: redirectPath ? { redirect: redirectPath } : undefined,
+        replace: true
+    }
+}
+
+const ensureAccessContextLoaded = async (appStore: ReturnType<typeof useAppStore>) => {
+    if (appStore.authLoaded) return true
+    try {
+        await appStore.fetchAccessContext()
+        return true
+    } catch {
+        return false
+    }
+}
+
 router.beforeEach(async (to) => {
     const accessToken = localStorage.getItem('accessToken')
     const authed = Boolean(accessToken)
     const isAuthPage = AUTH_PAGES.has(to.path)
     const appStore = useAppStore()
 
-    if (!authed && !isAuthPage) {
+    if (!authed) {
+        appStore.clearAccessContext()
+        if (isAuthPage) return true
+        clearSession()
+        return buildLoginRedirect(to.fullPath)
+    }
+
+    const accessReady = await ensureAccessContextLoaded(appStore)
+    if (!accessReady) {
         appStore.clearAccessContext()
         clearSession()
-        const redirectPath = sanitizeRedirectPath(to.fullPath)
-        return {
-            path: '/login',
-            query: redirectPath ? { redirect: redirectPath } : undefined,
-            replace: true
-        }
+        return buildLoginRedirect(to.fullPath)
     }
-
-    if (!authed && isAuthPage) {
-        appStore.clearAccessContext()
-        return true
-    }
-
-    try {
-        await appStore.fetchAccessContext()
-    } catch {
-        appStore.clearAccessContext()
-        clearSession()
-        const redirectPath = sanitizeRedirectPath(to.fullPath)
-        return {
-            path: '/login',
-            query: redirectPath ? { redirect: redirectPath } : undefined,
-            replace: true
-        }
-    }
-
-    const fallbackPath = appStore.getFirstAccessiblePath()
 
     if (isAuthPage && authed) {
+        const fallbackPath = appStore.getFirstAccessiblePath()
         return { path: fallbackPath, replace: true }
     }
 
     const permissionPath = typeof to.meta.permissionPath === 'string' ? to.meta.permissionPath : ''
     if (permissionPath && !appStore.canAccessPath(permissionPath)) {
+        const fallbackPath = appStore.getFirstAccessiblePath()
         return { path: fallbackPath === to.path ? '/profile' : fallbackPath, replace: true }
     }
 
@@ -249,3 +317,4 @@ router.beforeEach(async (to) => {
 })
 
 export default router
+

@@ -5,6 +5,11 @@ const TRANSFER_STATUS = ['DRAFT', 'PENDING_REVIEW', 'APPROVED', 'OUTBOUND', 'DON
 const WARNING_TYPES = ['LOW_STOCK', 'OVER_STOCK', 'NEAR_EXPIRY', 'STOCKOUT'];
 const WARNING_LEVEL = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 const WARNING_STATUS = ['OPEN', 'PROCESSING', 'CLOSED'];
+const OVER_STOCK_COVER_LOW = 5;
+const OVER_STOCK_COVER_MEDIUM = 6;
+const OVER_STOCK_COVER_HIGH = 7;
+const OVER_STOCK_COVER_CRITICAL = 8;
+const OVER_STOCK_MIN_EXCESS_QTY = 120;
 
 const normalize = (v) => String(v || '').trim();
 const toNum = (v, fb = 0) => {
@@ -302,12 +307,14 @@ const refreshWarnings = (db) => {
         const total = toNum(row.total_qty, 0);
         const safety = toNum(row.safety_qty, 0);
         const remaining = toNum(row.remaining_days, calcRemainingDays(row.expiry_date));
+        const coverRate = safety > 0 ? (available / safety) : 0;
+        const excessQty = Math.max(0, total - safety);
 
         if (available <= 0) {
             generated.push({
                 type: 'STOCKOUT',
-                level: 'CRITICAL',
-                message: '库存已缺货',
+                level: total <= 0 ? 'CRITICAL' : 'HIGH',
+                message: total <= 0 ? '库存已缺货' : '可用库存为0，存在锁定或在途占用',
                 related_qty: available,
                 warehouse_code: row.warehouse_code,
                 warehouse_name: row.warehouse_name,
@@ -318,10 +325,13 @@ const refreshWarnings = (db) => {
         }
 
         if (available > 0 && safety > 0 && available < safety) {
+            const level = coverRate <= 0.25
+                ? 'CRITICAL'
+                : (coverRate <= 0.5 ? 'HIGH' : (coverRate <= 0.8 ? 'MEDIUM' : 'LOW'));
             generated.push({
                 type: 'LOW_STOCK',
-                level: available < safety * 0.5 ? 'HIGH' : 'MEDIUM',
-                message: '可用库存低于安全库存',
+                level,
+                message: `可用库存低于安全库存（覆盖率 ${(coverRate * 100).toFixed(1)}%）`,
                 related_qty: available,
                 warehouse_code: row.warehouse_code,
                 warehouse_name: row.warehouse_name,
@@ -331,11 +341,20 @@ const refreshWarnings = (db) => {
             });
         }
 
-        if (safety > 0 && total > safety * 3) {
+        const isOverStock = safety > 0
+            && coverRate >= OVER_STOCK_COVER_LOW
+            && total >= safety * OVER_STOCK_COVER_LOW
+            && excessQty >= Math.max(OVER_STOCK_MIN_EXCESS_QTY, safety * 2);
+        if (isOverStock) {
+            const level = coverRate >= OVER_STOCK_COVER_CRITICAL
+                ? 'CRITICAL'
+                : (coverRate >= OVER_STOCK_COVER_HIGH
+                    ? 'HIGH'
+                    : (coverRate >= OVER_STOCK_COVER_MEDIUM ? 'MEDIUM' : 'LOW'));
             generated.push({
                 type: 'OVER_STOCK',
-                level: total > safety * 5 ? 'HIGH' : 'LOW',
-                message: '库存高于安全库存上限',
+                level,
+                message: `库存高于安全上限（覆盖率 ${coverRate.toFixed(1)} 倍）`,
                 related_qty: total,
                 warehouse_code: row.warehouse_code,
                 warehouse_name: row.warehouse_name,
@@ -346,9 +365,12 @@ const refreshWarnings = (db) => {
         }
 
         if (remaining <= 7) {
+            const level = remaining <= 0
+                ? 'CRITICAL'
+                : (remaining <= 2 ? 'HIGH' : (remaining <= 5 ? 'MEDIUM' : 'LOW'));
             generated.push({
                 type: 'NEAR_EXPIRY',
-                level: remaining <= 2 ? 'CRITICAL' : 'HIGH',
+                level,
                 message: remaining <= 0 ? '库存已过期不可售' : '库存临期预警',
                 related_qty: available,
                 warehouse_code: row.warehouse_code,
@@ -765,6 +787,7 @@ const registerInventoryOpsRoutes = ({ app, authRequired, apiOk, apiErr, paginate
             keyword = '',
             nearExpiry = '',
             unsellable = '',
+            dateField = 'updated_at',
             dateFrom = '',
             dateTo = ''
         } = req.query || {};
@@ -783,8 +806,9 @@ const registerInventoryOpsRoutes = ({ app, authRequired, apiOk, apiErr, paginate
         ));
         if (String(nearExpiry) === '1') rows = rows.filter((row) => Number(row.near_expiry_flag) === 1);
         if (String(unsellable) === '1') rows = rows.filter((row) => Number(row.unsellable_flag) === 1);
-        if (dateFrom) rows = rows.filter((row) => dateText(row.updated_at) >= dateText(dateFrom));
-        if (dateTo) rows = rows.filter((row) => dateText(row.updated_at) <= dateText(dateTo));
+        const dateFieldName = ['updated_at', 'production_date', 'expiry_date'].includes(String(dateField)) ? String(dateField) : 'updated_at';
+        if (dateFrom) rows = rows.filter((row) => dateText(row[dateFieldName]) >= dateText(dateFrom));
+        if (dateTo) rows = rows.filter((row) => dateText(row[dateFieldName]) <= dateText(dateTo));
 
         rows = rows.sort((a, b) => dateText(a.expiry_date).localeCompare(dateText(b.expiry_date)) || String(a.batch_no).localeCompare(String(b.batch_no)));
 
@@ -845,6 +869,7 @@ const registerInventoryOpsRoutes = ({ app, authRequired, apiOk, apiErr, paginate
         if (skuCode) rows = rows.filter((row) => String(row.sku_code) === String(skuCode));
         if (keyword) rows = rows.filter((row) => (
             contains(row.source_doc_no, keyword)
+            || contains(row.source_doc_type, keyword)
             || contains(row.warehouse_name, keyword)
             || contains(row.sku_name, keyword)
             || contains(row.batch_no, keyword)
@@ -861,6 +886,8 @@ const registerInventoryOpsRoutes = ({ app, authRequired, apiOk, apiErr, paginate
         const body = req.body || {};
         const txType = normalize(body.tx_type).toUpperCase();
         if (!TX_TYPES.includes(txType)) return apiErr(res, req, 400, '交易类型不支持');
+        const sourceDocType = normalize(body.source_doc_type || 'MANUAL').toUpperCase() || 'MANUAL';
+        const sourceDocNo = normalize(body.source_doc_no || `${sourceDocType}-${txType}-${Date.now()}`);
 
         const operator = req.user?.nickname || req.user?.username || '系统';
         let created = null;
@@ -907,12 +934,12 @@ const registerInventoryOpsRoutes = ({ app, authRequired, apiOk, apiErr, paginate
                 }
 
                 adjustLedger(ledger, delta);
-                ledger.last_change_source = `${txType}:${normalize(body.source_doc_no || '')}`;
+                ledger.last_change_source = `${txType}:${sourceDocNo}`;
 
                 created = {
                     tx_type: txType,
-                    source_doc_type: normalize(body.source_doc_type || 'MANUAL'),
-                    source_doc_no: normalize(body.source_doc_no || ''),
+                    source_doc_type: sourceDocType,
+                    source_doc_no: sourceDocNo,
                     warehouse_code: ledger.warehouse_code,
                     warehouse_name: ledger.warehouse_name,
                     sku_code: ledger.sku_code,
@@ -973,48 +1000,68 @@ const registerInventoryOpsRoutes = ({ app, authRequired, apiOk, apiErr, paginate
         const operator = req.user?.nickname || req.user?.username || '系统';
         let created = null;
 
-        updateDb((db) => {
-            ensureInventoryOpsStructures(db);
-            const transferNo = buildTransferNo(db);
+        try {
+            updateDb((db) => {
+                ensureInventoryOpsStructures(db);
+                const transferNo = buildTransferNo(db);
+                const sourceCandidates = arr(db.biz.inventory_ledger)
+                    .filter((row) => String(row.warehouse_code) === outWarehouseCode
+                        && String(row.sku_code) === skuCode
+                        && Number(row.unsellable_flag) !== 1)
+                    .sort((a, b) => dateText(a.expiry_date).localeCompare(dateText(b.expiry_date)) || String(a.batch_no).localeCompare(String(b.batch_no)));
 
-            let batchNo = normalize(body.batch_no);
-            if (!batchNo) {
-                const fefo = arr(db.biz.inventory_ledger)
-                    .filter((row) => String(row.warehouse_code) === outWarehouseCode && String(row.sku_code) === skuCode && toNum(row.available_qty, 0) > 0)
-                    .sort((a, b) => dateText(a.expiry_date).localeCompare(dateText(b.expiry_date)))[0];
-                batchNo = normalize(fefo?.batch_no);
-            }
+                let batchNo = normalize(body.batch_no);
+                let sourceLedger = null;
 
-            created = {
-                id: nextId(db.biz.transfer_orders),
-                transfer_no: transferNo,
-                out_warehouse_code: outWarehouseCode,
-                out_warehouse_name: normalize(body.out_warehouse_name),
-                in_warehouse_code: inWarehouseCode,
-                in_warehouse_name: normalize(body.in_warehouse_name),
-                sku_code: skuCode,
-                sku_name: normalize(body.sku_name),
-                batch_no: batchNo,
-                qty,
-                reason: normalize(body.reason),
-                status: 'DRAFT',
-                applicant: operator,
-                applied_at: nowIso(),
-                reviewer: '',
-                review_comment: '',
-                reviewed_at: '',
-                outbound_confirm_by: '',
-                outbound_confirm_at: '',
-                inbound_confirm_by: '',
-                inbound_confirm_at: '',
-                cancel_reason: '',
-                cancelled_at: '',
-                updated_at: nowIso()
-            };
+                if (!batchNo) {
+                    sourceLedger = sourceCandidates.find((row) => toNum(row.available_qty, 0) > 0) || null;
+                    if (!sourceLedger) throw new Error('调出仓无可用批次库存，无法创建调拨单');
+                    batchNo = normalize(sourceLedger.batch_no);
+                } else {
+                    sourceLedger = sourceCandidates.find((row) => String(row.batch_no) === batchNo) || null;
+                    if (!sourceLedger) throw new Error('指定批次不存在、不可售或不属于调出仓');
+                }
 
-            db.biz.transfer_orders.push(created);
-            appendTransferTrack(db, transferNo, 'DRAFT', operator, '创建调拨单');
-        });
+                if (toNum(sourceLedger.available_qty, 0) <= 0) {
+                    throw new Error('调出批次可用库存不足，无法创建调拨单');
+                }
+                if (qty > toNum(sourceLedger.available_qty, 0)) {
+                    throw new Error('申请数量超过调出批次当前可用库存');
+                }
+
+                created = {
+                    id: nextId(db.biz.transfer_orders),
+                    transfer_no: transferNo,
+                    out_warehouse_code: outWarehouseCode,
+                    out_warehouse_name: normalize(body.out_warehouse_name || sourceLedger.warehouse_name),
+                    in_warehouse_code: inWarehouseCode,
+                    in_warehouse_name: normalize(body.in_warehouse_name),
+                    sku_code: skuCode,
+                    sku_name: normalize(body.sku_name || sourceLedger.sku_name),
+                    batch_no: batchNo,
+                    qty,
+                    reason: normalize(body.reason),
+                    status: 'DRAFT',
+                    applicant: operator,
+                    applied_at: nowIso(),
+                    reviewer: '',
+                    review_comment: '',
+                    reviewed_at: '',
+                    outbound_confirm_by: '',
+                    outbound_confirm_at: '',
+                    inbound_confirm_by: '',
+                    inbound_confirm_at: '',
+                    cancel_reason: '',
+                    cancelled_at: '',
+                    updated_at: nowIso()
+                };
+
+                db.biz.transfer_orders.push(created);
+                appendTransferTrack(db, transferNo, 'DRAFT', operator, '创建调拨单');
+            });
+        } catch (error) {
+            return apiErr(res, req, 400, error?.message || '创建失败');
+        }
 
         apiOk(res, req, created, '创建成功');
     });
@@ -1057,6 +1104,16 @@ const registerInventoryOpsRoutes = ({ app, authRequired, apiOk, apiErr, paginate
                 const row = getTransferByNo(db, transferNo);
                 if (!row) throw new Error('调拨单不存在');
                 if (String(row.status) !== 'DRAFT') throw new Error('仅草稿状态可提交审核');
+                if (!normalize(row.batch_no)) throw new Error('调拨单缺少批次信息，无法提交审核');
+
+                const sourceLedger = findLedgerRow(db, {
+                    warehouse_code: row.out_warehouse_code,
+                    sku_code: row.sku_code,
+                    batch_no: row.batch_no
+                });
+                if (!sourceLedger) throw new Error('调出批次库存不存在，无法提交审核');
+                if (Number(sourceLedger.unsellable_flag) === 1) throw new Error('调出批次已不可售，无法提交审核');
+                if (toNum(sourceLedger.available_qty, 0) < toNum(row.qty, 0)) throw new Error('调出批次可用库存不足，无法提交审核');
 
                 row.status = 'PENDING_REVIEW';
                 row.updated_at = nowIso();
