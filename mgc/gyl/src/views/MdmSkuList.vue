@@ -7,6 +7,9 @@ import {
 } from '@element-plus/icons-vue'
 import axios from 'axios'
 
+const SKU_CODE_REGEX = /^SKU-[A-Z]{3}-[A-Z]{3}-(?:\d+ML|\d+L|\d+G|\d+KG)-\d{2}[A-Z]{2}-[A-Z0-9]{3}-\d{3}$/
+const DEFAULT_SKU_EXAMPLE = 'SKU-UHT-UHT-250ML-12BX-PLN-001'
+
 // 状态
 const loading = ref(false)
 const tableData = ref<any[]>([])
@@ -19,6 +22,8 @@ const queryParams = reactive({
   keyword: '',
   lifecycleStatus: ''
 })
+
+const skuRuleConfig = ref<any>(null)
 
 // 主数据查询
 const fetchList = async () => {
@@ -35,6 +40,17 @@ const fetchList = async () => {
     ElMessage.error(e.response?.data?.msg || '网络错误，获取数据失败')
   } finally {
     loading.value = false
+  }
+}
+
+const fetchSkuRuleConfig = async () => {
+  try {
+    const res = await axios.get('/master/SKU/rule-config')
+    if (res.data.code === 200) {
+      skuRuleConfig.value = res.data.data
+    }
+  } catch {
+    skuRuleConfig.value = null
   }
 }
 
@@ -80,8 +96,25 @@ const form = reactive({
   volume_m3: 0
 })
 
+const skuCodeExample = computed(() => skuRuleConfig.value?.example?.sku_code || DEFAULT_SKU_EXAMPLE)
+const skuRuleFormatText = computed(() => skuRuleConfig.value?.format || 'SKU-品类码-工艺码-规格码-包装码-属性码-流水号')
+const isLegacyEditCode = computed(() => isEdit.value && !!form.sku_code && !SKU_CODE_REGEX.test(String(form.sku_code).trim().toUpperCase()))
+
+const validateSkuCodeRule = (_rule: any, value: string, callback: (error?: Error) => void) => {
+  if (isEdit.value) return callback()
+  const code = String(value || '').trim().toUpperCase()
+  if (!code) return callback(new Error('请输入SKU编码'))
+  if (!SKU_CODE_REGEX.test(code)) {
+    return callback(new Error(`SKU编码需符合七段式规则，例如：${skuCodeExample.value}`))
+  }
+  callback()
+}
+
 const formRules = {
-  sku_code: [{ required: true, message: '请输入SKU编码', trigger: 'blur' }],
+  sku_code: [
+    { required: true, message: '请输入SKU编码', trigger: 'blur' },
+    { validator: validateSkuCodeRule, trigger: 'blur' }
+  ],
   sku_name: [{ required: true, message: '请输入SKU名称', trigger: 'blur' }],
   lifecycle_status: [{ required: true, message: '请选择生命周期', trigger: 'change' }]
 }
@@ -119,11 +152,19 @@ const submitForm = async () => {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
   try {
+    const payload = {
+      ...form,
+      sku_code: String(form.sku_code || '').trim().toUpperCase(),
+      sku_name: String(form.sku_name || '').trim(),
+      bar_code: String(form.bar_code || '').trim(),
+      category_code: String(form.category_code || '').trim(),
+      lifecycle_status: String(form.lifecycle_status || 'ACTIVE').trim().toUpperCase()
+    }
     let res
     if (isEdit.value) {
-      res = await axios.put(`/master/SKU/${editId.value}`, form)
+      res = await axios.put(`/master/SKU/${editId.value}`, payload)
     } else {
-      res = await axios.post('/master/SKU', form)
+      res = await axios.post('/master/SKU', payload)
     }
     if (res.data.code === 200) {
       ElMessage.success(isEdit.value ? '编辑成功' : '新增成功')
@@ -261,12 +302,66 @@ const handleImportError = () => {
 
 const handleDownloadTemplate = async () => {
   const xlsx = await import('xlsx')
+  let ruleConfig = skuRuleConfig.value
+  if (!ruleConfig) {
+    try {
+      const res = await axios.get('/master/SKU/rule-config')
+      if (res.data.code === 200) {
+        ruleConfig = res.data.data
+        skuRuleConfig.value = res.data.data
+      }
+    } catch {
+      ruleConfig = null
+    }
+  }
+  const example = ruleConfig?.example || {
+    sku_code: DEFAULT_SKU_EXAMPLE,
+    sku_name: '常温纯牛奶250ml×12盒',
+    bar_code: '6900000000001',
+    category_code: 'CAT-L3-UHT',
+    lifecycle_status: 'ACTIVE',
+    shelf_life_days: 180,
+    unit_ratio: 12,
+    volume_m3: 0.014
+  }
   const headers = [['SKU编码', 'SKU名称', '69码', '品类编码', '生命周期', '保质期(天)', '单位换算', '规格体积(m³)']]
-  const example = [['SKU-DEMO01', '演示商品-全脂牛奶200ml×12盒', '6900000000001', 'MILK-FRESH', 'ACTIVE', '7', '12', '0.0032']]
-  const ws = xlsx.utils.aoa_to_sheet([...headers, ...example])
-  ws['!cols'] = [{ wch: 16 }, { wch: 32 }, { wch: 18 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 16 }]
+  const exampleRows = [[
+    example.sku_code,
+    example.sku_name,
+    example.bar_code,
+    example.category_code,
+    example.lifecycle_status,
+    String(example.shelf_life_days),
+    String(example.unit_ratio),
+    String(example.volume_m3)
+  ]]
+  const ws = xlsx.utils.aoa_to_sheet([...headers, ...exampleRows])
+  ws['!cols'] = [{ wch: 28 }, { wch: 32 }, { wch: 18 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 16 }]
+  const ruleRows = [
+    ['项目', '内容'],
+    ['编码格式', ruleConfig?.format || 'SKU-品类码-工艺码-规格码-包装码-属性码-流水号'],
+    ['示例编码', example.sku_code],
+    ['规则1', '固定7段：SKU-品类码-工艺码-规格码-包装码-属性码-流水号'],
+    ['规则2', '规格码必须带单位，只允许 ML、L、G、KG'],
+    ['规则3', '包装码为两位数量加两位包装类型，例如 12BX、10CP、01CN'],
+    ['规则4', '属性码只保留一个主属性码'],
+    ['规则5', '流水号固定3位数字，例如 001'],
+    ['兼容说明', '已有历史SKU可按原编码覆盖更新；新增SKU必须符合七段式标准']
+  ]
+  const ruleSheet = xlsx.utils.aoa_to_sheet(ruleRows)
+  ruleSheet['!cols'] = [{ wch: 16 }, { wch: 80 }]
+  const dictRows = [['字典类型', '段位', '编码', '名称', '说明']]
+  ;(ruleConfig?.dictSections || []).forEach((section: any) => {
+    ;(section.items || []).forEach((item: any) => {
+      dictRows.push([section.dictTypeName, section.segment, item.code, item.name, item.remark || ''])
+    })
+  })
+  const dictSheet = xlsx.utils.aoa_to_sheet(dictRows)
+  dictSheet['!cols'] = [{ wch: 18 }, { wch: 10 }, { wch: 12 }, { wch: 18 }, { wch: 30 }]
   const wb = xlsx.utils.book_new()
   xlsx.utils.book_append_sheet(wb, ws, 'SKU导入模板')
+  xlsx.utils.book_append_sheet(wb, ruleSheet, '编码规则')
+  xlsx.utils.book_append_sheet(wb, dictSheet, '编码字典')
   xlsx.writeFile(wb, 'SKU_导入模板.xlsx')
 }
 
@@ -322,7 +417,10 @@ const lifecycleLabel = (status: string) => {
   return map[status] || status
 }
 
-onMounted(fetchList)
+onMounted(() => {
+  fetchList()
+  fetchSkuRuleConfig()
+})
 </script>
 
 <template>
@@ -495,8 +593,10 @@ onMounted(fetchList)
         label-position="left"
       >
         <el-form-item label="SKU编码" prop="sku_code">
-          <el-input v-model="form.sku_code" :disabled="isEdit" placeholder="例如：SKU-P001" id="form-sku-code" />
-          <div v-if="isEdit" class="form-hint">编辑时 SKU 编码不可更改</div>
+          <el-input v-model="form.sku_code" :disabled="isEdit" :placeholder="`例如：${skuCodeExample}`" id="form-sku-code" />
+          <div v-if="!isEdit" class="form-hint">七段式规则：{{ skuRuleFormatText }}</div>
+          <div v-else-if="isLegacyEditCode" class="form-hint">当前为历史SKU编码，可继续维护，但新增SKU必须使用七段式标准编码</div>
+          <div v-else class="form-hint">编辑时 SKU 编码不可更改</div>
         </el-form-item>
         <el-form-item label="SKU名称" prop="sku_name">
           <el-input v-model="form.sku_name" placeholder="例如：认养一头牛 全脂纯牛奶200ml×12盒" id="form-sku-name" />
@@ -550,7 +650,7 @@ onMounted(fetchList)
       <div v-if="!importResult">
         <el-alert type="info" :closable="false" show-icon style="margin-bottom: 16px">
           <template #default>
-            支持最多 <b>10,000</b> 行；遇到已有 SKU 编码时自动覆盖更新。<el-button link type="primary" @click="handleDownloadTemplate" style="margin-left:8px" id="btn-download-template">
+            支持最多 <b>10,000</b> 行；新增SKU必须符合七段式编码，已有SKU编码可覆盖更新。<el-button link type="primary" @click="handleDownloadTemplate" style="margin-left:8px" id="btn-download-template">
               下载导入模板
             </el-button>
           </template>
@@ -738,4 +838,3 @@ onMounted(fetchList)
   justify-content: center;
 }
 </style>
-

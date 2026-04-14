@@ -1,7 +1,7 @@
 {
   "meta": {
     "created_at": "2026-04-09T03:02:20.246Z",
-    "updated_at": "2026-04-14T07:27:27.572Z",
+    "updated_at": "2026-04-14T08:20:19.619Z",
     "storage_mode": "local-json",
     "helper_code": "952746",
     "helper_code_updated_at": "2026-04-09T03:02:20.246Z",
@@ -25506,7 +25506,7 @@
         "batch_no": "WH-HQ-HZ-SKU-UHT-250-12-20251014",
         "production_date": "2025-10-14",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 84,
         "available_qty": 84,
         "locked_qty": 0,
@@ -25515,7 +25515,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 2,
@@ -25526,7 +25526,7 @@
         "batch_no": "WH-HQ-HZ-SKU-UHT-250-24-20260210",
         "production_date": "2026-02-10",
         "expiry_date": "2026-08-09",
-        "remaining_days": 118,
+        "remaining_days": 117,
         "total_qty": 622,
         "available_qty": 442,
         "locked_qty": 0,
@@ -25535,7 +25535,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "TRANSFER_OUT:TR202604090004",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 3,
@@ -25546,7 +25546,7 @@
         "batch_no": "WH-HQ-HZ-SKU-UHT-200-10-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 806,
         "available_qty": 806,
         "locked_qty": 0,
@@ -25555,7 +25555,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 4,
@@ -25566,7 +25566,7 @@
         "batch_no": "WH-HQ-HZ-SKU-UHT-1L-12-20260208",
         "production_date": "2026-02-08",
         "expiry_date": "2026-08-07",
-        "remaining_days": 116,
+        "remaining_days": 115,
         "total_qty": 870,
         "available_qty": 870,
         "locked_qty": 0,
@@ -25575,7 +25575,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 5,
@@ -25586,7 +25586,7 @@
         "batch_no": "WH-HQ-HZ-SKU-UHT-HIGHCAL-250-12-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 935,
         "available_qty": 935,
         "locked_qty": 0,
@@ -25595,7 +25595,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 6,
@@ -25606,7 +25606,7 @@
         "batch_no": "WH-HQ-HZ-SKU-UHT-A2-250-12-20260206",
         "production_date": "2026-02-06",
         "expiry_date": "2026-08-05",
-        "remaining_days": 114,
+        "remaining_days": 113,
         "total_qty": 677,
         "available_qty": 677,
         "locked_qty": 0,
@@ -25615,7 +25615,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 7,
@@ -25626,7 +25626,7 @@
         "batch_no": "WH-HQ-HZ-SKU-UHT-ORGANIC-250-12-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 742,
         "available_qty": 742,
         "locked_qty": 0,
@@ -25635,7 +25635,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 8,
@@ -25646,16 +25646,16 @@
         "batch_no": "WH-HQ-HZ-SKU-PASTEUR-950-20260407",
         "production_date": "2026-04-07",
         "expiry_date": "2026-04-14",
-        "remaining_days": 1,
+        "remaining_days": 0,
         "total_qty": 279,
         "available_qty": 279,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 74,
         "near_expiry_flag": 1,
-        "unsellable_flag": 0,
+        "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 9,
@@ -25666,7 +25666,7 @@
         "batch_no": "WH-HQ-HZ-SKU-PASTEUR-450-20260406",
         "production_date": "2026-04-06",
         "expiry_date": "2026-04-13",
-        "remaining_days": 0,
+        "remaining_days": -1,
         "total_qty": 301,
         "available_qty": 301,
         "locked_qty": 0,
@@ -25675,7 +25675,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 10,
@@ -25686,16 +25686,16 @@
         "batch_no": "WH-HQ-HZ-SKU-PASTEUR-HIGHCAL-950-20260404",
         "production_date": "2026-04-04",
         "expiry_date": "2026-04-14",
-        "remaining_days": 1,
+        "remaining_days": 0,
         "total_qty": 324,
         "available_qty": 324,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 74,
         "near_expiry_flag": 1,
-        "unsellable_flag": 0,
+        "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 11,
@@ -25706,7 +25706,7 @@
         "batch_no": "WH-HQ-HZ-SKU-PASTEUR-CHILD-750-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 234,
         "available_qty": 234,
         "locked_qty": 0,
@@ -25715,7 +25715,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 12,
@@ -25726,7 +25726,7 @@
         "batch_no": "WH-HQ-HZ-SKU-YOG-CHILLED-ORIGIN-200-10-20260329",
         "production_date": "2026-03-29",
         "expiry_date": "2026-04-19",
-        "remaining_days": 6,
+        "remaining_days": 5,
         "total_qty": 342,
         "available_qty": 342,
         "locked_qty": 0,
@@ -25735,7 +25735,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 13,
@@ -25746,7 +25746,7 @@
         "batch_no": "WH-HQ-HZ-SKU-YOG-CHILLED-STRAW-200-10-20260403",
         "production_date": "2026-04-03",
         "expiry_date": "2026-04-24",
-        "remaining_days": 11,
+        "remaining_days": 10,
         "total_qty": 372,
         "available_qty": 372,
         "locked_qty": 0,
@@ -25755,7 +25755,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 14,
@@ -25766,7 +25766,7 @@
         "batch_no": "WH-HQ-HZ-SKU-YOG-CHILLED-BLUEB-200-10-20260402",
         "production_date": "2026-04-02",
         "expiry_date": "2026-04-23",
-        "remaining_days": 10,
+        "remaining_days": 9,
         "total_qty": 402,
         "available_qty": 402,
         "locked_qty": 0,
@@ -25775,7 +25775,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 15,
@@ -25786,7 +25786,7 @@
         "batch_no": "WH-HQ-HZ-SKU-YOG-CHILLED-0SUGAR-200-10-20260401",
         "production_date": "2026-04-01",
         "expiry_date": "2026-04-22",
-        "remaining_days": 9,
+        "remaining_days": 8,
         "total_qty": 432,
         "available_qty": 432,
         "locked_qty": 0,
@@ -25795,7 +25795,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 16,
@@ -25806,7 +25806,7 @@
         "batch_no": "WH-HQ-HZ-SKU-YOG-DRINK-ORIGIN-330-20260228",
         "production_date": "2026-02-28",
         "expiry_date": "2026-06-28",
-        "remaining_days": 76,
+        "remaining_days": 75,
         "total_qty": 312,
         "available_qty": 312,
         "locked_qty": 0,
@@ -25815,7 +25815,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 17,
@@ -25826,7 +25826,7 @@
         "batch_no": "WH-HQ-HZ-SKU-YOG-DRINK-MANGO-330-20260227",
         "production_date": "2026-02-27",
         "expiry_date": "2026-06-27",
-        "remaining_days": 75,
+        "remaining_days": 74,
         "total_qty": 342,
         "available_qty": 342,
         "locked_qty": 0,
@@ -25835,7 +25835,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 18,
@@ -25846,7 +25846,7 @@
         "batch_no": "WH-HQ-HZ-SKU-YOG-GREEK-135-12-20260327",
         "production_date": "2026-03-27",
         "expiry_date": "2026-04-24",
-        "remaining_days": 11,
+        "remaining_days": 10,
         "total_qty": 372,
         "available_qty": 372,
         "locked_qty": 0,
@@ -25855,7 +25855,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 19,
@@ -25866,7 +25866,7 @@
         "batch_no": "WH-HQ-HZ-SKU-PROBIOTIC-100-30-20260322",
         "production_date": "2026-03-22",
         "expiry_date": "2026-05-21",
-        "remaining_days": 38,
+        "remaining_days": 37,
         "total_qty": 402,
         "available_qty": 402,
         "locked_qty": 0,
@@ -25875,7 +25875,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 20,
@@ -25886,7 +25886,7 @@
         "batch_no": "WH-HQ-HZ-SKU-POWDER-ADULT-800-20251018",
         "production_date": "2025-10-18",
         "expiry_date": "2027-04-11",
-        "remaining_days": 363,
+        "remaining_days": 362,
         "total_qty": 270,
         "available_qty": 270,
         "locked_qty": 0,
@@ -25895,7 +25895,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 21,
@@ -25906,7 +25906,7 @@
         "batch_no": "WH-HQ-HZ-SKU-POWDER-ADULT-HIGHPRO-800-20251017",
         "production_date": "2025-10-17",
         "expiry_date": "2027-04-10",
-        "remaining_days": 362,
+        "remaining_days": 361,
         "total_qty": 195,
         "available_qty": 195,
         "locked_qty": 0,
@@ -25915,7 +25915,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 22,
@@ -25926,7 +25926,7 @@
         "batch_no": "WH-HQ-HZ-SKU-POWDER-CHILD-700-20251016",
         "production_date": "2025-10-16",
         "expiry_date": "2027-04-09",
-        "remaining_days": 361,
+        "remaining_days": 360,
         "total_qty": 214,
         "available_qty": 214,
         "locked_qty": 0,
@@ -25935,7 +25935,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 23,
@@ -25946,7 +25946,7 @@
         "batch_no": "WH-HQ-HZ-SKU-CHEESE-MOZ-200-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 171,
         "available_qty": 171,
         "locked_qty": 0,
@@ -25955,7 +25955,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 24,
@@ -25966,7 +25966,7 @@
         "batch_no": "WH-HQ-HZ-SKU-CHEESE-CREAM-180-20260226",
         "production_date": "2026-02-26",
         "expiry_date": "2026-06-26",
-        "remaining_days": 74,
+        "remaining_days": 73,
         "total_qty": 184,
         "available_qty": 184,
         "locked_qty": 0,
@@ -25975,7 +25975,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 25,
@@ -25986,7 +25986,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-UHT-250-12-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 724,
         "available_qty": 584,
         "locked_qty": 140,
@@ -25995,7 +25995,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604070001",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 26,
@@ -26006,7 +26006,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-UHT-250-24-20260210",
         "production_date": "2026-02-10",
         "expiry_date": "2026-08-09",
-        "remaining_days": 118,
+        "remaining_days": 117,
         "total_qty": 524,
         "available_qty": 524,
         "locked_qty": 0,
@@ -26015,7 +26015,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 27,
@@ -26026,7 +26026,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-UHT-200-10-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 574,
         "available_qty": 574,
         "locked_qty": 0,
@@ -26035,7 +26035,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 28,
@@ -26046,7 +26046,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-UHT-1L-12-20260208",
         "production_date": "2026-02-08",
         "expiry_date": "2026-08-07",
-        "remaining_days": 116,
+        "remaining_days": 115,
         "total_qty": 624,
         "available_qty": 624,
         "locked_qty": 0,
@@ -26055,7 +26055,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 29,
@@ -26066,7 +26066,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-UHT-HIGHCAL-250-12-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 674,
         "available_qty": 674,
         "locked_qty": 0,
@@ -26075,7 +26075,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 30,
@@ -26086,7 +26086,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-UHT-A2-250-12-20251017",
         "production_date": "2025-10-17",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 724,
         "available_qty": 724,
         "locked_qty": 0,
@@ -26095,7 +26095,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 31,
@@ -26106,7 +26106,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-PASTEUR-950-20260408",
         "production_date": "2026-04-08",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 181,
         "available_qty": 131,
         "locked_qty": 50,
@@ -26115,7 +26115,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604130004",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 32,
@@ -26126,16 +26126,16 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-PASTEUR-450-20260407",
         "production_date": "2026-04-07",
         "expiry_date": "2026-04-14",
-        "remaining_days": 1,
+        "remaining_days": 0,
         "total_qty": 199,
         "available_qty": 199,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 58,
         "near_expiry_flag": 1,
-        "unsellable_flag": 0,
+        "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 33,
@@ -26146,7 +26146,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-PASTEUR-HIGHCAL-950-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 216,
         "available_qty": 216,
         "locked_qty": 0,
@@ -26155,7 +26155,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 34,
@@ -26166,16 +26166,16 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-YOG-CHILLED-ORIGIN-200-10-20260331",
         "production_date": "2026-03-31",
         "expiry_date": "2026-04-21",
-        "remaining_days": 8,
+        "remaining_days": 7,
         "total_qty": 32,
         "available_qty": 32,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 72,
-        "near_expiry_flag": 0,
+        "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 35,
@@ -26186,7 +26186,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-YOG-CHILLED-STRAW-200-10-20260330",
         "production_date": "2026-03-30",
         "expiry_date": "2026-04-20",
-        "remaining_days": 7,
+        "remaining_days": 6,
         "total_qty": 334,
         "available_qty": 334,
         "locked_qty": 0,
@@ -26195,7 +26195,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 36,
@@ -26206,7 +26206,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-YOG-CHILLED-BLUEB-200-10-20260329",
         "production_date": "2026-03-29",
         "expiry_date": "2026-04-19",
-        "remaining_days": 6,
+        "remaining_days": 5,
         "total_qty": 242,
         "available_qty": 242,
         "locked_qty": 0,
@@ -26215,7 +26215,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 37,
@@ -26226,7 +26226,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-YOG-CHILLED-0SUGAR-200-10-20260403",
         "production_date": "2026-04-03",
         "expiry_date": "2026-04-24",
-        "remaining_days": 11,
+        "remaining_days": 10,
         "total_qty": 265,
         "available_qty": 175,
         "locked_qty": 90,
@@ -26235,7 +26235,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604070001",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 38,
@@ -26246,7 +26246,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-POWDER-ADULT-800-20251018",
         "production_date": "2025-10-18",
         "expiry_date": "2027-04-11",
-        "remaining_days": 363,
+        "remaining_days": 362,
         "total_qty": 180,
         "available_qty": 180,
         "locked_qty": 0,
@@ -26255,7 +26255,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 39,
@@ -26266,7 +26266,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-POWDER-ADULT-HIGHPRO-800-20251017",
         "production_date": "2025-10-17",
         "expiry_date": "2027-04-10",
-        "remaining_days": 362,
+        "remaining_days": 361,
         "total_qty": 194,
         "available_qty": 194,
         "locked_qty": 0,
@@ -26275,7 +26275,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 40,
@@ -26286,7 +26286,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-POWDER-CHILD-700-20251016",
         "production_date": "2025-10-16",
         "expiry_date": "2027-04-09",
-        "remaining_days": 361,
+        "remaining_days": 360,
         "total_qty": 209,
         "available_qty": 209,
         "locked_qty": 0,
@@ -26295,7 +26295,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 41,
@@ -26306,7 +26306,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-UHT-250-12-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 524,
         "available_qty": 524,
         "locked_qty": 0,
@@ -26315,7 +26315,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 42,
@@ -26326,7 +26326,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-UHT-250-24-20260206",
         "production_date": "2026-02-06",
         "expiry_date": "2026-08-05",
-        "remaining_days": 114,
+        "remaining_days": 113,
         "total_qty": 792,
         "available_qty": 792,
         "locked_qty": 0,
@@ -26335,7 +26335,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 43,
@@ -26346,7 +26346,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-UHT-200-10-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 624,
         "available_qty": 624,
         "locked_qty": 0,
@@ -26355,7 +26355,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 44,
@@ -26366,7 +26366,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-UHT-1L-12-20260210",
         "production_date": "2026-02-10",
         "expiry_date": "2026-08-09",
-        "remaining_days": 118,
+        "remaining_days": 117,
         "total_qty": 674,
         "available_qty": 674,
         "locked_qty": 0,
@@ -26375,7 +26375,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 45,
@@ -26386,7 +26386,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-UHT-A2-250-12-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 724,
         "available_qty": 724,
         "locked_qty": 0,
@@ -26395,7 +26395,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 46,
@@ -26406,7 +26406,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-PASTEUR-950-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 181,
         "available_qty": 181,
         "locked_qty": 0,
@@ -26415,7 +26415,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 47,
@@ -26426,7 +26426,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-PASTEUR-450-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 199,
         "available_qty": 199,
         "locked_qty": 0,
@@ -26435,7 +26435,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 48,
@@ -26446,7 +26446,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-PASTEUR-HIGHCAL-950-20260402",
         "production_date": "2026-04-02",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 216,
         "available_qty": 216,
         "locked_qty": 0,
@@ -26455,7 +26455,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 49,
@@ -26466,7 +26466,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-YOG-CHILLED-ORIGIN-200-10-20260403",
         "production_date": "2026-04-03",
         "expiry_date": "2026-04-24",
-        "remaining_days": 11,
+        "remaining_days": 10,
         "total_qty": 311,
         "available_qty": 311,
         "locked_qty": 0,
@@ -26475,7 +26475,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 50,
@@ -26486,7 +26486,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-YOG-CHILLED-STRAW-200-10-20260402",
         "production_date": "2026-04-02",
         "expiry_date": "2026-04-23",
-        "remaining_days": 10,
+        "remaining_days": 9,
         "total_qty": 334,
         "available_qty": 334,
         "locked_qty": 0,
@@ -26495,7 +26495,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 51,
@@ -26506,7 +26506,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-YOG-CHILLED-BLUEB-200-10-20260401",
         "production_date": "2026-04-01",
         "expiry_date": "2026-04-22",
-        "remaining_days": 9,
+        "remaining_days": 8,
         "total_qty": 242,
         "available_qty": 242,
         "locked_qty": 0,
@@ -26515,7 +26515,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 52,
@@ -26526,16 +26526,16 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-YOG-CHILLED-0SUGAR-200-10-20260331",
         "production_date": "2026-03-31",
         "expiry_date": "2026-04-21",
-        "remaining_days": 8,
+        "remaining_days": 7,
         "total_qty": 265,
         "available_qty": 265,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 72,
-        "near_expiry_flag": 0,
+        "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 53,
@@ -26546,7 +26546,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-POWDER-ADULT-800-20251015",
         "production_date": "2025-10-15",
         "expiry_date": "2027-04-08",
-        "remaining_days": 360,
+        "remaining_days": 359,
         "total_qty": 180,
         "available_qty": 180,
         "locked_qty": 0,
@@ -26555,7 +26555,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 54,
@@ -26566,7 +26566,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-POWDER-ADULT-HIGHPRO-800-20251014",
         "production_date": "2025-10-14",
         "expiry_date": "2027-04-07",
-        "remaining_days": 359,
+        "remaining_days": 358,
         "total_qty": 194,
         "available_qty": 194,
         "locked_qty": 0,
@@ -26575,7 +26575,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 55,
@@ -26586,7 +26586,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-POWDER-CHILD-700-20251019",
         "production_date": "2025-10-19",
         "expiry_date": "2027-04-12",
-        "remaining_days": 364,
+        "remaining_days": 363,
         "total_qty": 209,
         "available_qty": 209,
         "locked_qty": 0,
@@ -26595,7 +26595,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 56,
@@ -26606,7 +26606,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-UHT-250-12-20260210",
         "production_date": "2026-02-10",
         "expiry_date": "2026-08-09",
-        "remaining_days": 118,
+        "remaining_days": 117,
         "total_qty": 524,
         "available_qty": 524,
         "locked_qty": 0,
@@ -26615,7 +26615,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 57,
@@ -26626,7 +26626,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-UHT-250-24-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 574,
         "available_qty": 574,
         "locked_qty": 0,
@@ -26635,7 +26635,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 58,
@@ -26646,7 +26646,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-UHT-200-10-20260208",
         "production_date": "2026-02-08",
         "expiry_date": "2026-08-07",
-        "remaining_days": 116,
+        "remaining_days": 115,
         "total_qty": 0,
         "available_qty": 0,
         "locked_qty": 0,
@@ -26655,7 +26655,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 59,
@@ -26666,7 +26666,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-UHT-1L-12-20251017",
         "production_date": "2025-10-17",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 674,
         "available_qty": 674,
         "locked_qty": 0,
@@ -26675,7 +26675,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 60,
@@ -26686,7 +26686,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-UHT-HIGHCAL-250-12-20260206",
         "production_date": "2026-02-06",
         "expiry_date": "2026-08-05",
-        "remaining_days": 114,
+        "remaining_days": 113,
         "total_qty": 724,
         "available_qty": 724,
         "locked_qty": 0,
@@ -26695,7 +26695,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 61,
@@ -26706,7 +26706,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-UHT-A2-250-12-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 524,
         "available_qty": 524,
         "locked_qty": 0,
@@ -26715,7 +26715,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 62,
@@ -26726,16 +26726,16 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-PASTEUR-950-20260407",
         "production_date": "2026-04-07",
         "expiry_date": "2026-04-14",
-        "remaining_days": 1,
+        "remaining_days": 0,
         "total_qty": 199,
         "available_qty": 199,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 58,
         "near_expiry_flag": 1,
-        "unsellable_flag": 0,
+        "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 63,
@@ -26746,7 +26746,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-PASTEUR-450-20260406",
         "production_date": "2026-04-06",
         "expiry_date": "2026-04-13",
-        "remaining_days": 0,
+        "remaining_days": -1,
         "total_qty": 216,
         "available_qty": 216,
         "locked_qty": 0,
@@ -26755,7 +26755,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 64,
@@ -26766,16 +26766,16 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-PASTEUR-HIGHCAL-950-20260404",
         "production_date": "2026-04-04",
         "expiry_date": "2026-04-14",
-        "remaining_days": 1,
+        "remaining_days": 0,
         "total_qty": 233,
         "available_qty": 233,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 58,
         "near_expiry_flag": 1,
-        "unsellable_flag": 0,
+        "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 65,
@@ -26786,7 +26786,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-YOG-CHILLED-ORIGIN-200-10-20260330",
         "production_date": "2026-03-30",
         "expiry_date": "2026-04-20",
-        "remaining_days": 7,
+        "remaining_days": 6,
         "total_qty": 334,
         "available_qty": 334,
         "locked_qty": 0,
@@ -26795,7 +26795,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 66,
@@ -26806,7 +26806,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-YOG-CHILLED-STRAW-200-10-20260329",
         "production_date": "2026-03-29",
         "expiry_date": "2026-04-19",
-        "remaining_days": 6,
+        "remaining_days": 5,
         "total_qty": 242,
         "available_qty": 242,
         "locked_qty": 0,
@@ -26815,7 +26815,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 67,
@@ -26826,7 +26826,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-YOG-CHILLED-0SUGAR-200-10-20260403",
         "production_date": "2026-04-03",
         "expiry_date": "2026-04-24",
-        "remaining_days": 11,
+        "remaining_days": 10,
         "total_qty": 32,
         "available_qty": 32,
         "locked_qty": 0,
@@ -26835,7 +26835,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 68,
@@ -26846,7 +26846,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-POWDER-ADULT-800-20251018",
         "production_date": "2025-10-18",
         "expiry_date": "2027-04-11",
-        "remaining_days": 363,
+        "remaining_days": 362,
         "total_qty": 180,
         "available_qty": 180,
         "locked_qty": 0,
@@ -26855,7 +26855,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 69,
@@ -26866,7 +26866,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-POWDER-ADULT-HIGHPRO-800-20251017",
         "production_date": "2025-10-17",
         "expiry_date": "2027-04-10",
-        "remaining_days": 362,
+        "remaining_days": 361,
         "total_qty": 194,
         "available_qty": 194,
         "locked_qty": 0,
@@ -26875,7 +26875,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 70,
@@ -26886,7 +26886,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-POWDER-CHILD-700-20251016",
         "production_date": "2025-10-16",
         "expiry_date": "2027-04-09",
-        "remaining_days": 361,
+        "remaining_days": 360,
         "total_qty": 209,
         "available_qty": 209,
         "locked_qty": 0,
@@ -26895,7 +26895,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 71,
@@ -26906,7 +26906,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-UHT-250-12-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 524,
         "available_qty": 524,
         "locked_qty": 0,
@@ -26915,7 +26915,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 72,
@@ -26926,7 +26926,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-UHT-250-24-20260206",
         "production_date": "2026-02-06",
         "expiry_date": "2026-08-05",
-        "remaining_days": 114,
+        "remaining_days": 113,
         "total_qty": 574,
         "available_qty": 574,
         "locked_qty": 0,
@@ -26935,7 +26935,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 73,
@@ -26946,7 +26946,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-UHT-200-10-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 624,
         "available_qty": 624,
         "locked_qty": 0,
@@ -26955,7 +26955,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 74,
@@ -26966,7 +26966,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-UHT-1L-12-20260210",
         "production_date": "2026-02-10",
         "expiry_date": "2026-08-09",
-        "remaining_days": 118,
+        "remaining_days": 117,
         "total_qty": 674,
         "available_qty": 674,
         "locked_qty": 0,
@@ -26975,7 +26975,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 75,
@@ -26986,7 +26986,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-UHT-HIGHCAL-250-12-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 724,
         "available_qty": 724,
         "locked_qty": 0,
@@ -26995,7 +26995,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 76,
@@ -27006,7 +27006,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-UHT-A2-250-12-20260208",
         "production_date": "2026-02-08",
         "expiry_date": "2026-08-07",
-        "remaining_days": 116,
+        "remaining_days": 115,
         "total_qty": 524,
         "available_qty": 524,
         "locked_qty": 0,
@@ -27015,7 +27015,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 77,
@@ -27026,7 +27026,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-PASTEUR-950-20260405",
         "production_date": "2026-04-08",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 160,
         "available_qty": 106,
         "locked_qty": 54,
@@ -27035,7 +27035,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604090002",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 78,
@@ -27046,7 +27046,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-PASTEUR-450-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 216,
         "available_qty": 216,
         "locked_qty": 0,
@@ -27055,7 +27055,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 79,
@@ -27066,7 +27066,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-PASTEUR-HIGHCAL-950-20260407",
         "production_date": "2026-04-07",
         "expiry_date": "2026-04-17",
-        "remaining_days": 4,
+        "remaining_days": 3,
         "total_qty": 233,
         "available_qty": 233,
         "locked_qty": 0,
@@ -27075,7 +27075,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 80,
@@ -27086,7 +27086,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-YOG-CHILLED-ORIGIN-200-10-20260402",
         "production_date": "2026-04-02",
         "expiry_date": "2026-04-23",
-        "remaining_days": 10,
+        "remaining_days": 9,
         "total_qty": 334,
         "available_qty": 334,
         "locked_qty": 0,
@@ -27095,7 +27095,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 81,
@@ -27106,7 +27106,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-YOG-CHILLED-STRAW-200-10-20260401",
         "production_date": "2026-04-01",
         "expiry_date": "2026-04-22",
-        "remaining_days": 9,
+        "remaining_days": 8,
         "total_qty": 242,
         "available_qty": 242,
         "locked_qty": 0,
@@ -27115,7 +27115,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 82,
@@ -27126,16 +27126,16 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-YOG-CHILLED-BLUEB-200-10-20260331",
         "production_date": "2026-03-31",
         "expiry_date": "2026-04-21",
-        "remaining_days": 8,
+        "remaining_days": 7,
         "total_qty": 265,
         "available_qty": 265,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 72,
-        "near_expiry_flag": 0,
+        "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 83,
@@ -27146,7 +27146,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-YOG-CHILLED-0SUGAR-200-10-20260330",
         "production_date": "2026-03-30",
         "expiry_date": "2026-04-20",
-        "remaining_days": 7,
+        "remaining_days": 6,
         "total_qty": 396,
         "available_qty": 396,
         "locked_qty": 0,
@@ -27155,7 +27155,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 84,
@@ -27166,7 +27166,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-POWDER-ADULT-800-20251014",
         "production_date": "2025-10-14",
         "expiry_date": "2027-04-07",
-        "remaining_days": 359,
+        "remaining_days": 358,
         "total_qty": 194,
         "available_qty": 194,
         "locked_qty": 0,
@@ -27175,7 +27175,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 85,
@@ -27186,7 +27186,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-POWDER-ADULT-HIGHPRO-800-20251019",
         "production_date": "2025-10-19",
         "expiry_date": "2027-04-12",
-        "remaining_days": 364,
+        "remaining_days": 363,
         "total_qty": 209,
         "available_qty": 209,
         "locked_qty": 0,
@@ -27195,7 +27195,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 86,
@@ -27206,7 +27206,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-POWDER-CHILD-700-20251018",
         "production_date": "2025-10-18",
         "expiry_date": "2027-04-11",
-        "remaining_days": 363,
+        "remaining_days": 362,
         "total_qty": 151,
         "available_qty": 151,
         "locked_qty": 0,
@@ -27215,7 +27215,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 87,
@@ -27226,7 +27226,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-UHT-250-12-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 574,
         "available_qty": 574,
         "locked_qty": 0,
@@ -27235,7 +27235,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 88,
@@ -27246,7 +27246,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-UHT-250-24-20251017",
         "production_date": "2025-10-17",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 624,
         "available_qty": 624,
         "locked_qty": 0,
@@ -27255,7 +27255,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 89,
@@ -27266,7 +27266,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-UHT-1L-12-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 674,
         "available_qty": 674,
         "locked_qty": 0,
@@ -27275,7 +27275,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 90,
@@ -27286,7 +27286,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-UHT-HIGHCAL-250-12-20260206",
         "production_date": "2026-02-06",
         "expiry_date": "2026-08-05",
-        "remaining_days": 114,
+        "remaining_days": 113,
         "total_qty": 724,
         "available_qty": 724,
         "locked_qty": 0,
@@ -27295,7 +27295,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 91,
@@ -27306,7 +27306,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-UHT-A2-250-12-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 524,
         "available_qty": 524,
         "locked_qty": 0,
@@ -27315,7 +27315,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 92,
@@ -27326,16 +27326,16 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-PASTEUR-950-20260407",
         "production_date": "2026-04-07",
         "expiry_date": "2026-04-14",
-        "remaining_days": 1,
+        "remaining_days": 0,
         "total_qty": 199,
         "available_qty": 199,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 58,
         "near_expiry_flag": 1,
-        "unsellable_flag": 0,
+        "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 93,
@@ -27346,7 +27346,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-PASTEUR-450-20260406",
         "production_date": "2026-04-06",
         "expiry_date": "2026-04-13",
-        "remaining_days": 0,
+        "remaining_days": -1,
         "total_qty": 216,
         "available_qty": 216,
         "locked_qty": 0,
@@ -27355,7 +27355,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 94,
@@ -27366,16 +27366,16 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-PASTEUR-HIGHCAL-950-20260404",
         "production_date": "2026-04-04",
         "expiry_date": "2026-04-14",
-        "remaining_days": 1,
+        "remaining_days": 0,
         "total_qty": 233,
         "available_qty": 233,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 58,
         "near_expiry_flag": 1,
-        "unsellable_flag": 0,
+        "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 95,
@@ -27386,7 +27386,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-YOG-CHILLED-ORIGIN-200-10-20260322",
         "production_date": "2026-03-22",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 334,
         "available_qty": 334,
         "locked_qty": 0,
@@ -27395,7 +27395,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 96,
@@ -27406,7 +27406,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-YOG-CHILLED-STRAW-200-10-20260329",
         "production_date": "2026-03-29",
         "expiry_date": "2026-04-19",
-        "remaining_days": 6,
+        "remaining_days": 5,
         "total_qty": 242,
         "available_qty": 242,
         "locked_qty": 0,
@@ -27415,7 +27415,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 97,
@@ -27426,7 +27426,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-YOG-CHILLED-BLUEB-200-10-20260403",
         "production_date": "2026-04-03",
         "expiry_date": "2026-04-24",
-        "remaining_days": 11,
+        "remaining_days": 10,
         "total_qty": 265,
         "available_qty": 265,
         "locked_qty": 0,
@@ -27435,7 +27435,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 98,
@@ -27446,7 +27446,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-YOG-CHILLED-0SUGAR-200-10-20260402",
         "production_date": "2026-04-02",
         "expiry_date": "2026-04-23",
-        "remaining_days": 10,
+        "remaining_days": 9,
         "total_qty": 288,
         "available_qty": 288,
         "locked_qty": 0,
@@ -27455,7 +27455,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 99,
@@ -27466,7 +27466,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-POWDER-ADULT-800-20251017",
         "production_date": "2025-10-17",
         "expiry_date": "2027-04-10",
-        "remaining_days": 362,
+        "remaining_days": 361,
         "total_qty": 194,
         "available_qty": 194,
         "locked_qty": 0,
@@ -27475,7 +27475,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 100,
@@ -27486,7 +27486,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-POWDER-ADULT-HIGHPRO-800-20251016",
         "production_date": "2025-10-16",
         "expiry_date": "2027-04-09",
-        "remaining_days": 361,
+        "remaining_days": 360,
         "total_qty": 17,
         "available_qty": 17,
         "locked_qty": 0,
@@ -27495,7 +27495,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 101,
@@ -27506,7 +27506,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-POWDER-CHILD-700-20251015",
         "production_date": "2025-10-15",
         "expiry_date": "2027-04-08",
-        "remaining_days": 360,
+        "remaining_days": 359,
         "total_qty": 151,
         "available_qty": 151,
         "locked_qty": 0,
@@ -27515,7 +27515,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 102,
@@ -27526,7 +27526,7 @@
         "batch_no": "WH-DC-SUZHOU-SKU-UHT-250-12-20260206",
         "production_date": "2026-02-06",
         "expiry_date": "2026-08-05",
-        "remaining_days": 114,
+        "remaining_days": 113,
         "total_qty": 402,
         "available_qty": 402,
         "locked_qty": 0,
@@ -27535,7 +27535,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 103,
@@ -27546,7 +27546,7 @@
         "batch_no": "WH-DC-SUZHOU-SKU-UHT-250-24-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 405,
         "available_qty": 285,
         "locked_qty": 120,
@@ -27555,7 +27555,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604090018",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 104,
@@ -27566,7 +27566,7 @@
         "batch_no": "WH-DC-SUZHOU-SKU-UHT-200-10-20260210",
         "production_date": "2026-02-10",
         "expiry_date": "2026-08-09",
-        "remaining_days": 118,
+        "remaining_days": 117,
         "total_qty": 472,
         "available_qty": 472,
         "locked_qty": 0,
@@ -27575,7 +27575,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 105,
@@ -27586,7 +27586,7 @@
         "batch_no": "WH-DC-SUZHOU-SKU-UHT-1L-12-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 507,
         "available_qty": 507,
         "locked_qty": 0,
@@ -27595,7 +27595,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 106,
@@ -27606,7 +27606,7 @@
         "batch_no": "WH-DC-SUZHOU-SKU-PASTEUR-950-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 127,
         "available_qty": 127,
         "locked_qty": 0,
@@ -27615,7 +27615,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 107,
@@ -27626,7 +27626,7 @@
         "batch_no": "WH-DC-SUZHOU-SKU-PASTEUR-450-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 139,
         "available_qty": 139,
         "locked_qty": 0,
@@ -27635,7 +27635,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 108,
@@ -27646,7 +27646,7 @@
         "batch_no": "WH-DC-SUZHOU-SKU-YOG-CHILLED-ORIGIN-200-10-20260329",
         "production_date": "2026-03-29",
         "expiry_date": "2026-04-19",
-        "remaining_days": 6,
+        "remaining_days": 5,
         "total_qty": 202,
         "available_qty": 202,
         "locked_qty": 0,
@@ -27655,7 +27655,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 109,
@@ -27666,7 +27666,7 @@
         "batch_no": "WH-DC-SUZHOU-SKU-YOG-CHILLED-STRAW-200-10-20260403",
         "production_date": "2026-04-03",
         "expiry_date": "2026-04-24",
-        "remaining_days": 11,
+        "remaining_days": 10,
         "total_qty": 218,
         "available_qty": 218,
         "locked_qty": 0,
@@ -27675,7 +27675,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 110,
@@ -27686,7 +27686,7 @@
         "batch_no": "WH-DC-SUZHOU-SKU-YOG-CHILLED-BLUEB-200-10-20260402",
         "production_date": "2026-04-02",
         "expiry_date": "2026-04-23",
-        "remaining_days": 10,
+        "remaining_days": 9,
         "total_qty": 234,
         "available_qty": 234,
         "locked_qty": 0,
@@ -27695,7 +27695,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 111,
@@ -27706,7 +27706,7 @@
         "batch_no": "WH-DC-NANJING-SKU-UHT-250-12-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 367,
         "available_qty": 367,
         "locked_qty": 0,
@@ -27715,7 +27715,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 112,
@@ -27726,7 +27726,7 @@
         "batch_no": "WH-DC-NANJING-SKU-UHT-250-24-20260208",
         "production_date": "2026-02-08",
         "expiry_date": "2026-08-07",
-        "remaining_days": 116,
+        "remaining_days": 115,
         "total_qty": 402,
         "available_qty": 402,
         "locked_qty": 0,
@@ -27735,7 +27735,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 113,
@@ -27746,7 +27746,7 @@
         "batch_no": "WH-DC-NANJING-SKU-UHT-200-10-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 437,
         "available_qty": 437,
         "locked_qty": 0,
@@ -27755,7 +27755,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 114,
@@ -27766,7 +27766,7 @@
         "batch_no": "WH-DC-NANJING-SKU-UHT-1L-12-20260206",
         "production_date": "2026-02-06",
         "expiry_date": "2026-08-05",
-        "remaining_days": 114,
+        "remaining_days": 113,
         "total_qty": 472,
         "available_qty": 472,
         "locked_qty": 0,
@@ -27775,7 +27775,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 115,
@@ -27786,7 +27786,7 @@
         "batch_no": "WH-DC-NANJING-SKU-PASTEUR-950-20260408",
         "production_date": "2026-04-08",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 0,
         "available_qty": 0,
         "locked_qty": 0,
@@ -27795,7 +27795,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 116,
@@ -27806,16 +27806,16 @@
         "batch_no": "WH-DC-NANJING-SKU-PASTEUR-450-20260407",
         "production_date": "2026-04-07",
         "expiry_date": "2026-04-14",
-        "remaining_days": 1,
+        "remaining_days": 0,
         "total_qty": 127,
         "available_qty": 127,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 40,
         "near_expiry_flag": 1,
-        "unsellable_flag": 0,
+        "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 117,
@@ -27826,7 +27826,7 @@
         "batch_no": "WH-DC-NANJING-SKU-YOG-CHILLED-ORIGIN-200-10-20260325",
         "production_date": "2026-03-25",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 185,
         "available_qty": 185,
         "locked_qty": 0,
@@ -27835,7 +27835,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 118,
@@ -27846,16 +27846,16 @@
         "batch_no": "WH-DC-NANJING-SKU-YOG-CHILLED-STRAW-200-10-20260331",
         "production_date": "2026-03-31",
         "expiry_date": "2026-04-21",
-        "remaining_days": 8,
+        "remaining_days": 7,
         "total_qty": 202,
         "available_qty": 202,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 50,
-        "near_expiry_flag": 0,
+        "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 119,
@@ -27866,7 +27866,7 @@
         "batch_no": "WH-DC-NANJING-SKU-YOG-CHILLED-BLUEB-200-10-20260330",
         "production_date": "2026-03-30",
         "expiry_date": "2026-04-20",
-        "remaining_days": 7,
+        "remaining_days": 6,
         "total_qty": 218,
         "available_qty": 218,
         "locked_qty": 0,
@@ -27875,7 +27875,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 120,
@@ -27886,7 +27886,7 @@
         "batch_no": "WH-DC-NANJING-SKU-POWDER-ADULT-800-20251014",
         "production_date": "2025-10-14",
         "expiry_date": "2027-04-07",
-        "remaining_days": 359,
+        "remaining_days": 358,
         "total_qty": 146,
         "available_qty": 146,
         "locked_qty": 0,
@@ -27895,7 +27895,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 121,
@@ -27906,7 +27906,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-UHT-250-12-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 367,
         "available_qty": 317,
         "locked_qty": 50,
@@ -27915,7 +27915,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604130003",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 122,
@@ -27926,7 +27926,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-UHT-250-24-20260210",
         "production_date": "2026-02-10",
         "expiry_date": "2026-08-09",
-        "remaining_days": 118,
+        "remaining_days": 117,
         "total_qty": 402,
         "available_qty": 402,
         "locked_qty": 0,
@@ -27935,7 +27935,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 123,
@@ -27946,7 +27946,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-UHT-200-10-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 437,
         "available_qty": 437,
         "locked_qty": 0,
@@ -27955,7 +27955,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 124,
@@ -27966,7 +27966,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-UHT-1L-12-20260208",
         "production_date": "2026-02-08",
         "expiry_date": "2026-08-07",
-        "remaining_days": 116,
+        "remaining_days": 115,
         "total_qty": 556,
         "available_qty": 556,
         "locked_qty": 0,
@@ -27975,7 +27975,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 125,
@@ -27986,7 +27986,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-PASTEUR-950-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 175,
         "available_qty": 175,
         "locked_qty": 0,
@@ -27995,7 +27995,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 126,
@@ -28006,7 +28006,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-PASTEUR-450-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 127,
         "available_qty": 127,
         "locked_qty": 0,
@@ -28015,7 +28015,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 127,
@@ -28026,7 +28026,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-YOG-CHILLED-ORIGIN-200-10-20260403",
         "production_date": "2026-04-03",
         "expiry_date": "2026-04-24",
-        "remaining_days": 11,
+        "remaining_days": 10,
         "total_qty": 185,
         "available_qty": 185,
         "locked_qty": 0,
@@ -28035,7 +28035,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 128,
@@ -28046,7 +28046,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-YOG-CHILLED-STRAW-200-10-20260402",
         "production_date": "2026-04-02",
         "expiry_date": "2026-04-23",
-        "remaining_days": 10,
+        "remaining_days": 9,
         "total_qty": 202,
         "available_qty": 202,
         "locked_qty": 0,
@@ -28055,7 +28055,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 129,
@@ -28066,7 +28066,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-YOG-CHILLED-BLUEB-200-10-20260401",
         "production_date": "2026-04-01",
         "expiry_date": "2026-04-22",
-        "remaining_days": 9,
+        "remaining_days": 8,
         "total_qty": 218,
         "available_qty": 218,
         "locked_qty": 0,
@@ -28075,7 +28075,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 130,
@@ -28086,7 +28086,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-POWDER-ADULT-800-20251016",
         "production_date": "2025-10-16",
         "expiry_date": "2027-04-09",
-        "remaining_days": 361,
+        "remaining_days": 360,
         "total_qty": 146,
         "available_qty": 146,
         "locked_qty": 0,
@@ -28095,7 +28095,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 131,
@@ -28106,7 +28106,7 @@
         "batch_no": "WH-DC-FOSHAN-SKU-UHT-250-12-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 367,
         "available_qty": 367,
         "locked_qty": 0,
@@ -28115,7 +28115,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 132,
@@ -28126,7 +28126,7 @@
         "batch_no": "WH-DC-FOSHAN-SKU-UHT-250-24-20260206",
         "production_date": "2026-02-06",
         "expiry_date": "2026-08-05",
-        "remaining_days": 114,
+        "remaining_days": 113,
         "total_qty": 402,
         "available_qty": 402,
         "locked_qty": 0,
@@ -28135,7 +28135,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 133,
@@ -28146,7 +28146,7 @@
         "batch_no": "WH-DC-FOSHAN-SKU-UHT-1L-12-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 45,
         "available_qty": 45,
         "locked_qty": 0,
@@ -28155,7 +28155,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 134,
@@ -28166,16 +28166,16 @@
         "batch_no": "WH-DC-FOSHAN-SKU-PASTEUR-950-20260407",
         "production_date": "2026-04-07",
         "expiry_date": "2026-04-14",
-        "remaining_days": 1,
+        "remaining_days": 0,
         "total_qty": 163,
         "available_qty": 163,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 40,
         "near_expiry_flag": 1,
-        "unsellable_flag": 0,
+        "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 135,
@@ -28186,7 +28186,7 @@
         "batch_no": "WH-DC-FOSHAN-SKU-PASTEUR-450-20260406",
         "production_date": "2026-04-06",
         "expiry_date": "2026-04-13",
-        "remaining_days": 0,
+        "remaining_days": -1,
         "total_qty": 175,
         "available_qty": 175,
         "locked_qty": 0,
@@ -28195,7 +28195,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 136,
@@ -28206,16 +28206,16 @@
         "batch_no": "WH-DC-FOSHAN-SKU-YOG-CHILLED-ORIGIN-200-10-20260331",
         "production_date": "2026-03-31",
         "expiry_date": "2026-04-21",
-        "remaining_days": 8,
+        "remaining_days": 7,
         "total_qty": 169,
         "available_qty": 169,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 50,
-        "near_expiry_flag": 0,
+        "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 137,
@@ -28226,7 +28226,7 @@
         "batch_no": "WH-DC-FOSHAN-SKU-YOG-CHILLED-STRAW-200-10-20260330",
         "production_date": "2026-03-30",
         "expiry_date": "2026-04-20",
-        "remaining_days": 7,
+        "remaining_days": 6,
         "total_qty": 185,
         "available_qty": 185,
         "locked_qty": 0,
@@ -28235,7 +28235,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 138,
@@ -28246,7 +28246,7 @@
         "batch_no": "WH-DC-FOSHAN-SKU-YOG-CHILLED-BLUEB-200-10-20260329",
         "production_date": "2026-03-29",
         "expiry_date": "2026-04-19",
-        "remaining_days": 6,
+        "remaining_days": 5,
         "total_qty": 202,
         "available_qty": 202,
         "locked_qty": 0,
@@ -28255,7 +28255,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 139,
@@ -28266,7 +28266,7 @@
         "batch_no": "WH-DC-FOSHAN-SKU-POWDER-ADULT-800-20251019",
         "production_date": "2025-10-19",
         "expiry_date": "2027-04-12",
-        "remaining_days": 364,
+        "remaining_days": 363,
         "total_qty": 136,
         "available_qty": 136,
         "locked_qty": 0,
@@ -28275,7 +28275,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 140,
@@ -28286,7 +28286,7 @@
         "batch_no": "WH-DC-BEIJING-SKU-UHT-250-12-20260210",
         "production_date": "2026-02-10",
         "expiry_date": "2026-08-09",
-        "remaining_days": 118,
+        "remaining_days": 117,
         "total_qty": 507,
         "available_qty": 507,
         "locked_qty": 0,
@@ -28295,7 +28295,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 141,
@@ -28306,7 +28306,7 @@
         "batch_no": "WH-DC-BEIJING-SKU-UHT-250-24-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 367,
         "available_qty": 367,
         "locked_qty": 0,
@@ -28315,7 +28315,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 142,
@@ -28326,7 +28326,7 @@
         "batch_no": "WH-DC-BEIJING-SKU-UHT-200-10-20251014",
         "production_date": "2025-10-14",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 402,
         "available_qty": 402,
         "locked_qty": 0,
@@ -28335,7 +28335,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 143,
@@ -28346,7 +28346,7 @@
         "batch_no": "WH-DC-BEIJING-SKU-UHT-1L-12-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 437,
         "available_qty": 437,
         "locked_qty": 0,
@@ -28355,7 +28355,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 144,
@@ -28366,7 +28366,7 @@
         "batch_no": "WH-DC-BEIJING-SKU-PASTEUR-950-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 163,
         "available_qty": 163,
         "locked_qty": 0,
@@ -28375,7 +28375,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 145,
@@ -28386,7 +28386,7 @@
         "batch_no": "WH-DC-BEIJING-SKU-PASTEUR-450-20260408",
         "production_date": "2026-04-08",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 175,
         "available_qty": 175,
         "locked_qty": 0,
@@ -28395,7 +28395,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 146,
@@ -28406,7 +28406,7 @@
         "batch_no": "WH-DC-BEIJING-SKU-YOG-CHILLED-ORIGIN-200-10-20260325",
         "production_date": "2026-03-25",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 169,
         "available_qty": 169,
         "locked_qty": 0,
@@ -28415,7 +28415,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 147,
@@ -28426,7 +28426,7 @@
         "batch_no": "WH-DC-BEIJING-SKU-YOG-CHILLED-STRAW-200-10-20260401",
         "production_date": "2026-04-01",
         "expiry_date": "2026-04-22",
-        "remaining_days": 9,
+        "remaining_days": 8,
         "total_qty": 185,
         "available_qty": 185,
         "locked_qty": 0,
@@ -28435,7 +28435,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 148,
@@ -28446,16 +28446,16 @@
         "batch_no": "WH-DC-BEIJING-SKU-YOG-CHILLED-BLUEB-200-10-20260331",
         "production_date": "2026-03-31",
         "expiry_date": "2026-04-21",
-        "remaining_days": 8,
+        "remaining_days": 7,
         "total_qty": 202,
         "available_qty": 202,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 50,
-        "near_expiry_flag": 0,
+        "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 149,
@@ -28466,7 +28466,7 @@
         "batch_no": "WH-DC-BEIJING-SKU-POWDER-ADULT-800-20251015",
         "production_date": "2025-10-15",
         "expiry_date": "2027-04-08",
-        "remaining_days": 360,
+        "remaining_days": 359,
         "total_qty": 136,
         "available_qty": 136,
         "locked_qty": 0,
@@ -28475,7 +28475,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 150,
@@ -28486,7 +28486,7 @@
         "batch_no": "WH-DC-QINGDAO-SKU-UHT-250-12-20260206",
         "production_date": "2026-02-06",
         "expiry_date": "2026-08-05",
-        "remaining_days": 114,
+        "remaining_days": 113,
         "total_qty": 507,
         "available_qty": 507,
         "locked_qty": 0,
@@ -28495,7 +28495,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 151,
@@ -28506,7 +28506,7 @@
         "batch_no": "WH-DC-QINGDAO-SKU-UHT-250-24-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 367,
         "available_qty": 367,
         "locked_qty": 0,
@@ -28515,7 +28515,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 152,
@@ -28526,7 +28526,7 @@
         "batch_no": "WH-DC-QINGDAO-SKU-UHT-200-10-20260210",
         "production_date": "2026-02-10",
         "expiry_date": "2026-08-09",
-        "remaining_days": 118,
+        "remaining_days": 117,
         "total_qty": 402,
         "available_qty": 402,
         "locked_qty": 0,
@@ -28535,7 +28535,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 153,
@@ -28546,7 +28546,7 @@
         "batch_no": "WH-DC-QINGDAO-SKU-UHT-1L-12-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 437,
         "available_qty": 437,
         "locked_qty": 0,
@@ -28555,7 +28555,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 154,
@@ -28566,7 +28566,7 @@
         "batch_no": "WH-DC-QINGDAO-SKU-PASTEUR-950-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 163,
         "available_qty": 163,
         "locked_qty": 0,
@@ -28575,7 +28575,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 155,
@@ -28586,7 +28586,7 @@
         "batch_no": "WH-DC-QINGDAO-SKU-YOG-CHILLED-ORIGIN-200-10-20260330",
         "production_date": "2026-03-30",
         "expiry_date": "2026-04-20",
-        "remaining_days": 7,
+        "remaining_days": 6,
         "total_qty": 234,
         "available_qty": 234,
         "locked_qty": 0,
@@ -28595,7 +28595,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 156,
@@ -28606,7 +28606,7 @@
         "batch_no": "WH-DC-QINGDAO-SKU-YOG-CHILLED-STRAW-200-10-20260329",
         "production_date": "2026-03-29",
         "expiry_date": "2026-04-19",
-        "remaining_days": 6,
+        "remaining_days": 5,
         "total_qty": 169,
         "available_qty": 169,
         "locked_qty": 0,
@@ -28615,7 +28615,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 157,
@@ -28626,7 +28626,7 @@
         "batch_no": "WH-DC-QINGDAO-SKU-YOG-CHILLED-BLUEB-200-10-20260403",
         "production_date": "2026-04-03",
         "expiry_date": "2026-04-24",
-        "remaining_days": 11,
+        "remaining_days": 10,
         "total_qty": 185,
         "available_qty": 185,
         "locked_qty": 0,
@@ -28635,7 +28635,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 158,
@@ -28646,7 +28646,7 @@
         "batch_no": "WH-DC-QINGDAO-SKU-POWDER-ADULT-800-20251018",
         "production_date": "2025-10-18",
         "expiry_date": "2027-04-11",
-        "remaining_days": 363,
+        "remaining_days": 362,
         "total_qty": 126,
         "available_qty": 126,
         "locked_qty": 0,
@@ -28655,7 +28655,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 159,
@@ -28666,7 +28666,7 @@
         "batch_no": "WH-DC-ZHENGZHOU-SKU-UHT-250-12-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 472,
         "available_qty": 392,
         "locked_qty": 80,
@@ -28675,7 +28675,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604090002",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 160,
@@ -28686,7 +28686,7 @@
         "batch_no": "WH-DC-ZHENGZHOU-SKU-UHT-250-24-20260208",
         "production_date": "2026-02-08",
         "expiry_date": "2026-08-07",
-        "remaining_days": 116,
+        "remaining_days": 115,
         "total_qty": 507,
         "available_qty": 507,
         "locked_qty": 0,
@@ -28695,7 +28695,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 161,
@@ -28706,7 +28706,7 @@
         "batch_no": "WH-DC-ZHENGZHOU-SKU-UHT-200-10-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 367,
         "available_qty": 367,
         "locked_qty": 0,
@@ -28715,7 +28715,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 162,
@@ -28726,7 +28726,7 @@
         "batch_no": "WH-DC-ZHENGZHOU-SKU-UHT-1L-12-20260206",
         "production_date": "2026-02-06",
         "expiry_date": "2026-08-05",
-        "remaining_days": 114,
+        "remaining_days": 113,
         "total_qty": 402,
         "available_qty": 402,
         "locked_qty": 0,
@@ -28735,7 +28735,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 163,
@@ -28746,7 +28746,7 @@
         "batch_no": "WH-DC-ZHENGZHOU-SKU-PASTEUR-950-20260408",
         "production_date": "2026-04-06",
         "expiry_date": "2026-04-13",
-        "remaining_days": 0,
+        "remaining_days": -1,
         "total_qty": 26,
         "available_qty": 0,
         "locked_qty": 26,
@@ -28755,7 +28755,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "ORDER_ALLOCATE:SO202604090002",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 164,
@@ -28766,16 +28766,16 @@
         "batch_no": "WH-DC-ZHENGZHOU-SKU-PASTEUR-450-20260407",
         "production_date": "2026-04-07",
         "expiry_date": "2026-04-14",
-        "remaining_days": 1,
+        "remaining_days": 0,
         "total_qty": 163,
         "available_qty": 163,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 40,
         "near_expiry_flag": 1,
-        "unsellable_flag": 0,
+        "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 165,
@@ -28786,7 +28786,7 @@
         "batch_no": "WH-DC-ZHENGZHOU-SKU-YOG-CHILLED-ORIGIN-200-10-20260401",
         "production_date": "2026-04-01",
         "expiry_date": "2026-04-22",
-        "remaining_days": 9,
+        "remaining_days": 8,
         "total_qty": 275,
         "available_qty": 275,
         "locked_qty": 0,
@@ -28795,7 +28795,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 166,
@@ -28806,16 +28806,16 @@
         "batch_no": "WH-DC-ZHENGZHOU-SKU-YOG-CHILLED-STRAW-200-10-20260331",
         "production_date": "2026-03-31",
         "expiry_date": "2026-04-21",
-        "remaining_days": 8,
+        "remaining_days": 7,
         "total_qty": 23,
         "available_qty": 23,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 50,
-        "near_expiry_flag": 0,
+        "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 167,
@@ -28826,7 +28826,7 @@
         "batch_no": "WH-DC-ZHENGZHOU-SKU-YOG-CHILLED-BLUEB-200-10-20260330",
         "production_date": "2026-03-30",
         "expiry_date": "2026-04-20",
-        "remaining_days": 7,
+        "remaining_days": 6,
         "total_qty": 185,
         "available_qty": 185,
         "locked_qty": 0,
@@ -28835,7 +28835,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 168,
@@ -28846,7 +28846,7 @@
         "batch_no": "WH-DC-ZHENGZHOU-SKU-POWDER-ADULT-800-20251014",
         "production_date": "2025-10-14",
         "expiry_date": "2027-04-07",
-        "remaining_days": 359,
+        "remaining_days": 358,
         "total_qty": 126,
         "available_qty": 126,
         "locked_qty": 0,
@@ -28855,7 +28855,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 169,
@@ -28866,7 +28866,7 @@
         "batch_no": "WH-DC-CHANGSHA-SKU-UHT-250-12-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 472,
         "available_qty": 472,
         "locked_qty": 0,
@@ -28875,7 +28875,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 170,
@@ -28886,7 +28886,7 @@
         "batch_no": "WH-DC-CHANGSHA-SKU-UHT-250-24-20260210",
         "production_date": "2026-02-10",
         "expiry_date": "2026-08-09",
-        "remaining_days": 118,
+        "remaining_days": 117,
         "total_qty": 507,
         "available_qty": 507,
         "locked_qty": 0,
@@ -28895,7 +28895,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 171,
@@ -28906,7 +28906,7 @@
         "batch_no": "WH-DC-CHANGSHA-SKU-UHT-200-10-20260209",
         "production_date": "2026-02-09",
         "expiry_date": "2026-08-08",
-        "remaining_days": 117,
+        "remaining_days": 116,
         "total_qty": 367,
         "available_qty": 367,
         "locked_qty": 0,
@@ -28915,7 +28915,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 172,
@@ -28926,7 +28926,7 @@
         "batch_no": "WH-DC-CHANGSHA-SKU-UHT-1L-12-20260208",
         "production_date": "2026-02-08",
         "expiry_date": "2026-08-07",
-        "remaining_days": 116,
+        "remaining_days": 115,
         "total_qty": 0,
         "available_qty": 0,
         "locked_qty": 0,
@@ -28935,7 +28935,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 173,
@@ -28946,7 +28946,7 @@
         "batch_no": "WH-DC-CHANGSHA-SKU-PASTEUR-950-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 151,
         "available_qty": 151,
         "locked_qty": 0,
@@ -28955,7 +28955,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 174,
@@ -28966,7 +28966,7 @@
         "batch_no": "WH-DC-CHANGSHA-SKU-PASTEUR-450-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 163,
         "available_qty": 163,
         "locked_qty": 0,
@@ -28975,7 +28975,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 175,
@@ -28986,7 +28986,7 @@
         "batch_no": "WH-DC-CHANGSHA-SKU-YOG-CHILLED-ORIGIN-200-10-20260325",
         "production_date": "2026-03-25",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 234,
         "available_qty": 234,
         "locked_qty": 0,
@@ -28995,7 +28995,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 176,
@@ -29006,7 +29006,7 @@
         "batch_no": "WH-DC-CHANGSHA-SKU-YOG-CHILLED-STRAW-200-10-20260402",
         "production_date": "2026-04-02",
         "expiry_date": "2026-04-23",
-        "remaining_days": 10,
+        "remaining_days": 9,
         "total_qty": 169,
         "available_qty": 169,
         "locked_qty": 0,
@@ -29015,7 +29015,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 177,
@@ -29026,7 +29026,7 @@
         "batch_no": "WH-DC-CHANGSHA-SKU-POWDER-ADULT-800-20251017",
         "production_date": "2025-10-17",
         "expiry_date": "2027-04-10",
-        "remaining_days": 362,
+        "remaining_days": 361,
         "total_qty": 116,
         "available_qty": 116,
         "locked_qty": 0,
@@ -29035,7 +29035,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 178,
@@ -29046,7 +29046,7 @@
         "batch_no": "WH-DC-CHENGDU-SKU-UHT-250-12-20260208",
         "production_date": "2026-02-08",
         "expiry_date": "2026-08-07",
-        "remaining_days": 116,
+        "remaining_days": 115,
         "total_qty": 437,
         "available_qty": 437,
         "locked_qty": 0,
@@ -29055,7 +29055,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 179,
@@ -29066,7 +29066,7 @@
         "batch_no": "WH-DC-CHENGDU-SKU-UHT-250-24-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 472,
         "available_qty": 472,
         "locked_qty": 0,
@@ -29075,7 +29075,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 180,
@@ -29086,7 +29086,7 @@
         "batch_no": "WH-DC-CHENGDU-SKU-UHT-200-10-20260206",
         "production_date": "2026-02-06",
         "expiry_date": "2026-08-05",
-        "remaining_days": 114,
+        "remaining_days": 113,
         "total_qty": 507,
         "available_qty": 507,
         "locked_qty": 0,
@@ -29095,7 +29095,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 181,
@@ -29106,7 +29106,7 @@
         "batch_no": "WH-DC-CHENGDU-SKU-UHT-1L-12-20260211",
         "production_date": "2026-02-11",
         "expiry_date": "2026-08-10",
-        "remaining_days": 119,
+        "remaining_days": 118,
         "total_qty": 367,
         "available_qty": 367,
         "locked_qty": 0,
@@ -29115,7 +29115,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 182,
@@ -29126,16 +29126,16 @@
         "batch_no": "WH-DC-CHENGDU-SKU-PASTEUR-950-20260407",
         "production_date": "2026-04-07",
         "expiry_date": "2026-04-14",
-        "remaining_days": 1,
+        "remaining_days": 0,
         "total_qty": 139,
         "available_qty": 139,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 40,
         "near_expiry_flag": 1,
-        "unsellable_flag": 0,
+        "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 183,
@@ -29146,7 +29146,7 @@
         "batch_no": "WH-DC-CHENGDU-SKU-PASTEUR-450-20260406",
         "production_date": "2026-04-06",
         "expiry_date": "2026-04-13",
-        "remaining_days": 0,
+        "remaining_days": -1,
         "total_qty": 151,
         "available_qty": 151,
         "locked_qty": 0,
@@ -29155,7 +29155,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 184,
@@ -29166,16 +29166,16 @@
         "batch_no": "WH-DC-CHENGDU-SKU-YOG-CHILLED-ORIGIN-200-10-20260331",
         "production_date": "2026-03-31",
         "expiry_date": "2026-04-21",
-        "remaining_days": 8,
+        "remaining_days": 7,
         "total_qty": 218,
         "available_qty": 218,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 50,
-        "near_expiry_flag": 0,
+        "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 185,
@@ -29186,7 +29186,7 @@
         "batch_no": "WH-DC-CHENGDU-SKU-YOG-CHILLED-STRAW-200-10-20260330",
         "production_date": "2026-03-30",
         "expiry_date": "2026-04-20",
-        "remaining_days": 7,
+        "remaining_days": 6,
         "total_qty": 234,
         "available_qty": 234,
         "locked_qty": 0,
@@ -29195,7 +29195,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 186,
@@ -29206,7 +29206,7 @@
         "batch_no": "WH-DC-CHENGDU-SKU-YOG-CHILLED-BLUEB-200-10-20260329",
         "production_date": "2026-03-29",
         "expiry_date": "2026-04-19",
-        "remaining_days": 6,
+        "remaining_days": 5,
         "total_qty": 169,
         "available_qty": 169,
         "locked_qty": 0,
@@ -29215,7 +29215,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 187,
@@ -29226,7 +29226,7 @@
         "batch_no": "WH-DC-CHENGDU-SKU-POWDER-ADULT-800-20251019",
         "production_date": "2025-10-19",
         "expiry_date": "2027-04-12",
-        "remaining_days": 364,
+        "remaining_days": 363,
         "total_qty": 116,
         "available_qty": 116,
         "locked_qty": 0,
@@ -29235,7 +29235,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 188,
@@ -29246,7 +29246,7 @@
         "batch_no": "WH-DC-XIAN-SKU-UHT-250-12-20260210",
         "production_date": "2026-02-10",
         "expiry_date": "2026-08-09",
-        "remaining_days": 118,
+        "remaining_days": 117,
         "total_qty": 437,
         "available_qty": 437,
         "locked_qty": 0,
@@ -29255,7 +29255,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 189,
@@ -29266,7 +29266,7 @@
         "batch_no": "WH-DC-XIAN-SKU-UHT-250-24-20251014",
         "production_date": "2025-10-14",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 472,
         "available_qty": 472,
         "locked_qty": 0,
@@ -29275,7 +29275,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 190,
@@ -29286,7 +29286,7 @@
         "batch_no": "WH-DC-XIAN-SKU-UHT-200-10-20260208",
         "production_date": "2026-02-08",
         "expiry_date": "2026-08-07",
-        "remaining_days": 116,
+        "remaining_days": 115,
         "total_qty": 507,
         "available_qty": 507,
         "locked_qty": 0,
@@ -29295,7 +29295,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 191,
@@ -29306,7 +29306,7 @@
         "batch_no": "WH-DC-XIAN-SKU-UHT-1L-12-20260207",
         "production_date": "2026-02-07",
         "expiry_date": "2026-08-06",
-        "remaining_days": 115,
+        "remaining_days": 114,
         "total_qty": 367,
         "available_qty": 367,
         "locked_qty": 0,
@@ -29315,7 +29315,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 192,
@@ -29326,7 +29326,7 @@
         "batch_no": "WH-DC-XIAN-SKU-PASTEUR-950-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-12",
-        "remaining_days": -1,
+        "remaining_days": -2,
         "total_qty": 139,
         "available_qty": 139,
         "locked_qty": 0,
@@ -29335,7 +29335,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 193,
@@ -29346,7 +29346,7 @@
         "batch_no": "WH-DC-XIAN-SKU-PASTEUR-450-20260408",
         "production_date": "2026-04-08",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 151,
         "available_qty": 151,
         "locked_qty": 0,
@@ -29355,7 +29355,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 194,
@@ -29366,7 +29366,7 @@
         "batch_no": "WH-DC-XIAN-SKU-YOG-CHILLED-ORIGIN-200-10-20260402",
         "production_date": "2026-04-02",
         "expiry_date": "2026-04-23",
-        "remaining_days": 10,
+        "remaining_days": 9,
         "total_qty": 218,
         "available_qty": 218,
         "locked_qty": 0,
@@ -29375,7 +29375,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 195,
@@ -29386,7 +29386,7 @@
         "batch_no": "WH-DC-XIAN-SKU-YOG-CHILLED-STRAW-200-10-20260401",
         "production_date": "2026-04-01",
         "expiry_date": "2026-04-22",
-        "remaining_days": 9,
+        "remaining_days": 8,
         "total_qty": 234,
         "available_qty": 234,
         "locked_qty": 0,
@@ -29395,7 +29395,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 196,
@@ -29406,16 +29406,16 @@
         "batch_no": "WH-DC-XIAN-SKU-YOG-CHILLED-BLUEB-200-10-20260331",
         "production_date": "2026-03-31",
         "expiry_date": "2026-04-21",
-        "remaining_days": 8,
+        "remaining_days": 7,
         "total_qty": 169,
         "available_qty": 169,
         "locked_qty": 0,
         "in_transit_qty": 0,
         "safety_qty": 50,
-        "near_expiry_flag": 0,
+        "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 197,
@@ -29426,7 +29426,7 @@
         "batch_no": "WH-DC-XIAN-SKU-POWDER-ADULT-800-20251015",
         "production_date": "2025-10-15",
         "expiry_date": "2027-04-08",
-        "remaining_days": 360,
+        "remaining_days": 359,
         "total_qty": 116,
         "available_qty": 116,
         "locked_qty": 0,
@@ -29435,7 +29435,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "INIT_SEED",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 198,
@@ -29446,7 +29446,7 @@
         "batch_no": "WH-RDC-CENTRAL-WH-SKU-PASTEUR-950-20260405",
         "production_date": "2026-04-08",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 80,
         "available_qty": 80,
         "locked_qty": 0,
@@ -29455,7 +29455,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "TRANSFER_CREATE",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 199,
@@ -29466,7 +29466,7 @@
         "batch_no": "WH-DC-BEIJING-SKU-UHT-A2-250-12-20260116",
         "production_date": "2026-01-16",
         "expiry_date": "2026-07-15",
-        "remaining_days": 93,
+        "remaining_days": 92,
         "total_qty": 36,
         "available_qty": 36,
         "locked_qty": 0,
@@ -29475,7 +29475,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_RELEASE:SO202604080017",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 200,
@@ -29486,7 +29486,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-YOG-CHILLED-0SUGAR-200-10-20260406",
         "production_date": "2026-04-06",
         "expiry_date": "2026-04-27",
-        "remaining_days": 14,
+        "remaining_days": 13,
         "total_qty": 18,
         "available_qty": 18,
         "locked_qty": 0,
@@ -29495,7 +29495,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "DAMAGE:DM202604090001",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 201,
@@ -29506,7 +29506,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-CHEESE-CREAM-180-20251216",
         "production_date": "2025-12-16",
         "expiry_date": "2026-04-15",
-        "remaining_days": 2,
+        "remaining_days": 1,
         "total_qty": 24,
         "available_qty": 24,
         "locked_qty": 0,
@@ -29515,7 +29515,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 0,
         "last_change_source": "PO_RECEIPT:PO202604030021",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 202,
@@ -29526,7 +29526,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-YOG-CHILLED-0SUGAR-200-10-20260409",
         "production_date": "2026-04-09",
         "expiry_date": "2026-04-30",
-        "remaining_days": 17,
+        "remaining_days": 16,
         "total_qty": 180,
         "available_qty": 180,
         "locked_qty": 0,
@@ -29535,7 +29535,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "PO_RECEIPT:PO202604090001",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       }
     ],
     "inventory_transactions": [
@@ -33419,6 +33419,32 @@
         "cancel_reason": "",
         "cancelled_at": "",
         "updated_at": "2026-04-10T00:42:00.000Z"
+      },
+      {
+        "id": 7,
+        "transfer_no": "TR202604140001",
+        "out_warehouse_code": "WH-HQ-HZ",
+        "out_warehouse_name": "杭州总部中央仓",
+        "in_warehouse_code": "WH-RDC-EAST-SH",
+        "in_warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-UHT-HIGHCAL-250-12",
+        "sku_name": "高钙纯牛奶250ml*12",
+        "batch_no": "WH-HQ-HZ-SKU-UHT-HIGHCAL-250-12-20260207",
+        "qty": 1,
+        "reason": "",
+        "status": "DRAFT",
+        "applicant": "焦昊源",
+        "applied_at": "2026-04-14T08:19:30.765Z",
+        "reviewer": "",
+        "review_comment": "",
+        "reviewed_at": "",
+        "outbound_confirm_by": "",
+        "outbound_confirm_at": "",
+        "inbound_confirm_by": "",
+        "inbound_confirm_at": "",
+        "cancel_reason": "",
+        "cancelled_at": "",
+        "updated_at": "2026-04-14T08:19:30.765Z"
       }
     ],
     "transfer_tracks": [
@@ -33565,6 +33591,14 @@
         "operator": "李强",
         "comment": "创建调拨草稿",
         "action_time": "2026-04-10T00:42:00.000Z"
+      },
+      {
+        "id": 19,
+        "transfer_no": "TR202604140001",
+        "status": "DRAFT",
+        "operator": "焦昊源",
+        "comment": "创建调拨单",
+        "action_time": "2026-04-14T08:19:30.765Z"
       }
     ],
     "inventory_warnings": [
@@ -36452,7 +36486,7 @@
         "id": 1,
         "type": "LOW_STOCK",
         "level": "HIGH",
-        "status": "OPEN",
+        "status": "PROCESSING",
         "warehouse_code": "WH-HQ-HZ",
         "warehouse_name": "杭州总部中央仓",
         "sku_code": "SKU-UHT-250-12",
@@ -36461,10 +36495,10 @@
         "message": "可用库存低于安全库存（覆盖率 45.2%）",
         "related_qty": 84,
         "generated_at": "2026-04-10T01:00:00.000Z",
-        "handled_by": "",
+        "handled_by": "焦昊源",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 2,
@@ -36482,7 +36516,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 6,
@@ -36500,25 +36534,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 10,
         "type": "NEAR_EXPIRY",
-        "level": "HIGH",
+        "level": "CRITICAL",
         "status": "OPEN",
         "warehouse_code": "WH-HQ-HZ",
         "warehouse_name": "杭州总部中央仓",
         "sku_code": "SKU-PASTEUR-950",
         "sku_name": "巴氏鲜奶950ml",
         "batch_no": "WH-HQ-HZ-SKU-PASTEUR-950-20260407",
-        "message": "库存临期预警",
+        "message": "库存已过期不可售",
         "related_qty": 279,
         "generated_at": "2026-04-10T01:00:00.000Z",
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 12,
@@ -36536,25 +36570,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 14,
         "type": "NEAR_EXPIRY",
-        "level": "HIGH",
+        "level": "CRITICAL",
         "status": "OPEN",
         "warehouse_code": "WH-HQ-HZ",
         "warehouse_name": "杭州总部中央仓",
         "sku_code": "SKU-PASTEUR-HIGHCAL-950",
         "sku_name": "高钙鲜奶950ml",
         "batch_no": "WH-HQ-HZ-SKU-PASTEUR-HIGHCAL-950-20260404",
-        "message": "库存临期预警",
+        "message": "库存已过期不可售",
         "related_qty": 324,
         "generated_at": "2026-04-10T01:00:00.000Z",
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 15,
@@ -36572,12 +36606,12 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 250,
         "type": "NEAR_EXPIRY",
-        "level": "LOW",
+        "level": "MEDIUM",
         "status": "OPEN",
         "warehouse_code": "WH-HQ-HZ",
         "warehouse_name": "杭州总部中央仓",
@@ -36590,7 +36624,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 24,
@@ -36608,7 +36642,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 34,
@@ -36626,7 +36660,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 35,
@@ -36644,7 +36678,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 36,
@@ -36662,25 +36696,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 38,
         "type": "NEAR_EXPIRY",
-        "level": "HIGH",
+        "level": "CRITICAL",
         "status": "OPEN",
         "warehouse_code": "WH-RDC-EAST-SH",
         "warehouse_name": "上海华东RDC",
         "sku_code": "SKU-PASTEUR-450",
         "sku_name": "巴氏鲜奶450ml",
         "batch_no": "WH-RDC-EAST-SH-SKU-PASTEUR-450-20260407",
-        "message": "库存临期预警",
+        "message": "库存已过期不可售",
         "related_qty": 199,
         "generated_at": "2026-04-10T01:00:00.000Z",
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 40,
@@ -36698,7 +36732,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 41,
@@ -36716,7 +36750,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
+      },
+      {
+        "id": 266,
+        "type": "NEAR_EXPIRY",
+        "level": "LOW",
+        "status": "OPEN",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-YOG-CHILLED-ORIGIN-200-10",
+        "sku_name": "低温原味酸奶200g*10",
+        "batch_no": "WH-RDC-EAST-SH-SKU-YOG-CHILLED-ORIGIN-200-10-20260331",
+        "message": "库存临期预警",
+        "related_qty": 32,
+        "generated_at": "2026-04-14T08:11:07.804Z",
+        "handled_by": "",
+        "handled_at": "",
+        "handle_comment": "",
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 258,
@@ -36734,12 +36786,12 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 251,
         "type": "NEAR_EXPIRY",
-        "level": "LOW",
+        "level": "MEDIUM",
         "status": "OPEN",
         "warehouse_code": "WH-RDC-EAST-SH",
         "warehouse_name": "上海华东RDC",
@@ -36752,7 +36804,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 46,
@@ -36770,7 +36822,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 47,
@@ -36788,7 +36840,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 49,
@@ -36806,7 +36858,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 52,
@@ -36824,7 +36876,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 53,
@@ -36842,7 +36894,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 55,
@@ -36860,7 +36912,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 57,
@@ -36878,7 +36930,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
+      },
+      {
+        "id": 267,
+        "type": "NEAR_EXPIRY",
+        "level": "LOW",
+        "status": "OPEN",
+        "warehouse_code": "WH-RDC-SOUTH-GZ",
+        "warehouse_name": "广州华南RDC",
+        "sku_code": "SKU-YOG-CHILLED-0SUGAR-200-10",
+        "sku_name": "低温0蔗糖酸奶200g*10",
+        "batch_no": "WH-RDC-SOUTH-GZ-SKU-YOG-CHILLED-0SUGAR-200-10-20260331",
+        "message": "库存临期预警",
+        "related_qty": 265,
+        "generated_at": "2026-04-14T08:11:07.804Z",
+        "handled_by": "",
+        "handled_at": "",
+        "handle_comment": "",
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 63,
@@ -36896,7 +36966,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 64,
@@ -36914,7 +36984,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 67,
@@ -36932,7 +37002,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 69,
@@ -36950,7 +37020,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 70,
@@ -36968,25 +37038,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 73,
         "type": "NEAR_EXPIRY",
-        "level": "HIGH",
+        "level": "CRITICAL",
         "status": "OPEN",
         "warehouse_code": "WH-RDC-NORTH-TJ",
         "warehouse_name": "天津华北RDC",
         "sku_code": "SKU-PASTEUR-950",
         "sku_name": "巴氏鲜奶950ml",
         "batch_no": "WH-RDC-NORTH-TJ-SKU-PASTEUR-950-20260407",
-        "message": "库存临期预警",
+        "message": "库存已过期不可售",
         "related_qty": 199,
         "generated_at": "2026-04-10T01:00:00.000Z",
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 75,
@@ -37004,25 +37074,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 77,
         "type": "NEAR_EXPIRY",
-        "level": "HIGH",
+        "level": "CRITICAL",
         "status": "OPEN",
         "warehouse_code": "WH-RDC-NORTH-TJ",
         "warehouse_name": "天津华北RDC",
         "sku_code": "SKU-PASTEUR-HIGHCAL-950",
         "sku_name": "高钙鲜奶950ml",
         "batch_no": "WH-RDC-NORTH-TJ-SKU-PASTEUR-HIGHCAL-950-20260404",
-        "message": "库存临期预警",
+        "message": "库存已过期不可售",
         "related_qty": 233,
         "generated_at": "2026-04-10T01:00:00.000Z",
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 259,
@@ -37040,12 +37110,12 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 252,
         "type": "NEAR_EXPIRY",
-        "level": "LOW",
+        "level": "MEDIUM",
         "status": "OPEN",
         "warehouse_code": "WH-RDC-NORTH-TJ",
         "warehouse_name": "天津华北RDC",
@@ -37058,7 +37128,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 80,
@@ -37076,7 +37146,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 82,
@@ -37094,7 +37164,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 83,
@@ -37112,7 +37182,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 88,
@@ -37130,7 +37200,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 90,
@@ -37148,7 +37218,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 92,
@@ -37166,7 +37236,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 246,
@@ -37184,7 +37254,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
+      },
+      {
+        "id": 268,
+        "type": "NEAR_EXPIRY",
+        "level": "LOW",
+        "status": "OPEN",
+        "warehouse_code": "WH-RDC-CENTRAL-WH",
+        "warehouse_name": "武汉华中RDC",
+        "sku_code": "SKU-YOG-CHILLED-BLUEB-200-10",
+        "sku_name": "低温蓝莓酸奶200g*10",
+        "batch_no": "WH-RDC-CENTRAL-WH-SKU-YOG-CHILLED-BLUEB-200-10-20260331",
+        "message": "库存临期预警",
+        "related_qty": 265,
+        "generated_at": "2026-04-14T08:11:07.804Z",
+        "handled_by": "",
+        "handled_at": "",
+        "handle_comment": "",
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 97,
@@ -37202,7 +37290,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 260,
@@ -37220,7 +37308,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 98,
@@ -37238,7 +37326,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 99,
@@ -37256,7 +37344,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 103,
@@ -37274,7 +37362,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 105,
@@ -37292,25 +37380,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 108,
         "type": "NEAR_EXPIRY",
-        "level": "HIGH",
+        "level": "CRITICAL",
         "status": "OPEN",
         "warehouse_code": "WH-RDC-WEST-CD",
         "warehouse_name": "成都西南RDC",
         "sku_code": "SKU-PASTEUR-950",
         "sku_name": "巴氏鲜奶950ml",
         "batch_no": "WH-RDC-WEST-CD-SKU-PASTEUR-950-20260407",
-        "message": "库存临期预警",
+        "message": "库存已过期不可售",
         "related_qty": 199,
         "generated_at": "2026-04-10T01:00:00.000Z",
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 110,
@@ -37328,25 +37416,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 112,
         "type": "NEAR_EXPIRY",
-        "level": "HIGH",
+        "level": "CRITICAL",
         "status": "OPEN",
         "warehouse_code": "WH-RDC-WEST-CD",
         "warehouse_name": "成都西南RDC",
         "sku_code": "SKU-PASTEUR-HIGHCAL-950",
         "sku_name": "高钙鲜奶950ml",
         "batch_no": "WH-RDC-WEST-CD-SKU-PASTEUR-HIGHCAL-950-20260404",
-        "message": "库存临期预警",
+        "message": "库存已过期不可售",
         "related_qty": 233,
         "generated_at": "2026-04-10T01:00:00.000Z",
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 114,
@@ -37364,12 +37452,12 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 253,
         "type": "NEAR_EXPIRY",
-        "level": "LOW",
+        "level": "MEDIUM",
         "status": "OPEN",
         "warehouse_code": "WH-RDC-WEST-CD",
         "warehouse_name": "成都西南RDC",
@@ -37382,7 +37470,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 118,
@@ -37400,7 +37488,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 119,
@@ -37418,7 +37506,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 124,
@@ -37436,7 +37524,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 125,
@@ -37454,7 +37542,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 127,
@@ -37472,12 +37560,12 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 254,
         "type": "NEAR_EXPIRY",
-        "level": "LOW",
+        "level": "MEDIUM",
         "status": "OPEN",
         "warehouse_code": "WH-DC-SUZHOU",
         "warehouse_name": "苏州渠道分拨仓",
@@ -37490,7 +37578,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 135,
@@ -37508,7 +37596,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 136,
@@ -37526,25 +37614,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 137,
         "type": "NEAR_EXPIRY",
-        "level": "HIGH",
+        "level": "CRITICAL",
         "status": "OPEN",
         "warehouse_code": "WH-DC-NANJING",
         "warehouse_name": "南京渠道分拨仓",
         "sku_code": "SKU-PASTEUR-450",
         "sku_name": "巴氏鲜奶450ml",
         "batch_no": "WH-DC-NANJING-SKU-PASTEUR-450-20260407",
-        "message": "库存临期预警",
+        "message": "库存已过期不可售",
         "related_qty": 127,
         "generated_at": "2026-04-10T01:00:00.000Z",
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 139,
@@ -37562,7 +37650,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
+      },
+      {
+        "id": 269,
+        "type": "NEAR_EXPIRY",
+        "level": "LOW",
+        "status": "OPEN",
+        "warehouse_code": "WH-DC-NANJING",
+        "warehouse_name": "南京渠道分拨仓",
+        "sku_code": "SKU-YOG-CHILLED-STRAW-200-10",
+        "sku_name": "低温草莓酸奶200g*10",
+        "batch_no": "WH-DC-NANJING-SKU-YOG-CHILLED-STRAW-200-10-20260331",
+        "message": "库存临期预警",
+        "related_qty": 202,
+        "generated_at": "2026-04-14T08:11:07.804Z",
+        "handled_by": "",
+        "handled_at": "",
+        "handle_comment": "",
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 261,
@@ -37580,7 +37686,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 146,
@@ -37598,7 +37704,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 148,
@@ -37616,7 +37722,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 149,
@@ -37634,7 +37740,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 156,
@@ -37652,25 +37758,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 158,
         "type": "NEAR_EXPIRY",
-        "level": "HIGH",
+        "level": "CRITICAL",
         "status": "OPEN",
         "warehouse_code": "WH-DC-FOSHAN",
         "warehouse_name": "佛山城市分拨仓",
         "sku_code": "SKU-PASTEUR-950",
         "sku_name": "巴氏鲜奶950ml",
         "batch_no": "WH-DC-FOSHAN-SKU-PASTEUR-950-20260407",
-        "message": "库存临期预警",
+        "message": "库存已过期不可售",
         "related_qty": 163,
         "generated_at": "2026-04-10T01:00:00.000Z",
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 160,
@@ -37688,7 +37794,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
+      },
+      {
+        "id": 270,
+        "type": "NEAR_EXPIRY",
+        "level": "LOW",
+        "status": "OPEN",
+        "warehouse_code": "WH-DC-FOSHAN",
+        "warehouse_name": "佛山城市分拨仓",
+        "sku_code": "SKU-YOG-CHILLED-ORIGIN-200-10",
+        "sku_name": "低温原味酸奶200g*10",
+        "batch_no": "WH-DC-FOSHAN-SKU-YOG-CHILLED-ORIGIN-200-10-20260331",
+        "message": "库存临期预警",
+        "related_qty": 169,
+        "generated_at": "2026-04-14T08:11:07.804Z",
+        "handled_by": "",
+        "handled_at": "",
+        "handle_comment": "",
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 262,
@@ -37706,12 +37830,12 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 255,
         "type": "NEAR_EXPIRY",
-        "level": "LOW",
+        "level": "MEDIUM",
         "status": "OPEN",
         "warehouse_code": "WH-DC-FOSHAN",
         "warehouse_name": "佛山城市分拨仓",
@@ -37724,7 +37848,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 165,
@@ -37742,7 +37866,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 168,
@@ -37760,7 +37884,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 171,
@@ -37778,7 +37902,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 173,
@@ -37796,7 +37920,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 175,
@@ -37814,7 +37938,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
+      },
+      {
+        "id": 271,
+        "type": "NEAR_EXPIRY",
+        "level": "LOW",
+        "status": "OPEN",
+        "warehouse_code": "WH-DC-BEIJING",
+        "warehouse_name": "北京城市分拨仓",
+        "sku_code": "SKU-YOG-CHILLED-BLUEB-200-10",
+        "sku_name": "低温蓝莓酸奶200g*10",
+        "batch_no": "WH-DC-BEIJING-SKU-YOG-CHILLED-BLUEB-200-10-20260331",
+        "message": "库存临期预警",
+        "related_qty": 202,
+        "generated_at": "2026-04-14T08:11:07.804Z",
+        "handled_by": "",
+        "handled_at": "",
+        "handle_comment": "",
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 179,
@@ -37832,7 +37974,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 184,
@@ -37850,7 +37992,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 263,
@@ -37868,12 +38010,12 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 256,
         "type": "NEAR_EXPIRY",
-        "level": "LOW",
+        "level": "MEDIUM",
         "status": "OPEN",
         "warehouse_code": "WH-DC-QINGDAO",
         "warehouse_name": "青岛城市分拨仓",
@@ -37886,7 +38028,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 190,
@@ -37904,7 +38046,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 193,
@@ -37922,7 +38064,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 194,
@@ -37940,25 +38082,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 196,
         "type": "NEAR_EXPIRY",
-        "level": "HIGH",
+        "level": "CRITICAL",
         "status": "OPEN",
         "warehouse_code": "WH-DC-ZHENGZHOU",
         "warehouse_name": "郑州城市分拨仓",
         "sku_code": "SKU-PASTEUR-450",
         "sku_name": "巴氏鲜奶450ml",
         "batch_no": "WH-DC-ZHENGZHOU-SKU-PASTEUR-450-20260407",
-        "message": "库存临期预警",
+        "message": "库存已过期不可售",
         "related_qty": 163,
         "generated_at": "2026-04-10T01:00:00.000Z",
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 197,
@@ -37976,7 +38118,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 198,
@@ -37994,7 +38136,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
+      },
+      {
+        "id": 272,
+        "type": "NEAR_EXPIRY",
+        "level": "LOW",
+        "status": "OPEN",
+        "warehouse_code": "WH-DC-ZHENGZHOU",
+        "warehouse_name": "郑州城市分拨仓",
+        "sku_code": "SKU-YOG-CHILLED-STRAW-200-10",
+        "sku_name": "低温草莓酸奶200g*10",
+        "batch_no": "WH-DC-ZHENGZHOU-SKU-YOG-CHILLED-STRAW-200-10-20260331",
+        "message": "库存临期预警",
+        "related_qty": 23,
+        "generated_at": "2026-04-14T08:11:07.804Z",
+        "handled_by": "",
+        "handled_at": "",
+        "handle_comment": "",
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 264,
@@ -38012,7 +38172,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 202,
@@ -38030,7 +38190,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 204,
@@ -38048,7 +38208,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 206,
@@ -38066,7 +38226,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 208,
@@ -38084,7 +38244,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 210,
@@ -38102,7 +38262,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 215,
@@ -38120,25 +38280,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 218,
         "type": "NEAR_EXPIRY",
-        "level": "HIGH",
+        "level": "CRITICAL",
         "status": "OPEN",
         "warehouse_code": "WH-DC-CHENGDU",
         "warehouse_name": "成都城市分拨仓",
         "sku_code": "SKU-PASTEUR-950",
         "sku_name": "巴氏鲜奶950ml",
         "batch_no": "WH-DC-CHENGDU-SKU-PASTEUR-950-20260407",
-        "message": "库存临期预警",
+        "message": "库存已过期不可售",
         "related_qty": 139,
         "generated_at": "2026-04-10T01:00:00.000Z",
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 220,
@@ -38156,7 +38316,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
+      },
+      {
+        "id": 273,
+        "type": "NEAR_EXPIRY",
+        "level": "LOW",
+        "status": "OPEN",
+        "warehouse_code": "WH-DC-CHENGDU",
+        "warehouse_name": "成都城市分拨仓",
+        "sku_code": "SKU-YOG-CHILLED-ORIGIN-200-10",
+        "sku_name": "低温原味酸奶200g*10",
+        "batch_no": "WH-DC-CHENGDU-SKU-YOG-CHILLED-ORIGIN-200-10-20260331",
+        "message": "库存临期预警",
+        "related_qty": 218,
+        "generated_at": "2026-04-14T08:11:07.804Z",
+        "handled_by": "",
+        "handled_at": "",
+        "handle_comment": "",
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 265,
@@ -38174,12 +38352,12 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 257,
         "type": "NEAR_EXPIRY",
-        "level": "LOW",
+        "level": "MEDIUM",
         "status": "OPEN",
         "warehouse_code": "WH-DC-CHENGDU",
         "warehouse_name": "成都城市分拨仓",
@@ -38192,7 +38370,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 227,
@@ -38210,7 +38388,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 228,
@@ -38228,7 +38406,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 231,
@@ -38246,7 +38424,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 233,
@@ -38264,7 +38442,25 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
+      },
+      {
+        "id": 274,
+        "type": "NEAR_EXPIRY",
+        "level": "LOW",
+        "status": "OPEN",
+        "warehouse_code": "WH-DC-XIAN",
+        "warehouse_name": "西安城市分拨仓",
+        "sku_code": "SKU-YOG-CHILLED-BLUEB-200-10",
+        "sku_name": "低温蓝莓酸奶200g*10",
+        "batch_no": "WH-DC-XIAN-SKU-YOG-CHILLED-BLUEB-200-10-20260331",
+        "message": "库存临期预警",
+        "related_qty": 169,
+        "generated_at": "2026-04-14T08:11:07.804Z",
+        "handled_by": "",
+        "handled_at": "",
+        "handle_comment": "",
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 238,
@@ -38282,7 +38478,7 @@
         "handled_by": "",
         "handled_at": "",
         "handle_comment": "",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 239,
@@ -38300,7 +38496,7 @@
         "handled_by": "林文超",
         "handled_at": "2026-04-09T06:15:00.000Z",
         "handle_comment": "已审批调拨 TR202604090003，待总部仓出库",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 240,
@@ -38318,7 +38514,7 @@
         "handled_by": "李强",
         "handled_at": "2026-04-09T02:12:00.000Z",
         "handle_comment": "已提交调拨申请 TR202604090002，待供应链经理审核",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       },
       {
         "id": 241,
@@ -38336,7 +38532,7 @@
         "handled_by": "李强",
         "handled_at": "2026-04-09T03:30:00.000Z",
         "handle_comment": "改为西南本地临促处理，跨区调拨单 TR202604090005 已取消",
-        "updated_at": "2026-04-13T05:38:01.387Z"
+        "updated_at": "2026-04-14T08:20:00.173Z"
       }
     ],
     "warehouse_capabilities": [
@@ -39214,7 +39410,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 2,
@@ -39241,7 +39437,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 3,
@@ -39268,7 +39464,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 4,
@@ -39295,7 +39491,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 5,
@@ -39322,7 +39518,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 6,
@@ -39349,7 +39545,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 7,
@@ -39376,7 +39572,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 8,
@@ -39403,7 +39599,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 9,
@@ -39430,7 +39626,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 10,
@@ -39457,7 +39653,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 11,
@@ -39484,7 +39680,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 12,
@@ -39511,7 +39707,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 13,
@@ -39538,7 +39734,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 14,
@@ -39565,7 +39761,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 15,
@@ -39592,7 +39788,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 16,
@@ -39619,7 +39815,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 17,
@@ -39646,7 +39842,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 18,
@@ -39673,7 +39869,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       },
       {
         "id": 19,
@@ -39700,7 +39896,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-14T07:27:23.300Z"
+        "updated_at": "2026-04-14T08:11:54.319Z"
       }
     ],
     "channel_dealer_authorizations": [
@@ -48360,6 +48556,42 @@
         "sort_order": 5,
         "remark": "站内通知状态",
         "system_flag": 1
+      },
+      {
+        "id": 101,
+        "dict_type_code": "sku_category_code",
+        "dict_type_name": "SKU品类码",
+        "status": 1,
+        "sort_order": 101,
+        "remark": "SKU第2段，表示商品大类",
+        "system_flag": 1
+      },
+      {
+        "id": 102,
+        "dict_type_code": "sku_process_code",
+        "dict_type_name": "SKU工艺码",
+        "status": 1,
+        "sort_order": 102,
+        "remark": "SKU第3段，表示工艺或产品形态",
+        "system_flag": 1
+      },
+      {
+        "id": 103,
+        "dict_type_code": "sku_pack_code",
+        "dict_type_name": "SKU包装码",
+        "status": 1,
+        "sort_order": 103,
+        "remark": "SKU第5段，表示包装数量和包装类型",
+        "system_flag": 1
+      },
+      {
+        "id": 104,
+        "dict_type_code": "sku_attr_code",
+        "dict_type_name": "SKU属性码",
+        "status": 1,
+        "sort_order": 104,
+        "remark": "SKU第6段，表示主差异属性",
+        "system_flag": 1
       }
     ],
     "dict_items": [
@@ -48538,6 +48770,414 @@
         "sort_order": 2,
         "status": 1,
         "system_flag": 1
+      },
+      {
+        "id": 1001,
+        "dict_type_code": "sku_category_code",
+        "item_code": "UHT",
+        "item_name": "常温液奶",
+        "item_value": "UHT",
+        "item_color": "primary",
+        "sort_order": 1,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "常温液奶"
+      },
+      {
+        "id": 1002,
+        "dict_type_code": "sku_category_code",
+        "item_code": "FRM",
+        "item_name": "巴氏鲜奶",
+        "item_value": "FRM",
+        "item_color": "success",
+        "sort_order": 2,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "鲜奶/低温鲜奶"
+      },
+      {
+        "id": 1003,
+        "dict_type_code": "sku_category_code",
+        "item_code": "YOG",
+        "item_name": "酸奶",
+        "item_value": "YOG",
+        "item_color": "warning",
+        "sort_order": 3,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "发酵乳/酸奶"
+      },
+      {
+        "id": 1004,
+        "dict_type_code": "sku_category_code",
+        "item_code": "DRK",
+        "item_name": "乳饮品",
+        "item_value": "DRK",
+        "item_color": "warning",
+        "sort_order": 4,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "乳饮料/即饮型饮品"
+      },
+      {
+        "id": 1005,
+        "dict_type_code": "sku_category_code",
+        "item_code": "PWD",
+        "item_name": "奶粉",
+        "item_value": "PWD",
+        "item_color": "danger",
+        "sort_order": 5,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "粉状奶粉"
+      },
+      {
+        "id": 1006,
+        "dict_type_code": "sku_category_code",
+        "item_code": "CHS",
+        "item_name": "芝士",
+        "item_value": "CHS",
+        "item_color": "info",
+        "sort_order": 6,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "芝士/奶酪制品"
+      },
+      {
+        "id": 1101,
+        "dict_type_code": "sku_process_code",
+        "item_code": "UHT",
+        "item_name": "超高温灭菌",
+        "item_value": "UHT",
+        "item_color": "primary",
+        "sort_order": 1,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "常温灭菌工艺"
+      },
+      {
+        "id": 1102,
+        "dict_type_code": "sku_process_code",
+        "item_code": "PAS",
+        "item_name": "巴氏杀菌",
+        "item_value": "PAS",
+        "item_color": "success",
+        "sort_order": 2,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "巴氏杀菌工艺"
+      },
+      {
+        "id": 1103,
+        "dict_type_code": "sku_process_code",
+        "item_code": "CHL",
+        "item_name": "冷藏低温",
+        "item_value": "CHL",
+        "item_color": "warning",
+        "sort_order": 3,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "低温冷藏型"
+      },
+      {
+        "id": 1104,
+        "dict_type_code": "sku_process_code",
+        "item_code": "RTD",
+        "item_name": "即饮型",
+        "item_value": "RTD",
+        "item_color": "warning",
+        "sort_order": 4,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "开盖即饮"
+      },
+      {
+        "id": 1105,
+        "dict_type_code": "sku_process_code",
+        "item_code": "GRK",
+        "item_name": "希腊型",
+        "item_value": "GRK",
+        "item_color": "warning",
+        "sort_order": 5,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "希腊酸奶型"
+      },
+      {
+        "id": 1106,
+        "dict_type_code": "sku_process_code",
+        "item_code": "PWD",
+        "item_name": "粉状",
+        "item_value": "PWD",
+        "item_color": "danger",
+        "sort_order": 6,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "粉状形态"
+      },
+      {
+        "id": 1107,
+        "dict_type_code": "sku_process_code",
+        "item_code": "CRM",
+        "item_name": "奶油型",
+        "item_value": "CRM",
+        "item_color": "info",
+        "sort_order": 7,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "奶油芝士型"
+      },
+      {
+        "id": 1108,
+        "dict_type_code": "sku_process_code",
+        "item_code": "MOZ",
+        "item_name": "马苏里拉型",
+        "item_value": "MOZ",
+        "item_color": "info",
+        "sort_order": 8,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "马苏里拉"
+      },
+      {
+        "id": 1109,
+        "dict_type_code": "sku_process_code",
+        "item_code": "SLC",
+        "item_name": "切片型",
+        "item_value": "SLC",
+        "item_color": "info",
+        "sort_order": 9,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "切片奶酪"
+      },
+      {
+        "id": 1201,
+        "dict_type_code": "sku_pack_code",
+        "item_code": "01BT",
+        "item_name": "单瓶",
+        "item_value": "01BT",
+        "item_color": "primary",
+        "sort_order": 1,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "1瓶装"
+      },
+      {
+        "id": 1202,
+        "dict_type_code": "sku_pack_code",
+        "item_code": "01BX",
+        "item_name": "单盒",
+        "item_value": "01BX",
+        "item_color": "primary",
+        "sort_order": 2,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "1盒装"
+      },
+      {
+        "id": 1203,
+        "dict_type_code": "sku_pack_code",
+        "item_code": "01BG",
+        "item_name": "单袋",
+        "item_value": "01BG",
+        "item_color": "primary",
+        "sort_order": 3,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "1袋装"
+      },
+      {
+        "id": 1204,
+        "dict_type_code": "sku_pack_code",
+        "item_code": "01CN",
+        "item_name": "单罐",
+        "item_value": "01CN",
+        "item_color": "primary",
+        "sort_order": 4,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "1罐装"
+      },
+      {
+        "id": 1205,
+        "dict_type_code": "sku_pack_code",
+        "item_code": "10CP",
+        "item_name": "10杯装",
+        "item_value": "10CP",
+        "item_color": "success",
+        "sort_order": 5,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "10杯装"
+      },
+      {
+        "id": 1206,
+        "dict_type_code": "sku_pack_code",
+        "item_code": "12BX",
+        "item_name": "12盒装",
+        "item_value": "12BX",
+        "item_color": "success",
+        "sort_order": 6,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "12盒装"
+      },
+      {
+        "id": 1207,
+        "dict_type_code": "sku_pack_code",
+        "item_code": "24BX",
+        "item_name": "24盒装",
+        "item_value": "24BX",
+        "item_color": "success",
+        "sort_order": 7,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "24盒装"
+      },
+      {
+        "id": 1208,
+        "dict_type_code": "sku_pack_code",
+        "item_code": "30BT",
+        "item_name": "30瓶装",
+        "item_value": "30BT",
+        "item_color": "success",
+        "sort_order": 8,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "30瓶装"
+      },
+      {
+        "id": 1301,
+        "dict_type_code": "sku_attr_code",
+        "item_code": "PLN",
+        "item_name": "基础款/原味",
+        "item_value": "PLN",
+        "item_color": "primary",
+        "sort_order": 1,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "基础款或原味"
+      },
+      {
+        "id": 1302,
+        "dict_type_code": "sku_attr_code",
+        "item_code": "HCL",
+        "item_name": "高钙",
+        "item_value": "HCL",
+        "item_color": "success",
+        "sort_order": 2,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "高钙"
+      },
+      {
+        "id": 1303,
+        "dict_type_code": "sku_attr_code",
+        "item_code": "A2N",
+        "item_name": "A2",
+        "item_value": "A2N",
+        "item_color": "success",
+        "sort_order": 3,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "A2配方"
+      },
+      {
+        "id": 1304,
+        "dict_type_code": "sku_attr_code",
+        "item_code": "ORG",
+        "item_name": "有机",
+        "item_value": "ORG",
+        "item_color": "success",
+        "sort_order": 4,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "有机认证"
+      },
+      {
+        "id": 1305,
+        "dict_type_code": "sku_attr_code",
+        "item_code": "ADT",
+        "item_name": "成人",
+        "item_value": "ADT",
+        "item_color": "warning",
+        "sort_order": 5,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "成人向"
+      },
+      {
+        "id": 1306,
+        "dict_type_code": "sku_attr_code",
+        "item_code": "CHD",
+        "item_name": "儿童",
+        "item_value": "CHD",
+        "item_color": "warning",
+        "sort_order": 6,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "儿童向"
+      },
+      {
+        "id": 1307,
+        "dict_type_code": "sku_attr_code",
+        "item_code": "MID",
+        "item_name": "中老年",
+        "item_value": "MID",
+        "item_color": "warning",
+        "sort_order": 7,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "中老年向"
+      },
+      {
+        "id": 1308,
+        "dict_type_code": "sku_attr_code",
+        "item_code": "STR",
+        "item_name": "草莓味",
+        "item_value": "STR",
+        "item_color": "danger",
+        "sort_order": 8,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "草莓味"
+      },
+      {
+        "id": 1309,
+        "dict_type_code": "sku_attr_code",
+        "item_code": "BLU",
+        "item_name": "蓝莓味",
+        "item_value": "BLU",
+        "item_color": "danger",
+        "sort_order": 9,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "蓝莓味"
+      },
+      {
+        "id": 1310,
+        "dict_type_code": "sku_attr_code",
+        "item_code": "MNG",
+        "item_name": "芒果味",
+        "item_value": "MNG",
+        "item_color": "danger",
+        "sort_order": 10,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "芒果味"
+      },
+      {
+        "id": 1311,
+        "dict_type_code": "sku_attr_code",
+        "item_code": "ZSG",
+        "item_name": "零蔗糖",
+        "item_value": "ZSG",
+        "item_color": "danger",
+        "sort_order": 11,
+        "status": 1,
+        "system_flag": 1,
+        "remark": "零蔗糖"
       }
     ],
     "operation_logs": [

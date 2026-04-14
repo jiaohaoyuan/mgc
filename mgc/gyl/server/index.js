@@ -19,6 +19,7 @@ const { registerMdmGovernanceRoutes } = require('./mdmGovernance');
 const { registerChannelDealerOpsRoutes } = require('./channelDealerOps');
 const { registerWorkflowCenterRoutes } = require('./workflowCenter');
 const { registerManagementCockpitRoutes } = require('./managementCockpit');
+const { buildSkuRuleConfig, normalizeCode: normalizeSkuCode, validateSkuCode } = require('./skuRules');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -2589,9 +2590,38 @@ const withMasterFilter = (rows, { keyword = '', status = '' }, fields) => {
 
 const formatSkuRow = (row) => ({
     ...row,
+    sku_code: row.sku_code === undefined ? '' : normalizeSkuCode(row.sku_code),
+    sku_name: row.sku_name === undefined ? '' : String(row.sku_name).trim(),
+    bar_code: row.bar_code === undefined ? '' : String(row.bar_code).trim(),
+    category_code: row.category_code === undefined ? '' : String(row.category_code).trim(),
+    lifecycle_status: String(row.lifecycle_status || 'ACTIVE').trim().toUpperCase() || 'ACTIVE',
     created_time: row.created_time || nowIso(),
     updated_time: row.updated_time || nowIso(),
     status: row.status === undefined ? 1 : row.status
+});
+
+const getSkuRulePayload = (db, body = {}) => {
+    const validation = validateSkuCode(body.sku_code, db.platform?.dict_items);
+    if (!validation.ok) throw new Error(validation.errors[0] || 'SKU编码格式不正确');
+    const skuName = String(body.sku_name || '').trim();
+    if (!skuName) throw new Error('SKU名称不能为空');
+    return formatSkuRow({
+        sku_code: validation.normalizedCode,
+        sku_name: skuName,
+        bar_code: String(body.bar_code || '').trim(),
+        category_code: String(body.category_code || '').trim(),
+        lifecycle_status: String(body.lifecycle_status || 'ACTIVE').trim().toUpperCase() || 'ACTIVE',
+        shelf_life_days: toNum(body.shelf_life_days, 0),
+        unit_ratio: toNum(body.unit_ratio, 1),
+        volume_m3: Number(body.volume_m3 || 0),
+        status: 1,
+        created_time: nowIso(),
+        updated_time: nowIso()
+    });
+};
+
+app.get('/api/master/SKU/rule-config', superAdminRequired, (req, res) => {
+    apiOk(res, req, buildSkuRuleConfig(readDb().platform?.dict_items), '获取成功');
 });
 
 app.get('/api/master/SKU/list', superAdminRequired, (req, res) => {
@@ -2608,21 +2638,9 @@ app.post('/api/master/SKU', superAdminRequired, (req, res) => {
     if (!body.sku_code || !body.sku_name) return apiErr(res, req, 400, 'SKU编码和名称不能为空');
     try {
         updateDb((db) => {
-            if (db.master.sku.some(s => s.sku_code === body.sku_code)) throw new Error('SKU编码已存在');
-            db.master.sku.push(formatSkuRow({
-                id: nextId(db.master.sku),
-                sku_code: String(body.sku_code),
-                sku_name: String(body.sku_name),
-                bar_code: String(body.bar_code || ''),
-                category_code: String(body.category_code || ''),
-                lifecycle_status: String(body.lifecycle_status || 'ACTIVE'),
-                shelf_life_days: toNum(body.shelf_life_days, 0),
-                unit_ratio: toNum(body.unit_ratio, 1),
-                volume_m3: Number(body.volume_m3 || 0),
-                status: 1,
-                created_time: nowIso(),
-                updated_time: nowIso()
-            }));
+            const payload = getSkuRulePayload(db, body);
+            if (db.master.sku.some((s) => normalizeSkuCode(s.sku_code) === payload.sku_code)) throw new Error('SKU编码已存在');
+            db.master.sku.push({ id: nextId(db.master.sku), ...payload });
         });
     } catch (error) {
         return apiErr(res, req, 400, error.message || '新增失败');
@@ -2634,21 +2652,30 @@ app.put('/api/master/SKU/:id', superAdminRequired, (req, res) => {
     const id = toNum(req.params.id);
     const body = req.body || {};
     let found = false;
-    updateDb((db) => {
-        const row = db.master.sku.find(s => Number(s.id) === id);
-        if (!row) return;
-        Object.assign(row, {
-            sku_name: body.sku_name !== undefined ? String(body.sku_name) : row.sku_name,
-            bar_code: body.bar_code !== undefined ? String(body.bar_code) : row.bar_code,
-            category_code: body.category_code !== undefined ? String(body.category_code) : row.category_code,
-            lifecycle_status: body.lifecycle_status !== undefined ? String(body.lifecycle_status) : row.lifecycle_status,
-            shelf_life_days: body.shelf_life_days !== undefined ? toNum(body.shelf_life_days, row.shelf_life_days) : row.shelf_life_days,
-            unit_ratio: body.unit_ratio !== undefined ? Number(body.unit_ratio) : row.unit_ratio,
-            volume_m3: body.volume_m3 !== undefined ? Number(body.volume_m3) : row.volume_m3,
-            updated_time: nowIso()
+    try {
+        updateDb((db) => {
+            const row = db.master.sku.find(s => Number(s.id) === id);
+            if (!row) return;
+            if (body.sku_code !== undefined && normalizeSkuCode(body.sku_code) !== normalizeSkuCode(row.sku_code)) {
+                throw new Error('编辑时不支持修改SKU编码');
+            }
+            const nextSkuName = body.sku_name !== undefined ? String(body.sku_name).trim() : row.sku_name;
+            if (!nextSkuName) throw new Error('SKU名称不能为空');
+            Object.assign(row, {
+                sku_name: nextSkuName,
+                bar_code: body.bar_code !== undefined ? String(body.bar_code).trim() : row.bar_code,
+                category_code: body.category_code !== undefined ? String(body.category_code).trim() : row.category_code,
+                lifecycle_status: body.lifecycle_status !== undefined ? String(body.lifecycle_status).trim().toUpperCase() : row.lifecycle_status,
+                shelf_life_days: body.shelf_life_days !== undefined ? toNum(body.shelf_life_days, row.shelf_life_days) : row.shelf_life_days,
+                unit_ratio: body.unit_ratio !== undefined ? Number(body.unit_ratio) : row.unit_ratio,
+                volume_m3: body.volume_m3 !== undefined ? Number(body.volume_m3) : row.volume_m3,
+                updated_time: nowIso()
+            });
+            found = true;
         });
-        found = true;
-    });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '编辑失败');
+    }
     if (!found) return apiErr(res, req, 404, '数据不存在');
     apiOk(res, req, true, '编辑成功');
 });
@@ -3193,25 +3220,31 @@ app.post('/api/master/import', superAdminRequired, upload.single('file'), (req, 
     updateDb((db) => {
         if (tableType === 'SKU') {
             rows.forEach((r, idx) => {
-                const skuCode = String(r.sku_code || r['SKU编码'] || r['编码'] || '').trim();
+                const skuCode = normalizeSkuCode(r.sku_code || r['SKU编码'] || r['编码'] || '');
                 const skuName = String(r.sku_name || r['SKU名称'] || r['名称'] || '').trim();
                 if (!skuCode || !skuName) {
                     errors.push({ rowNumber: idx + 2, error: '缺少SKU编码或SKU名称' });
                     return;
                 }
-                const target = db.master.sku.find(s => s.sku_code === skuCode);
-                const payload = {
-                    sku_code: skuCode,
+                const target = db.master.sku.find((s) => normalizeSkuCode(s.sku_code) === skuCode);
+                const validation = validateSkuCode(skuCode, db.platform?.dict_items);
+                if (!validation.ok && !target) {
+                    errors.push({ rowNumber: idx + 2, error: validation.errors[0] || 'SKU编码格式不正确' });
+                    return;
+                }
+                const payload = formatSkuRow({
+                    sku_code: validation.normalizedCode || skuCode,
                     sku_name: skuName,
-                    bar_code: String(r.bar_code || r['69码'] || ''),
-                    category_code: String(r.category_code || r['品类编码'] || ''),
-                    lifecycle_status: String(r.lifecycle_status || r['生命周期'] || 'ACTIVE'),
+                    bar_code: String(r.bar_code || r['69码'] || r['69码/国际码'] || '').trim(),
+                    category_code: String(r.category_code || r['品类编码'] || '').trim(),
+                    lifecycle_status: String(r.lifecycle_status || r['生命周期'] || 'ACTIVE').trim().toUpperCase(),
                     shelf_life_days: toNum(r.shelf_life_days || r['保质期(天)'] || r['保质期'] || 0),
                     unit_ratio: Number(r.unit_ratio || r['单位换算'] || 1),
                     volume_m3: Number(r.volume_m3 || r['规格体积(m³)'] || 0),
                     status: 1,
+                    created_time: target?.created_time || nowIso(),
                     updated_time: nowIso()
-                };
+                });
                 if (target) Object.assign(target, payload);
                 else db.master.sku.push({ id: nextId(db.master.sku), ...payload, created_time: nowIso() });
                 successCount += 1;

@@ -1,5 +1,7 @@
 ﻿const { readDb, updateDb, nextId, nowIso } = require('./localDb');
 
+const { SKU_RULE_REGEX_SOURCE } = require('./skuRules');
+
 const REQUEST_STATUS = ['DRAFT', 'PENDING', 'REJECTED', 'EFFECTIVE'];
 const REQUEST_ACTION = ['CREATE', 'UPDATE', 'DISABLE'];
 const REVIEW_ACTION = ['APPROVE', 'REJECT'];
@@ -28,9 +30,10 @@ const RELATION_OBJECT_TYPES = ['RESELLER_RLTN', 'RLTN_WAREHOUSE_SKU', 'RLTN_ORG_
 const DEFAULT_QUALITY_RULES = [
   { id: 1, rule_code: 'SKU_UNIQUE_CODE', rule_name: 'SKU编码唯一性', rule_type: 'UNIQUE', object_type: 'SKU', config: { fields: ['sku_code'] }, status: 1 },
   { id: 2, rule_code: 'SKU_REQUIRED_NAME', rule_name: 'SKU名称必填', rule_type: 'REQUIRED', object_type: 'SKU', config: { fields: ['sku_name'] }, status: 1 },
-  { id: 3, rule_code: 'RESELLER_RLTN_TIME_RANGE', rule_name: '经销关系时间区间校验', rule_type: 'TIME_RANGE', object_type: 'RESELLER_RLTN', config: { begin_field: 'begin_date', end_field: 'end_date' }, status: 1 },
-  { id: 4, rule_code: 'RESELLER_RLTN_REFERENCE', rule_name: '经销关系引用校验', rule_type: 'REFERENCE', object_type: 'RESELLER_RLTN', config: { field: 'sku_code', ref_object_type: 'SKU', ref_field: 'sku_code' }, status: 1 },
-  { id: 5, rule_code: 'CROSS_WH_SKU_COVERAGE', rule_name: '在售SKU仓库覆盖校验', rule_type: 'CROSS_OBJECT', object_type: 'SKU', config: { kind: 'WAREHOUSE_SKU_COVERAGE' }, status: 1 }
+  { id: 3, rule_code: 'SKU_FORMAT_STANDARD', rule_name: 'SKU标准编码格式校验', rule_type: 'FORMAT', object_type: 'SKU', config: { field: 'sku_code', pattern: SKU_RULE_REGEX_SOURCE }, status: 1 },
+  { id: 4, rule_code: 'RESELLER_RLTN_TIME_RANGE', rule_name: '经销关系时间区间校验', rule_type: 'TIME_RANGE', object_type: 'RESELLER_RLTN', config: { begin_field: 'begin_date', end_field: 'end_date' }, status: 1 },
+  { id: 5, rule_code: 'RESELLER_RLTN_REFERENCE', rule_name: '经销关系引用校验', rule_type: 'REFERENCE', object_type: 'RESELLER_RLTN', config: { field: 'sku_code', ref_object_type: 'SKU', ref_field: 'sku_code' }, status: 1 },
+  { id: 6, rule_code: 'CROSS_WH_SKU_COVERAGE', rule_name: '在售SKU仓库覆盖校验', rule_type: 'CROSS_OBJECT', object_type: 'SKU', config: { kind: 'WAREHOUSE_SKU_COVERAGE' }, status: 1 }
 ];
 
 const normalize = (v) => String(v || '').trim();

@@ -1,6 +1,7 @@
 ﻿const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const { SKU_RULE_DICT_TYPES, SKU_RULE_DICT_ITEMS } = require('./skuRules');
 
 const DATA_DIR = path.join(__dirname, 'local-data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -25,7 +26,7 @@ const DEFAULT_PLATFORM_PAGES = [
     { id: 50, name: '企业级平台能力中心', path: '/enterprise-platform', permission: 'sys:enterprise:platform:view', parent_id: 10 }
 ];
 
-const DEFAULT_DICT_TYPES = [
+const BASE_DICT_TYPES = [
     { id: 1, dict_type_code: 'data_scope_type', dict_type_name: '数据范围类型', status: 1, sort_order: 1, remark: '角色数据权限范围', system_flag: 1 },
     { id: 2, dict_type_code: 'import_task_status', dict_type_name: '导入任务状态', status: 1, sort_order: 2, remark: '导入任务执行状态', system_flag: 1 },
     { id: 3, dict_type_code: 'export_task_status', dict_type_name: '导出任务状态', status: 1, sort_order: 3, remark: '导出任务执行状态', system_flag: 1 },
@@ -33,7 +34,9 @@ const DEFAULT_DICT_TYPES = [
     { id: 5, dict_type_code: 'notification_status', dict_type_name: '通知状态', status: 1, sort_order: 5, remark: '站内通知状态', system_flag: 1 }
 ];
 
-const DEFAULT_DICT_ITEMS = [
+const DEFAULT_DICT_TYPES = [...BASE_DICT_TYPES, ...SKU_RULE_DICT_TYPES];
+
+const BASE_DICT_ITEMS = [
     { id: 1, dict_type_code: 'data_scope_type', item_code: 'ALL', item_name: '全部数据', item_value: 'ALL', item_color: 'danger', sort_order: 1, status: 1, system_flag: 1 },
     { id: 2, dict_type_code: 'data_scope_type', item_code: 'DEPT', item_name: '本部门数据', item_value: 'DEPT', item_color: 'primary', sort_order: 2, status: 1, system_flag: 1 },
     { id: 3, dict_type_code: 'data_scope_type', item_code: 'DEPT_AND_CHILD', item_name: '本部门及下级', item_value: 'DEPT_AND_CHILD', item_color: 'primary', sort_order: 3, status: 1, system_flag: 1 },
@@ -48,6 +51,8 @@ const DEFAULT_DICT_ITEMS = [
     { id: 12, dict_type_code: 'notification_status', item_code: 'UNREAD', item_name: '未读', item_value: 'UNREAD', item_color: 'warning', sort_order: 1, status: 1, system_flag: 1 },
     { id: 13, dict_type_code: 'notification_status', item_code: 'READ', item_name: '已读', item_value: 'READ', item_color: 'success', sort_order: 2, status: 1, system_flag: 1 }
 ];
+
+const DEFAULT_DICT_ITEMS = [...BASE_DICT_ITEMS, ...SKU_RULE_DICT_ITEMS];
 
 const DEFAULT_SYSTEM_CONFIG_DEFINITIONS = [
     {
