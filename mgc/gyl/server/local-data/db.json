@@ -1,7 +1,7 @@
 {
   "meta": {
     "created_at": "2026-04-09T03:02:20.246Z",
-    "updated_at": "2026-04-13T05:39:18.262Z",
+    "updated_at": "2026-04-14T07:27:27.572Z",
     "storage_mode": "local-json",
     "helper_code": "952746",
     "helper_code_updated_at": "2026-04-09T03:02:20.246Z",
@@ -39214,7 +39214,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 2,
@@ -39241,7 +39241,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 3,
@@ -39268,7 +39268,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 4,
@@ -39295,7 +39295,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 5,
@@ -39322,7 +39322,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 6,
@@ -39349,7 +39349,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 7,
@@ -39376,7 +39376,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 8,
@@ -39403,7 +39403,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 9,
@@ -39430,7 +39430,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 10,
@@ -39457,7 +39457,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 11,
@@ -39484,7 +39484,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 12,
@@ -39511,7 +39511,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 13,
@@ -39538,7 +39538,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 14,
@@ -39565,7 +39565,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 15,
@@ -39592,7 +39592,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 16,
@@ -39619,7 +39619,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 17,
@@ -39646,7 +39646,7 @@
         "payment_term_days": 45,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 18,
@@ -39673,7 +39673,7 @@
         "payment_term_days": 60,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       },
       {
         "id": 19,
@@ -39700,7 +39700,7 @@
         "payment_term_days": 30,
         "status": 1,
         "created_at": "2026-04-11T04:30:21.827Z",
-        "updated_at": "2026-04-13T05:35:11.963Z"
+        "updated_at": "2026-04-14T07:27:23.300Z"
       }
     ],
     "channel_dealer_authorizations": [
@@ -51390,6 +51390,32 @@
         "before_snapshot": null,
         "after_snapshot": null,
         "created_at": "2026-04-13T05:38:38.994Z"
+      },
+      {
+        "id": 28,
+        "log_type": "BUSINESS",
+        "module_code": "auth",
+        "biz_object_type": "account",
+        "biz_object_id": 1,
+        "action_type": "LOGIN",
+        "operator_id": 1,
+        "operator_name": "焦昊源",
+        "operator_roles": [
+          "超级管理员"
+        ],
+        "operator_ip": "::1",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0",
+        "request_path": "/api/login",
+        "request_method": "POST",
+        "trace_id": "17bc4769-5f76-48e8-b649-aab4265cac68",
+        "result_status": "SUCCESS",
+        "message": "用户登录 jiaohaoyuan",
+        "request_summary": {
+          "username": "jiaohaoyuan"
+        },
+        "before_snapshot": null,
+        "after_snapshot": null,
+        "created_at": "2026-04-14T07:27:10.448Z"
       }
     ],
     "import_tasks": [
@@ -56684,6 +56710,21 @@
         "message": "登录成功：jiaohaoyuan",
         "metadata": {},
         "created_at": "2026-04-13T05:04:45.160Z"
+      },
+      {
+        "id": 7,
+        "event_type": "LOGIN",
+        "username": "jiaohaoyuan",
+        "user_id": 1,
+        "module_code": "auth",
+        "action_type": "LOGIN_SUCCESS",
+        "result": "SUCCESS",
+        "risk_level": "LOW",
+        "operator_ip": "::1",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0",
+        "message": "登录成功：jiaohaoyuan",
+        "metadata": {},
+        "created_at": "2026-04-14T07:27:10.458Z"
       }
     ],
     "system_configs": [
