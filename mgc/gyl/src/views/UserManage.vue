@@ -90,7 +90,36 @@ const formData = reactive<{
   password: ''
 })
 
-const rules = {
+const PHONE_REGEX = /^1[3-9]\d{9}$/
+const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+
+const validatePhone = (_rule: any, value: string, callback: (error?: Error) => void) => {
+  const phone = String(value || '').trim()
+  if (!phone) {
+    callback(new Error('请输入手机号'))
+    return
+  }
+  if (!PHONE_REGEX.test(phone)) {
+    callback(new Error('请输入正确的11位手机号'))
+    return
+  }
+  callback()
+}
+
+const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
+  const email = String(value || '').trim()
+  if (!email) {
+    callback()
+    return
+  }
+  if (!EMAIL_REGEX.test(email)) {
+    callback(new Error('请输入正确的邮箱地址'))
+    return
+  }
+  callback()
+}
+
+const rules: Record<string, any> = {
   username: [{ required: true, message: '请输入用户账号', trigger: 'blur' }],
   nickname: [{ required: true, message: '请输入用户昵称', trigger: 'blur' }],
   phone: [{ required: true, message: '请输入手机号', trigger: 'blur' }],
@@ -98,6 +127,9 @@ const rules = {
 }
 
 // 动态候选岗位（根据选择的部门过滤）
+rules.phone = [{ validator: validatePhone, trigger: 'blur' }]
+rules.email = [{ validator: validateEmail, trigger: 'blur' }]
+
 const availablePosts = computed(() => {
   if (formData.deptIds.length === 0) return postList
   const lastDeptId = formData.deptIds[formData.deptIds.length - 1] as number
@@ -252,13 +284,28 @@ async function handleToggleStatus(row: UserItem) {
 async function handleSubmit() {
   await formRef.value?.validate()
   const lastDeptId = formData.deptIds[formData.deptIds.length - 1] as number
+  const username = formData.username.trim()
+  const nickname = formData.nickname.trim()
+  const phone = formData.phone.trim()
+  const email = formData.email.trim()
+  const password = formData.password.trim()
+
+  if (!PHONE_REGEX.test(phone)) {
+    ElMessage.error('请输入正确的11位手机号')
+    return
+  }
+
+  if (email && !EMAIL_REGEX.test(email)) {
+    ElMessage.error('请输入正确的邮箱地址')
+    return
+  }
 
   const payload = {
-    username: formData.username,
-    password: formData.password || '123456',
-    nickname: formData.nickname,
-    phone: formData.phone,
-    email: formData.email,
+    username,
+    password: password || '123456',
+    nickname,
+    phone,
+    email,
     deptId: lastDeptId,
     status: formData.status,
     roleIds: formData.roleIds,

@@ -1,7 +1,7 @@
 {
   "meta": {
     "created_at": "2026-04-09T03:02:20.246Z",
-    "updated_at": "2026-04-14T08:20:19.619Z",
+    "updated_at": "2026-04-15T01:14:54.679Z",
     "storage_mode": "local-json",
     "helper_code": "952746",
     "helper_code_updated_at": "2026-04-09T03:02:20.246Z",
@@ -52056,6 +52056,32 @@
         "before_snapshot": null,
         "after_snapshot": null,
         "created_at": "2026-04-14T07:27:10.448Z"
+      },
+      {
+        "id": 29,
+        "log_type": "BUSINESS",
+        "module_code": "auth",
+        "biz_object_type": "account",
+        "biz_object_id": 1,
+        "action_type": "LOGIN",
+        "operator_id": 1,
+        "operator_name": "焦昊源",
+        "operator_roles": [
+          "超级管理员"
+        ],
+        "operator_ip": "::1",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0",
+        "request_path": "/api/login",
+        "request_method": "POST",
+        "trace_id": "9ac93196-096a-46e2-9843-205fbb71c2c8",
+        "result_status": "SUCCESS",
+        "message": "用户登录 jiaohaoyuan",
+        "request_summary": {
+          "username": "jiaohaoyuan"
+        },
+        "before_snapshot": null,
+        "after_snapshot": null,
+        "created_at": "2026-04-15T00:49:11.428Z"
       }
     ],
     "import_tasks": [
@@ -55263,7 +55289,7 @@
         "biz_id": "CR202604120008",
         "priority": "P1",
         "due_at": "2026-04-12T19:34:53.199Z",
-        "status": "PENDING",
+        "status": "DONE",
         "assignee_id": 1,
         "assignee_name": "焦昊源",
         "source_path": "/mdm/governance?requestNo=CR202604120008",
@@ -55273,9 +55299,9 @@
         "last_remind_at": "",
         "escalated": 0,
         "created_at": "2026-04-12T03:34:53.200Z",
-        "updated_at": "2026-04-12T03:34:53.200Z",
-        "done_at": "",
-        "done_comment": ""
+        "updated_at": "2026-04-15T01:14:29.574Z",
+        "done_at": "2026-04-15T01:14:29.574Z",
+        "done_comment": "已处理"
       },
       {
         "id": 3,
@@ -55286,7 +55312,7 @@
         "biz_id": "TR202604120021",
         "priority": "P1",
         "due_at": "2026-04-12T11:34:53.199Z",
-        "status": "PENDING",
+        "status": "DONE",
         "assignee_id": 1,
         "assignee_name": "焦昊源",
         "source_path": "/inventory-ops?transferNo=TR202604120021",
@@ -55296,9 +55322,9 @@
         "last_remind_at": "",
         "escalated": 0,
         "created_at": "2026-04-12T03:34:53.200Z",
-        "updated_at": "2026-04-12T03:34:53.200Z",
-        "done_at": "",
-        "done_comment": ""
+        "updated_at": "2026-04-15T01:14:28.160Z",
+        "done_at": "2026-04-15T01:14:28.160Z",
+        "done_comment": "已处理"
       },
       {
         "id": 4,
@@ -55332,7 +55358,7 @@
         "biz_id": "EXP-20260412-01",
         "priority": "P2",
         "due_at": "2026-04-12T02:34:53.199Z",
-        "status": "PENDING",
+        "status": "DONE",
         "assignee_id": 1,
         "assignee_name": "焦昊源",
         "source_path": "/workflow-center",
@@ -55342,9 +55368,9 @@
         "last_remind_at": "",
         "escalated": 0,
         "created_at": "2026-04-12T03:34:53.200Z",
-        "updated_at": "2026-04-12T03:34:53.200Z",
-        "done_at": "",
-        "done_comment": ""
+        "updated_at": "2026-04-15T01:14:31.238Z",
+        "done_at": "2026-04-15T01:14:31.238Z",
+        "done_comment": "已处理"
       },
       {
         "id": 6,
@@ -55514,20 +55540,26 @@
         "biz_type": "ORDER",
         "biz_id": "SO202604120001",
         "title": "订单审批：华东鲜奶补货单",
-        "status": "PENDING",
+        "status": "APPROVED",
         "applicant_name": "陈建国",
         "applicant_id": 1,
         "reviewer_id": 1,
         "reviewer_name": "焦昊源",
         "submitted_at": "2026-04-12T03:34:53.200Z",
-        "reviewed_at": "",
-        "review_comment": "",
+        "reviewed_at": "2026-04-15T01:14:44.147Z",
+        "review_comment": "同意",
         "records": [
           {
             "action": "SUBMIT",
             "operator": "陈建国",
             "comment": "提交审批",
             "created_at": "2026-04-12T03:34:53.200Z"
+          },
+          {
+            "action": "APPROVE",
+            "operator": "焦昊源",
+            "comment": "同意",
+            "created_at": "2026-04-15T01:14:44.147Z"
           }
         ]
       },
@@ -55536,20 +55568,26 @@
         "biz_type": "MDM",
         "biz_id": "CR202604120008",
         "title": "主数据审批：渠道层级变更申请",
-        "status": "PENDING",
+        "status": "APPROVED",
         "applicant_name": "周维",
         "applicant_id": 1,
         "reviewer_id": 1,
         "reviewer_name": "焦昊源",
         "submitted_at": "2026-04-12T03:34:53.200Z",
-        "reviewed_at": "",
-        "review_comment": "",
+        "reviewed_at": "2026-04-15T01:14:45.427Z",
+        "review_comment": "同意",
         "records": [
           {
             "action": "SUBMIT",
             "operator": "周维",
             "comment": "提交审批",
             "created_at": "2026-04-12T03:34:53.200Z"
+          },
+          {
+            "action": "APPROVE",
+            "operator": "焦昊源",
+            "comment": "同意",
+            "created_at": "2026-04-15T01:14:45.427Z"
           }
         ]
       },
@@ -55648,7 +55686,7 @@
         "category": "TODO",
         "title": "你有新的待办审批",
         "content": "订单审批 SO202604120001 已流转到你，请及时处理。",
-        "status": "UNREAD",
+        "status": "READ",
         "priority": "P0",
         "receiver_id": 1,
         "receiver_name": "焦昊源",
@@ -55656,7 +55694,7 @@
         "biz_type": "ORDER",
         "biz_id": "SO202604120001",
         "created_at": "2026-04-12T03:34:53.200Z",
-        "read_at": ""
+        "read_at": "2026-04-15T01:14:38.470Z"
       },
       {
         "id": 2,
@@ -55708,7 +55746,7 @@
         "category": "TASK",
         "title": "任务重试成功：主数据增量同步任务",
         "content": "任务 SYNC-MDM-20260412-01 已恢复成功",
-        "status": "UNREAD",
+        "status": "READ",
         "priority": "P2",
         "receiver_id": 1,
         "receiver_name": "焦昊源",
@@ -55716,6 +55754,36 @@
         "biz_type": "TASK",
         "biz_id": "1",
         "created_at": "2026-04-13T05:39:11.763Z",
+        "read_at": "2026-04-15T01:14:37.733Z"
+      },
+      {
+        "id": 6,
+        "category": "APPROVAL",
+        "title": "审批通过：订单审批：华东鲜奶补货单",
+        "content": "同意",
+        "status": "UNREAD",
+        "priority": "P2",
+        "receiver_id": 1,
+        "receiver_name": "焦昊源",
+        "link_path": "/intelligent-closed-loop?orderNo=SO202604120001",
+        "biz_type": "ORDER",
+        "biz_id": "SO202604120001",
+        "created_at": "2026-04-15T01:14:44.147Z",
+        "read_at": ""
+      },
+      {
+        "id": 7,
+        "category": "APPROVAL",
+        "title": "审批通过：主数据审批：渠道层级变更申请",
+        "content": "同意",
+        "status": "UNREAD",
+        "priority": "P2",
+        "receiver_id": 1,
+        "receiver_name": "焦昊源",
+        "link_path": "/mdm/governance?requestNo=CR202604120008",
+        "biz_type": "MDM",
+        "biz_id": "CR202604120008",
+        "created_at": "2026-04-15T01:14:45.427Z",
         "read_at": ""
       }
     ],
@@ -57365,6 +57433,21 @@
         "message": "登录成功：jiaohaoyuan",
         "metadata": {},
         "created_at": "2026-04-14T07:27:10.458Z"
+      },
+      {
+        "id": 8,
+        "event_type": "LOGIN",
+        "username": "jiaohaoyuan",
+        "user_id": 1,
+        "module_code": "auth",
+        "action_type": "LOGIN_SUCCESS",
+        "result": "SUCCESS",
+        "risk_level": "LOW",
+        "operator_ip": "::1",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0",
+        "message": "登录成功：jiaohaoyuan",
+        "metadata": {},
+        "created_at": "2026-04-15T00:49:11.442Z"
       }
     ],
     "system_configs": [

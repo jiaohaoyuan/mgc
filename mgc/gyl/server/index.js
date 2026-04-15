@@ -86,8 +86,22 @@ const ERROR_CODE_BY_STATUS = {
 const contains = (text, keyword) => String(text || '').toLowerCase().includes(String(keyword || '').trim().toLowerCase());
 const normalizeDictCode = (value) => String(value || '').trim().toUpperCase();
 const isValidDictCode = (value) => /^[A-Z][A-Z0-9_]{1,63}$/.test(String(value || ''));
+const PHONE_REGEX = /^1[3-9]\d{9}$/;
+const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 const validateDictCodeOrThrow = (value, label) => {
     if (!isValidDictCode(value)) throw new Error(`${label}仅支持大写字母、数字、下划线，且必须字母开头`);
+};
+const validatePhoneOrThrow = (value, label = '手机号') => {
+    const phone = String(value || '').trim();
+    if (!phone) throw new Error(`${label}不能为空`);
+    if (!PHONE_REGEX.test(phone)) throw new Error(`${label}格式不正确`);
+    return phone;
+};
+const validateEmailOrThrow = (value, label = '邮箱') => {
+    const email = String(value || '').trim();
+    if (!email) return '';
+    if (!EMAIL_REGEX.test(email)) throw new Error(`${label}格式不正确`);
+    return email;
 };
 const normalizeBinaryStatus = (value, fallback = 1) => {
     if (value === '' || value === undefined || value === null) return fallback;
@@ -737,18 +751,26 @@ app.get('/api/accounts', authRequired, (req, res) => {
 app.post('/api/register', (req, res) => {
     const { username, password, nickname, phone, email, deptId, status, roleIds, postIds } = req.body || {};
     if (!username || !password) return apiErr(res, req, 400, '用户名和密码不能为空');
+    let normalizedUsername = '';
+    let normalizedNickname = '';
+    let normalizedPhone = '';
+    let normalizedEmail = '';
     let created = null;
     try {
+        normalizedUsername = String(username || '').trim();
+        normalizedNickname = String(nickname || username || '').trim();
+        normalizedPhone = validatePhoneOrThrow(phone);
+        normalizedEmail = validateEmailOrThrow(email);
         updateDb((db) => {
-            if (db.system.accounts.some(a => a.login_id === username)) throw new Error('用户名已存在');
+            if (db.system.accounts.some(a => a.login_id === normalizedUsername)) throw new Error('用户名已存在');
             const id = nextId(db.system.accounts);
             created = {
                 id,
-                login_id: String(username),
-                nick_name: String(nickname || username),
+                login_id: normalizedUsername,
+                nick_name: normalizedNickname,
                 password_hash: bcrypt.hashSync(String(password), 10),
-                mobile: String(phone || ''),
-                email: String(email || ''),
+                mobile: normalizedPhone,
+                email: normalizedEmail,
                 department_id: String(deptId || '100'),
                 status: toNum(status, 1),
                 created_time: nowIso()
@@ -771,7 +793,7 @@ app.post('/api/register', (req, res) => {
         bizObjectId: created.id,
         actionType: 'CREATE',
         message: `注册用户 ${created.login_id}`,
-        requestSummary: { username, nickname, phone, deptId, roleIds, postIds },
+        requestSummary: { username: normalizedUsername, nickname: normalizedNickname, phone: normalizedPhone, email: normalizedEmail, deptId, roleIds, postIds },
         afterSnapshot: created
     });
     apiOk(res, req, { id: created.id }, '注册成功');
@@ -788,10 +810,14 @@ app.put('/api/accounts/:id', authRequired, (req, res) => {
             const account = db.system.accounts.find(a => Number(a.id) === id);
             if (!account) throw new Error('用户不存在');
             beforeSnapshot = safeClone(account);
-            account.login_id = payload.username ? String(payload.username) : account.login_id;
-            account.nick_name = payload.nickname ? String(payload.nickname) : account.nick_name;
-            account.mobile = payload.phone !== undefined ? String(payload.phone) : account.mobile;
-            account.email = payload.email !== undefined ? String(payload.email) : account.email;
+            account.login_id = payload.username ? String(payload.username).trim() : account.login_id;
+            account.nick_name = payload.nickname ? String(payload.nickname).trim() : account.nick_name;
+            if (payload.phone !== undefined) {
+                account.mobile = validatePhoneOrThrow(payload.phone);
+            }
+            if (payload.email !== undefined) {
+                account.email = validateEmailOrThrow(payload.email);
+            }
             account.department_id = payload.deptId !== undefined ? String(payload.deptId) : account.department_id;
             account.status = payload.status !== undefined ? toNum(payload.status, 1) : account.status;
             if (payload.password) account.password_hash = bcrypt.hashSync(String(payload.password), 10);

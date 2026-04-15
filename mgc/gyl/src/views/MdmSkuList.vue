@@ -3,9 +3,24 @@ import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   UploadFilled, Plus, Download, Search, Delete, Edit,
-  RefreshLeft, Check, CircleClose, DocumentAdd, ArrowDown, Loading
+  RefreshLeft, Check, CircleClose, DocumentAdd, ArrowDown, Loading, Tickets
 } from '@element-plus/icons-vue'
 import axios from 'axios'
+import {
+  SKU_SPEC_EXECUTION_SUMMARY,
+  SKU_SPEC_EXAMPLE,
+  SKU_SPEC_FORMAT,
+  skuSpecCompatibilityPolicy,
+  skuSpecDictionarySections as skuSpecDictionarySectionsFallback,
+  skuSpecDictionaryTypes,
+  skuSpecImplementedItems,
+  skuSpecNextSteps,
+  skuSpecSegments,
+  skuSpecSystemChanges,
+  skuSpecTemplateSheets,
+  skuSpecUsageGuides,
+  skuSpecValidationSections
+} from '@/data/skuSpec'
 
 const SKU_CODE_REGEX = /^SKU-[A-Z]{3}-[A-Z]{3}-(?:\d+ML|\d+L|\d+G|\d+KG)-\d{2}[A-Z]{2}-[A-Z0-9]{3}-\d{3}$/
 const DEFAULT_SKU_EXAMPLE = 'SKU-UHT-UHT-250ML-12BX-PLN-001'
@@ -24,6 +39,7 @@ const queryParams = reactive({
 })
 
 const skuRuleConfig = ref<any>(null)
+const skuSpecVisible = ref(false)
 
 // 主数据查询
 const fetchList = async () => {
@@ -99,6 +115,38 @@ const form = reactive({
 const skuCodeExample = computed(() => skuRuleConfig.value?.example?.sku_code || DEFAULT_SKU_EXAMPLE)
 const skuRuleFormatText = computed(() => skuRuleConfig.value?.format || 'SKU-品类码-工艺码-规格码-包装码-属性码-流水号')
 const isLegacyEditCode = computed(() => isEdit.value && !!form.sku_code && !SKU_CODE_REGEX.test(String(form.sku_code).trim().toUpperCase()))
+const skuSpecExample = computed(() => skuRuleConfig.value?.example?.sku_code || SKU_SPEC_EXAMPLE)
+const skuSpecFormat = computed(() => skuRuleConfig.value?.format || SKU_SPEC_FORMAT)
+const skuSpecDictionarySections = computed(() => {
+  const remoteSections = skuRuleConfig.value?.dictSections
+  if (!Array.isArray(remoteSections) || !remoteSections.length) {
+    return skuSpecDictionarySectionsFallback
+  }
+  const fallbackMap = new Map(skuSpecDictionarySectionsFallback.map(section => [section.dictType, section]))
+  const normalized = remoteSections
+    .map((section: any) => {
+      const fallback = fallbackMap.get(section.dictType)
+      const items = Array.isArray(section.items)
+        ? section.items
+          .map((item: any) => ({
+            code: String(item.code || '').trim(),
+            name: String(item.name || '').trim()
+          }))
+          .filter((item: any) => item.code && item.name)
+        : fallback?.items || []
+      return {
+        title: fallback?.title || section.dictTypeName || section.dictType || 'SKU字典',
+        dictType: section.dictType || fallback?.dictType || '',
+        dictTypeName: section.dictTypeName || fallback?.dictTypeName || '',
+        segment: section.segment || fallback?.segment || '',
+        items
+      }
+    })
+    .filter((section: any) => section.dictType)
+  const existingTypes = new Set(normalized.map((section: any) => section.dictType))
+  const missing = skuSpecDictionarySectionsFallback.filter(section => !existingTypes.has(section.dictType))
+  return [...normalized, ...missing]
+})
 
 const validateSkuCodeRule = (_rule: any, value: string, callback: (error?: Error) => void) => {
   if (isEdit.value) return callback()
@@ -438,6 +486,7 @@ onMounted(() => {
         <el-button type="primary" :icon="Plus" @click="openAdd" id="btn-add-sku">新增</el-button>
         <el-button type="success" :icon="DocumentAdd" @click="importDialogVisible = true" id="btn-import-sku">Excel 导入</el-button>
         <el-button type="warning" :icon="Download" @click="handleExport" id="btn-export-sku">导出</el-button>
+        <el-button :icon="Tickets" @click="skuSpecVisible = true" id="btn-view-sku-spec">查看SKU制定规范</el-button>
         <el-dropdown trigger="click" :disabled="!selectedIds.length" @command="handleBatchCommand">
           <el-button type="info" :disabled="!selectedIds.length" id="btn-batch-ops">
             批量操作 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
@@ -703,6 +752,194 @@ onMounted(() => {
         </div>
       </div>
     </el-dialog>
+
+    <el-dialog
+      v-model="skuSpecVisible"
+      title="SKU制定规范"
+      width="1080px"
+      top="5vh"
+      draggable
+      destroy-on-close
+      class="sku-dialog sku-spec-dialog"
+    >
+      <div class="sku-spec-content">
+        <el-alert type="success" :closable="false" show-icon class="spec-banner">
+          <template #title>一句话执行口径</template>
+          <template #default>{{ SKU_SPEC_EXECUTION_SUMMARY }}</template>
+        </el-alert>
+
+        <div class="spec-metric-grid">
+          <div class="spec-metric-card">
+            <span class="spec-metric-value">4</span>
+            <span class="spec-metric-label">已落地编码字典</span>
+          </div>
+          <div class="spec-metric-card">
+            <span class="spec-metric-value">7</span>
+            <span class="spec-metric-label">标准编码段位</span>
+          </div>
+          <div class="spec-metric-card">
+            <span class="spec-metric-value">3</span>
+            <span class="spec-metric-label">导入模板工作表</span>
+          </div>
+          <div class="spec-metric-card">
+            <span class="spec-metric-value">新严老兼</span>
+            <span class="spec-metric-label">当前兼容策略</span>
+          </div>
+        </div>
+
+        <section class="spec-section">
+          <div class="spec-section-title">
+            <h3>一、这次已经落地了什么</h3>
+            <p>本次已经把 SKU 新规则从“文档建议”落成了“系统可执行规则”。</p>
+          </div>
+          <div class="spec-list-card">
+            <ul class="spec-list">
+              <li v-for="item in skuSpecImplementedItems" :key="item">{{ item }}</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="spec-section">
+          <div class="spec-section-title">
+            <h3>二、系统里现在的 SKU 标准格式</h3>
+            <p>新增 SKU 统一采用七段式编码结构。</p>
+          </div>
+          <el-descriptions :column="2" border size="small" class="spec-descriptions">
+            <el-descriptions-item label="统一格式">{{ skuSpecFormat }}</el-descriptions-item>
+            <el-descriptions-item label="标准示例">
+              <span class="spec-code">{{ skuSpecExample }}</span>
+            </el-descriptions-item>
+          </el-descriptions>
+          <el-table :data="skuSpecSegments" border class="spec-table" size="small">
+            <el-table-column type="index" label="#" width="60" align="center" />
+            <el-table-column prop="code" label="示例段值" min-width="180">
+              <template #default="{ row }">
+                <span class="spec-code">{{ row.code }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="meaning" label="含义" min-width="220" />
+          </el-table>
+        </section>
+
+        <section class="spec-section">
+          <div class="spec-section-title">
+            <h3>三、已落地的编码字典表</h3>
+            <p>本次没有另外新建旁路表，而是直接接入系统现有“字典中心”。</p>
+          </div>
+          <el-table :data="skuSpecDictionaryTypes" border class="spec-table" size="small">
+            <el-table-column prop="code" label="字典类型编码" min-width="180">
+              <template #default="{ row }">
+                <span class="spec-code">{{ row.code }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="name" label="字典类型名称" min-width="150" />
+            <el-table-column prop="usage" label="用途" min-width="140" />
+          </el-table>
+          <div class="spec-dict-grid">
+            <div v-for="section in skuSpecDictionarySections" :key="section.dictType" class="spec-dict-card">
+              <div class="spec-dict-card__header">
+                <div>
+                  <h4>{{ section.title }}</h4>
+                  <p>{{ section.dictTypeName }} / {{ section.segment }}</p>
+                </div>
+                <el-tag size="small" effect="plain">{{ section.dictType }}</el-tag>
+              </div>
+              <el-table :data="section.items" border size="small">
+                <el-table-column prop="code" label="编码" width="110">
+                  <template #default="{ row }">
+                    <span class="spec-code">{{ row.code }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="name" label="名称" min-width="140" />
+              </el-table>
+            </div>
+          </div>
+        </section>
+
+        <section class="spec-section">
+          <div class="spec-section-title">
+            <h3>四、系统已补的校验规则</h3>
+            <p>当前校验覆盖新增、编辑、导入和兼容策略四个层面。</p>
+          </div>
+          <div class="spec-rule-grid">
+            <div v-for="section in skuSpecValidationSections" :key="section.title" class="spec-info-card">
+              <h4>{{ section.title }}</h4>
+              <ul class="spec-list">
+                <li v-for="item in section.items" :key="item">{{ item }}</li>
+              </ul>
+            </div>
+            <div class="spec-info-card spec-info-card--highlight">
+              <h4>当前兼容策略</h4>
+              <p class="spec-paragraph">为了不一下子打断已有业务，这次采用的是“新标准强校验，老数据兼容维护”。</p>
+              <ul class="spec-list">
+                <li v-for="item in skuSpecCompatibilityPolicy" :key="item">{{ item }}</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="spec-section">
+          <div class="spec-section-title">
+            <h3>五、导入模板现在有什么变化</h3>
+            <p>下载的 SKU 导入模板现在已经不是单张表，而是三张表。</p>
+          </div>
+          <div class="spec-card-grid">
+            <div v-for="sheet in skuSpecTemplateSheets" :key="sheet.title" class="spec-info-card">
+              <h4>{{ sheet.title }}</h4>
+              <p class="spec-paragraph">{{ sheet.description }}</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="spec-section">
+          <div class="spec-section-title">
+            <h3>六、系统里具体改到了哪里</h3>
+            <p>规范已经同时落到前后端逻辑和模板能力里。</p>
+          </div>
+          <div class="spec-card-grid">
+            <div v-for="changeGroup in skuSpecSystemChanges" :key="changeGroup.area" class="spec-info-card">
+              <h4>{{ changeGroup.area }}</h4>
+              <ul class="spec-list">
+                <li v-for="item in changeGroup.items" :key="`${changeGroup.area}-${item.file}`">
+                  <span class="spec-code">{{ item.file }}</span>
+                  <span class="spec-list-desc">{{ item.description }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="spec-section">
+          <div class="spec-section-title">
+            <h3>七、现在可以怎么用</h3>
+            <p>不同角色可以按下面口径理解和执行。</p>
+          </div>
+          <div class="spec-card-grid">
+            <div v-for="guide in skuSpecUsageGuides" :key="guide.title" class="spec-info-card">
+              <h4>{{ guide.title }}</h4>
+              <ul class="spec-list">
+                <li v-for="item in guide.items" :key="item">{{ item }}</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="spec-section">
+          <div class="spec-section-title">
+            <h3>八、下一步建议</h3>
+            <p>这次完成的是“规则落地第一步”，后续建议继续推进以下工作。</p>
+          </div>
+          <div class="spec-list-card">
+            <ul class="spec-list">
+              <li v-for="item in skuSpecNextSteps" :key="item">{{ item }}</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+      <template #footer>
+        <el-button @click="skuSpecVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -836,5 +1073,173 @@ onMounted(() => {
   margin-top: 12px;
   font-size: 14px;
   justify-content: center;
+}
+
+.sku-spec-dialog :deep(.el-dialog__body) {
+  padding-top: 18px;
+}
+
+.sku-spec-content {
+  max-height: 72vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.spec-banner {
+  margin-bottom: 18px;
+}
+
+.spec-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.spec-metric-card {
+  background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.spec-metric-value {
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.spec-metric-label {
+  font-size: 13px;
+  color: #475569;
+}
+
+.spec-section + .spec-section {
+  margin-top: 24px;
+}
+
+.spec-section-title {
+  margin-bottom: 12px;
+}
+
+.spec-section-title h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.spec-section-title p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.spec-descriptions,
+.spec-table {
+  margin-top: 12px;
+}
+
+.spec-code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  color: #0f6cbd;
+  font-weight: 600;
+}
+
+.spec-list-card,
+.spec-info-card,
+.spec-dict-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.spec-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #334155;
+  display: grid;
+  gap: 8px;
+}
+
+.spec-dict-grid,
+.spec-rule-grid,
+.spec-card-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.spec-dict-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.spec-rule-grid,
+.spec-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.spec-dict-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.spec-dict-card__header h4,
+.spec-info-card h4 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.spec-dict-card__header p {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.spec-paragraph {
+  margin: 0;
+  color: #475569;
+  line-height: 1.7;
+}
+
+.spec-info-card--highlight {
+  background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
+  border-color: #fdba74;
+}
+
+.spec-list-desc {
+  margin-left: 8px;
+  color: #475569;
+}
+
+@media (max-width: 1200px) {
+  .spec-metric-grid,
+  .spec-dict-grid,
+  .spec-rule-grid,
+  .spec-card-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .spec-metric-grid,
+  .spec-dict-grid,
+  .spec-rule-grid,
+  .spec-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sku-spec-content {
+    max-height: 68vh;
+  }
 }
 </style>
