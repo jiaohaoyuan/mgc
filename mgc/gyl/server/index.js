@@ -15,11 +15,17 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { DB_FILE, nowIso, readDb, updateDb, nextId } = require('./localDb');
 const { registerOrderPhase2Routes } = require('./orderPhase2');
 const { registerInventoryOpsRoutes } = require('./inventoryOps');
-const { registerMdmGovernanceRoutes } = require('./mdmGovernance');
+const { registerMdmGovernanceRoutes, runQualityCheckCore } = require('./mdmGovernance');
 const { registerChannelDealerOpsRoutes } = require('./channelDealerOps');
 const { registerWorkflowCenterRoutes } = require('./workflowCenter');
 const { registerManagementCockpitRoutes } = require('./managementCockpit');
-const { buildSkuRuleConfig, normalizeCode: normalizeSkuCode, validateSkuCode } = require('./skuRules');
+const {
+    buildSkuRuleConfig,
+    inferStandardSkuCode,
+    isStandardSkuCode,
+    normalizeCode: normalizeSkuCode,
+    validateSkuCode
+} = require('./skuRules');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -2646,8 +2652,232 @@ const getSkuRulePayload = (db, body = {}) => {
     });
 };
 
+const ensureSkuCodeMappingRows = (db) => {
+    if (!db.platform) db.platform = {};
+    db.platform.mdm_sku_code_mappings = ensureArray(db.platform.mdm_sku_code_mappings);
+    return db.platform.mdm_sku_code_mappings;
+};
+
+const buildSkuMappingSummary = (rows, skuRows = []) => {
+    const list = ensureArray(rows);
+    const activeSkuRows = ensureArray(skuRows).filter((row) => Number(row.status ?? 1) !== 0);
+    return {
+        total: list.length,
+        activeSkuCount: activeSkuRows.length,
+        legacySkuCount: activeSkuRows.filter((row) => !isStandardSkuCode(row.sku_code)).length,
+        generatedCount: list.filter((row) => String(row.mapping_status) === 'GENERATED').length,
+        confirmedCount: list.filter((row) => String(row.mapping_status) === 'CONFIRMED').length,
+        appliedCount: list.filter((row) => String(row.mapping_status) === 'APPLIED').length,
+        skippedCount: list.filter((row) => String(row.mapping_status) === 'SKIPPED').length
+    };
+};
+
+const buildSkuCodeMappings = (db, options = {}) => {
+    const forceRefresh = Boolean(options.forceRefresh);
+    const rows = ensureSkuCodeMappingRows(db);
+    const skuRows = ensureArray(db.master?.sku).filter((row) => Number(row.status ?? 1) !== 0);
+    const existingByOld = new Map(rows.map((row) => [normalizeSkuCode(row.old_sku_code), row]));
+    const reservedCodes = new Set(
+        skuRows
+            .map((row) => normalizeSkuCode(row.sku_code))
+            .filter((code) => code && isStandardSkuCode(code))
+    );
+    let created = 0;
+    let refreshed = 0;
+
+    skuRows
+        .filter((row) => !isStandardSkuCode(row.sku_code))
+        .sort((a, b) => toNum(a.id) - toNum(b.id))
+        .forEach((sku) => {
+            const oldCode = normalizeSkuCode(sku.sku_code);
+            const existing = existingByOld.get(oldCode);
+            const keepExistingCode = Boolean(existing?.new_sku_code) && !forceRefresh;
+            const candidate = keepExistingCode ? null : inferStandardSkuCode(sku, { reservedCodes });
+            const newCode = keepExistingCode ? normalizeSkuCode(existing.new_sku_code) : candidate.newCode;
+            reservedCodes.add(newCode);
+
+            if (existing) {
+                Object.assign(existing, {
+                    sku_id: sku.id || 0,
+                    sku_name: sku.sku_name || '',
+                    category_code: sku.category_code || '',
+                    lifecycle_status: sku.lifecycle_status || '',
+                    new_sku_code: newCode,
+                    confidence: keepExistingCode ? existing.confidence : candidate.confidence,
+                    infer_reason: keepExistingCode ? existing.infer_reason : candidate.reason,
+                    quality_status: existing.mapping_status === 'APPLIED' ? 'RESOLVED' : 'OPEN',
+                    updated_at: nowIso()
+                });
+                refreshed += 1;
+                return;
+            }
+
+            rows.push({
+                id: nextId(rows),
+                sku_id: sku.id || 0,
+                old_sku_code: oldCode,
+                new_sku_code: newCode,
+                sku_name: sku.sku_name || '',
+                category_code: sku.category_code || '',
+                lifecycle_status: sku.lifecycle_status || '',
+                source: 'AUTO_RULE',
+                confidence: candidate.confidence,
+                infer_reason: candidate.reason,
+                mapping_status: 'GENERATED',
+                convergence_stage: '待业务确认',
+                quality_status: 'OPEN',
+                created_at: nowIso(),
+                updated_at: nowIso(),
+                applied_by: '',
+                applied_at: ''
+            });
+            created += 1;
+        });
+
+    return {
+        created,
+        refreshed,
+        summary: buildSkuMappingSummary(rows, skuRows),
+        preview: rows.slice(0, 100)
+    };
+};
+
+const filterSkuCodeMappings = (rows, query = {}) => {
+    const { keyword = '', status = '', qualityStatus = '' } = query || {};
+    let list = ensureArray(rows).map((row) => ({ ...row }));
+    if (keyword) {
+        list = list.filter((row) => (
+            contains(row.old_sku_code, keyword)
+            || contains(row.new_sku_code, keyword)
+            || contains(row.sku_name, keyword)
+            || contains(row.infer_reason, keyword)
+        ));
+    }
+    if (status) list = list.filter((row) => String(row.mapping_status) === String(status).toUpperCase());
+    if (qualityStatus) list = list.filter((row) => String(row.quality_status) === String(qualityStatus).toUpperCase());
+    const order = { GENERATED: 1, CONFIRMED: 2, SKIPPED: 3, APPLIED: 4 };
+    return list.sort((a, b) => (order[a.mapping_status] || 9) - (order[b.mapping_status] || 9) || toNum(a.id) - toNum(b.id));
+};
+
+const replaceSkuCodeReferences = (db, oldCode, newCode) => {
+    const touched = [];
+    const updateRowCollection = (scope, table, rows) => {
+        ensureArray(rows).forEach((row) => {
+            let changed = 0;
+            Object.keys(row || {}).forEach((field) => {
+                if (!['sku_code', 'sku_id'].includes(field)) return;
+                if (normalizeSkuCode(row[field]) !== oldCode) return;
+                row[field] = newCode;
+                changed += 1;
+            });
+            if (changed) touched.push({ scope, table, id: row.id || row.order_no || '', changed });
+        });
+    };
+
+    Object.entries(db.master || {}).forEach(([table, rows]) => {
+        if (table === 'sku') return;
+        updateRowCollection('master', table, rows);
+    });
+    Object.entries(db.biz || {}).forEach(([table, rows]) => {
+        updateRowCollection('biz', table, rows);
+    });
+    return touched;
+};
+
 app.get('/api/master/SKU/rule-config', superAdminRequired, (req, res) => {
     apiOk(res, req, buildSkuRuleConfig(readDb().platform?.dict_items), '获取成功');
+});
+
+app.get('/api/master/SKU/code-mappings', superAdminRequired, (req, res) => {
+    const { page = 1, pageSize = 20 } = req.query || {};
+    const db = readDb();
+    const rows = ensureSkuCodeMappingRows(db);
+    const filtered = filterSkuCodeMappings(rows, req.query || {});
+    apiOk(res, req, {
+        ...paginate(filtered, page, pageSize),
+        summary: buildSkuMappingSummary(rows, db.master?.sku)
+    }, '获取成功');
+});
+
+app.post('/api/master/SKU/code-mappings/build', superAdminRequired, (req, res) => {
+    let out = null;
+    updateDb((db) => {
+        out = buildSkuCodeMappings(db, { forceRefresh: Boolean(req.body?.forceRefresh) });
+    });
+    apiOk(res, req, out, '映射表已生成');
+});
+
+app.post('/api/master/SKU/code-mappings/:id/apply', superAdminRequired, (req, res) => {
+    const id = toNum(req.params.id);
+    let out = null;
+    try {
+        updateDb((db) => {
+            const rows = ensureSkuCodeMappingRows(db);
+            const mapping = rows.find((row) => Number(row.id) === id);
+            if (!mapping) throw new Error('映射记录不存在');
+            if (String(mapping.mapping_status) === 'APPLIED') throw new Error('该映射已应用');
+
+            const oldCode = normalizeSkuCode(mapping.old_sku_code);
+            const newCode = normalizeSkuCode(req.body?.new_sku_code || mapping.new_sku_code);
+            const validation = validateSkuCode(newCode, db.platform?.dict_items);
+            if (!validation.ok) throw new Error(validation.errors[0] || '新标准码格式不正确');
+
+            const skuRow = ensureArray(db.master?.sku).find((row) => normalizeSkuCode(row.sku_code) === oldCode && Number(row.status ?? 1) !== 0);
+            if (!skuRow) throw new Error('旧码对应的SKU不存在或已停用');
+            const duplicated = ensureArray(db.master?.sku).some((row) => (
+                Number(row.id) !== Number(skuRow.id)
+                && Number(row.status ?? 1) !== 0
+                && normalizeSkuCode(row.sku_code) === newCode
+            ));
+            if (duplicated) throw new Error('新标准码已被其他SKU使用');
+
+            skuRow.sku_code = newCode;
+            skuRow.updated_time = nowIso();
+            const touched = replaceSkuCodeReferences(db, oldCode, newCode);
+            ensureArray(db.platform?.mdm_quality_issues).forEach((issue) => {
+                if (String(issue.rule_code) !== 'SKU_FORMAT_STANDARD') return;
+                if (normalizeSkuCode(issue.target_code) !== oldCode) return;
+                if (String(issue.status) === 'RESOLVED') return;
+                issue.status = 'RESOLVED';
+                issue.resolution = `已按映射切换为 ${newCode}`;
+                issue.resolved_by = req.user?.nickname || req.user?.username || '系统';
+                issue.resolved_at = nowIso();
+                issue.updated_at = nowIso();
+            });
+
+            Object.assign(mapping, {
+                sku_id: skuRow.id || mapping.sku_id,
+                new_sku_code: newCode,
+                mapping_status: 'APPLIED',
+                convergence_stage: '已切换',
+                quality_status: 'RESOLVED',
+                applied_by: req.user?.nickname || req.user?.username || '系统',
+                applied_at: nowIso(),
+                updated_at: nowIso(),
+                reference_updates: touched
+            });
+            out = { mapping, touchedCount: touched.length, touchedPreview: touched.slice(0, 100) };
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || '应用映射失败');
+    }
+    apiOk(res, req, out, '映射已应用');
+});
+
+app.post('/api/master/SKU/quality-check', superAdminRequired, (req, res) => {
+    let runSummary = null;
+    try {
+        updateDb((db) => {
+            runSummary = runQualityCheckCore(db, {
+                trigger_mode: req.body?.trigger_mode || 'MANUAL',
+                object_types: ['SKU'],
+                rule_codes: ['SKU_FORMAT_STANDARD']
+            }, req.user?.nickname || req.user?.username || '系统');
+        });
+    } catch (error) {
+        return apiErr(res, req, 400, error.message || 'SKU格式质量检查失败');
+    }
+    apiOk(res, req, runSummary, 'SKU格式质量检查完成');
 });
 
 app.get('/api/master/SKU/list', superAdminRequired, (req, res) => {

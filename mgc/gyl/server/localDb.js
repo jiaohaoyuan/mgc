@@ -7,6 +7,7 @@ const DATA_DIR = path.join(__dirname, 'local-data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
 let cachedDb = null;
+let cachedDbMtimeMs = 0;
 
 const ensureArray = (value) => (Array.isArray(value) ? value : []);
 const ensureObject = (value) => (value && typeof value === 'object' && !Array.isArray(value) ? value : {});
@@ -301,7 +302,8 @@ const createSeedDb = () => {
             workflow_tasks: [],
             workflow_reminders: [],
             workflow_timeout_rules: [],
-            management_reports: []
+            management_reports: [],
+            mdm_sku_code_mappings: []
         }
     };
 };
@@ -369,6 +371,7 @@ const ensurePlatformStructures = (db) => {
     db.platform.workflow_reminders = ensureArray(db.platform.workflow_reminders);
     db.platform.workflow_timeout_rules = ensureArray(db.platform.workflow_timeout_rules);
     db.platform.management_reports = ensureArray(db.platform.management_reports);
+    db.platform.mdm_sku_code_mappings = ensureArray(db.platform.mdm_sku_code_mappings);
 
     DEFAULT_DICT_TYPES.forEach((item) => {
         if (!db.platform.dict_types.some((row) => String(row.dict_type_code) === String(item.dict_type_code))) {
@@ -625,16 +628,30 @@ const persist = (db) => {
     const tmp = `${DB_FILE}.tmp`;
     fs.writeFileSync(tmp, JSON.stringify(db, null, 2), 'utf8');
     fs.renameSync(tmp, DB_FILE);
+    try {
+        cachedDbMtimeMs = fs.statSync(DB_FILE).mtimeMs;
+    } catch {
+        cachedDbMtimeMs = 0;
+    }
 };
 
 const loadDb = () => {
-    if (cachedDb) return cachedDb;
-
     ensureDir();
     if (!fs.existsSync(DB_FILE)) {
         cachedDb = createSeedDb();
         ensurePlatformStructures(cachedDb);
         persist(cachedDb);
+        return cachedDb;
+    }
+
+    let diskMtimeMs = 0;
+    try {
+        diskMtimeMs = fs.statSync(DB_FILE).mtimeMs;
+    } catch {
+        diskMtimeMs = 0;
+    }
+
+    if (cachedDb && diskMtimeMs > 0 && diskMtimeMs <= cachedDbMtimeMs) {
         return cachedDb;
     }
 
@@ -649,6 +666,9 @@ const loadDb = () => {
 
     if (ensurePlatformStructures(cachedDb)) {
         persist(cachedDb);
+    }
+    else {
+        cachedDbMtimeMs = diskMtimeMs;
     }
 
     return cachedDb;

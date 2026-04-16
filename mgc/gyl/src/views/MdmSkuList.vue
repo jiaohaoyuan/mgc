@@ -40,6 +40,23 @@ const queryParams = reactive({
 
 const skuRuleConfig = ref<any>(null)
 const skuSpecVisible = ref(false)
+const mappingDialogVisible = ref(false)
+const mappingLoading = ref(false)
+const mappingRows = ref<any[]>([])
+const mappingTotal = ref(0)
+const mappingSummary = ref<any>({
+  total: 0,
+  activeSkuCount: 0,
+  legacySkuCount: 0,
+  generatedCount: 0,
+  appliedCount: 0
+})
+const mappingQuery = reactive({
+  page: 1,
+  pageSize: 10,
+  keyword: '',
+  status: ''
+})
 
 // 主数据查询
 const fetchList = async () => {
@@ -456,6 +473,115 @@ const handleExport = async () => {
 }
 
 // 工具
+const isStandardSkuCode = (code: string) => SKU_CODE_REGEX.test(String(code || '').trim().toUpperCase())
+const skuCodeType = (code: string) => isStandardSkuCode(code) ? '标准编码' : '历史编码'
+const skuCodeTypeTag = (code: string) => isStandardSkuCode(code) ? 'success' : 'warning'
+
+const mappingStatusTagType = (status: string) => {
+  const map: Record<string, string> = { GENERATED: 'warning', CONFIRMED: 'primary', APPLIED: 'success', SKIPPED: 'info' }
+  return (map[status] || 'info') as any
+}
+const mappingStatusLabel = (status: string) => {
+  const map: Record<string, string> = { GENERATED: '待确认', CONFIRMED: '已确认', APPLIED: '已切换', SKIPPED: '暂缓' }
+  return map[status] || status
+}
+const formatConfidence = (value: any) => `${Math.round(Number(value || 0) * 100)}%`
+
+const loadSkuMappings = async () => {
+  mappingLoading.value = true
+  try {
+    const res = await axios.get('/master/SKU/code-mappings', { params: mappingQuery })
+    const data = res.data?.data || {}
+    mappingRows.value = data.list || []
+    mappingTotal.value = data.total || 0
+    mappingSummary.value = data.summary || {}
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.msg || '获取旧码映射失败')
+  } finally {
+    mappingLoading.value = false
+  }
+}
+
+const openSkuMappingDialog = async () => {
+  mappingDialogVisible.value = true
+  mappingQuery.page = 1
+  await loadSkuMappings()
+}
+
+const buildSkuMappings = async (forceRefresh = false) => {
+  mappingLoading.value = true
+  try {
+    const res = await axios.post('/master/SKU/code-mappings/build', { forceRefresh })
+    const summary = res.data?.data?.summary || {}
+    ElMessage.success(`映射表已生成：待确认 ${summary.generatedCount || 0} 条，已切换 ${summary.appliedCount || 0} 条`)
+    await loadSkuMappings()
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.msg || '生成旧码映射失败')
+  } finally {
+    mappingLoading.value = false
+  }
+}
+
+const applySkuMapping = async (row: any) => {
+  try {
+    await ElMessageBox.confirm(
+      `确认将【${row.old_sku_code}】切换为【${row.new_sku_code}】吗？系统会同步更新关系表、订单行和库存引用。`,
+      '应用标准码映射',
+      { type: 'warning', confirmButtonText: '确认切换', cancelButtonText: '取消' }
+    )
+    const res = await axios.post(`/master/SKU/code-mappings/${row.id}/apply`)
+    ElMessage.success(`切换完成，同步引用 ${res.data?.data?.touchedCount || 0} 处`)
+    await loadSkuMappings()
+    await fetchList()
+  } catch (e: any) {
+    if (e !== 'cancel' && e !== 'close') {
+      ElMessage.error(e.response?.data?.msg || '应用映射失败')
+    }
+  }
+}
+
+const exportSkuMappings = async () => {
+  try {
+    const res = await axios.get('/master/SKU/code-mappings', {
+      params: { keyword: mappingQuery.keyword, status: mappingQuery.status, page: 1, pageSize: 10000 }
+    })
+    const rows = res.data?.data?.list || []
+    if (!rows.length) return ElMessage.warning('暂无映射可导出')
+    const xlsx = await import('xlsx')
+    const ws = xlsx.utils.json_to_sheet(rows.map((row: any) => ({
+      '旧SKU编码': row.old_sku_code,
+      '新标准SKU编码': row.new_sku_code,
+      'SKU名称': row.sku_name,
+      '品类编码': row.category_code,
+      '映射状态': mappingStatusLabel(row.mapping_status),
+      '质量状态': row.quality_status,
+      '推导置信度': formatConfidence(row.confidence),
+      '推导说明': row.infer_reason,
+      '收敛阶段': row.convergence_stage,
+      '应用时间': row.applied_at
+    })))
+    ws['!cols'] = [
+      { wch: 28 }, { wch: 34 }, { wch: 32 }, { wch: 18 }, { wch: 12 },
+      { wch: 12 }, { wch: 12 }, { wch: 42 }, { wch: 14 }, { wch: 22 }
+    ]
+    const wb = xlsx.utils.book_new()
+    xlsx.utils.book_append_sheet(wb, ws, '旧码映射')
+    xlsx.writeFile(wb, 'SKU_旧码到新标准码映射.xlsx')
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.msg || '导出映射失败')
+  }
+}
+
+const runSkuFormatQualityCheck = async () => {
+  try {
+    const res = await axios.post('/master/SKU/quality-check')
+    const data = res.data?.data || {}
+    ElMessage.success(`SKU格式质量检查完成：发现 ${data.issue_count || 0} 条问题`)
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.msg || 'SKU格式质量检查失败')
+  }
+}
+
 const lifecycleTagType = (status: string) => {
   const map: Record<string, string> = { ACTIVE: 'success', INACTIVE: 'warning', OBSOLETE: 'info' }
   return (map[status] || 'info') as any
@@ -486,6 +612,8 @@ onMounted(() => {
         <el-button type="primary" :icon="Plus" @click="openAdd" id="btn-add-sku">新增</el-button>
         <el-button type="success" :icon="DocumentAdd" @click="importDialogVisible = true" id="btn-import-sku">Excel 导入</el-button>
         <el-button type="warning" :icon="Download" @click="handleExport" id="btn-export-sku">导出</el-button>
+        <el-button :icon="RefreshLeft" @click="openSkuMappingDialog" id="btn-open-sku-mapping">旧码映射</el-button>
+        <el-button :icon="Check" @click="runSkuFormatQualityCheck" id="btn-run-sku-format-check">SKU格式检查</el-button>
         <el-button :icon="Tickets" @click="skuSpecVisible = true" id="btn-view-sku-spec">查看SKU制定规范</el-button>
         <el-dropdown trigger="click" :disabled="!selectedIds.length" @command="handleBatchCommand">
           <el-button type="info" :disabled="!selectedIds.length" id="btn-batch-ops">
@@ -561,6 +689,13 @@ onMounted(() => {
           <span class="code-text">{{ row.sku_code }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="编码体系" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag :type="skuCodeTypeTag(row.sku_code)" size="small" effect="light">
+            {{ skuCodeType(row.sku_code) }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="sku_name" label="SKU 名称" min-width="200" show-overflow-tooltip />
       <el-table-column prop="bar_code" label="69码/国际码" width="150" />
       <el-table-column prop="category_code" label="品类编码" width="120" />
@@ -623,6 +758,121 @@ onMounted(() => {
         id="sku-pagination"
       />
     </div>
+
+    <el-dialog
+      v-model="mappingDialogVisible"
+      title="SKU旧码 -> 新标准码映射"
+      width="1120px"
+      top="5vh"
+      draggable
+      class="sku-dialog sku-mapping-dialog"
+    >
+      <div class="mapping-summary-grid">
+        <div class="mapping-summary-item">
+          <span>{{ mappingSummary.activeSkuCount || 0 }}</span>
+          <label>在用SKU</label>
+        </div>
+        <div class="mapping-summary-item warning">
+          <span>{{ mappingSummary.legacySkuCount || 0 }}</span>
+          <label>历史编码</label>
+        </div>
+        <div class="mapping-summary-item">
+          <span>{{ mappingSummary.generatedCount || 0 }}</span>
+          <label>待确认映射</label>
+        </div>
+        <div class="mapping-summary-item success">
+          <span>{{ mappingSummary.appliedCount || 0 }}</span>
+          <label>已切换</label>
+        </div>
+      </div>
+
+      <div class="mapping-toolbar">
+        <el-form :inline="true" :model="mappingQuery" @submit.prevent="loadSkuMappings">
+          <el-form-item>
+            <el-input
+              v-model="mappingQuery.keyword"
+              placeholder="搜索旧码/新码/SKU名称"
+              clearable
+              style="width: 240px"
+              @keyup.enter="loadSkuMappings"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-select v-model="mappingQuery.status" placeholder="映射状态" clearable style="width: 140px" @change="loadSkuMappings">
+              <el-option label="待确认" value="GENERATED" />
+              <el-option label="已确认" value="CONFIRMED" />
+              <el-option label="已切换" value="APPLIED" />
+              <el-option label="暂缓" value="SKIPPED" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :icon="Search" @click="loadSkuMappings">查询</el-button>
+            <el-button :icon="RefreshLeft" @click="buildSkuMappings(false)">生成/刷新映射</el-button>
+            <el-button :icon="Download" @click="exportSkuMappings">导出映射</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <el-table
+        v-loading="mappingLoading"
+        :data="mappingRows"
+        border
+        stripe
+        max-height="460"
+        class="mapping-table"
+      >
+        <el-table-column prop="old_sku_code" label="旧SKU编码" min-width="190">
+          <template #default="{ row }">
+            <span class="code-text legacy-code">{{ row.old_sku_code }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="new_sku_code" label="新标准码" min-width="240">
+          <template #default="{ row }">
+            <span class="code-text standard-code">{{ row.new_sku_code }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="sku_name" label="SKU名称" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="mapping_status" label="状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="mappingStatusTagType(row.mapping_status)" size="small">
+              {{ mappingStatusLabel(row.mapping_status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="confidence" label="置信度" width="90" align="center">
+          <template #default="{ row }">{{ formatConfidence(row.confidence) }}</template>
+        </el-table-column>
+        <el-table-column prop="infer_reason" label="推导说明" min-width="240" show-overflow-tooltip />
+        <el-table-column label="操作" width="120" align="center" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.mapping_status !== 'APPLIED'"
+              type="success"
+              link
+              :icon="Check"
+              @click="applySkuMapping(row)"
+            >应用</el-button>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="pagination-wrapper mapping-pagination">
+        <el-pagination
+          v-model:current-page="mappingQuery.page"
+          v-model:page-size="mappingQuery.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next"
+          :total="mappingTotal"
+          @size-change="loadSkuMappings"
+          @current-change="loadSkuMappings"
+        />
+      </div>
+
+      <template #footer>
+        <el-button @click="mappingDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 新增/编辑弹窗 -->
     <el-dialog
@@ -1031,6 +1281,74 @@ onMounted(() => {
   background: #eff6ff;
   padding: 2px 6px;
   border-radius: 4px;
+}
+.legacy-code {
+  color: #b45309;
+  background: #fffbeb;
+}
+.standard-code {
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.mapping-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.mapping-summary-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mapping-summary-item span {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mapping-summary-item label {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.mapping-summary-item.warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.mapping-summary-item.warning span {
+  color: #b45309;
+}
+
+.mapping-summary-item.success {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+}
+
+.mapping-summary-item.success span {
+  color: #047857;
+}
+
+.mapping-toolbar {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 12px 0;
+  margin-bottom: 12px;
+}
+
+.mapping-pagination {
+  box-shadow: none;
+  margin-top: 12px;
+  border-radius: 8px;
 }
 
 /* 分页 */

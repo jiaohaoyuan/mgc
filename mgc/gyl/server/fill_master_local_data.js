@@ -19,6 +19,7 @@ const category = [
   ['CAT-L2-LIQUID', '液态奶', 2, 'CAT-L1-DAIRY', 1],
   ['CAT-L2-YOGURT', '酸奶', 2, 'CAT-L1-DAIRY', 2],
   ['CAT-L2-CHEESE', '奶酪', 2, 'CAT-L1-DAIRY', 3],
+  ['CAT-L2-REGIONAL-DAIRY', '特殊或地域性奶制品', 2, 'CAT-L1-DAIRY', 4],
   ['CAT-L2-MILKPOWDER', '奶粉', 2, 'CAT-L1-NUTRITION', 1],
   ['CAT-L3-UHT', '常温纯奶', 3, 'CAT-L2-LIQUID', 1],
   ['CAT-L3-PASTEUR', '巴氏鲜奶', 3, 'CAT-L2-LIQUID', 2],
@@ -26,6 +27,12 @@ const category = [
   ['CAT-L3-CHILLED-YOG', '冷藏酸奶', 3, 'CAT-L2-YOGURT', 2],
   ['CAT-L3-CREAM-CHEESE', '奶油芝士', 3, 'CAT-L2-CHEESE', 1],
   ['CAT-L3-MOZZARELLA', '马苏里拉', 3, 'CAT-L2-CHEESE', 2],
+  ['CAT-L3-GHEE', '酥油/澄清黄油', 3, 'CAT-L2-REGIONAL-DAIRY', 1],
+  ['CAT-L3-KEFIR', '克菲尔发酵乳', 3, 'CAT-L2-REGIONAL-DAIRY', 2],
+  ['CAT-L3-SOUR-CREAM', '酸奶油', 3, 'CAT-L2-REGIONAL-DAIRY', 3],
+  ['CAT-L3-CAMEL-MILK', '骆驼奶制品', 3, 'CAT-L2-REGIONAL-DAIRY', 4],
+  ['CAT-L3-MARE-MILK', '马奶制品', 3, 'CAT-L2-REGIONAL-DAIRY', 5],
+  ['CAT-L3-DONKEY-MILK', '驴奶制品', 3, 'CAT-L2-REGIONAL-DAIRY', 6],
   ['CAT-L3-ADULT-POWDER', '成人奶粉', 3, 'CAT-L2-MILKPOWDER', 1],
   ['CAT-L3-CHILD-POWDER', '儿童奶粉', 3, 'CAT-L2-MILKPOWDER', 2]
 ].map((x, i) => stamp({ id: i + 1, category_code: x[0], category_name: x[1], level: x[2], parent_code: x[3], sort_order: x[4] }));
@@ -170,7 +177,14 @@ const sku = [
   ['SKU-POWDER-MIDDLE-750', '中老年益生菌奶粉750g', '6901000004004', 'CAT-L3-ADULT-POWDER', 'ACTIVE', 540, 1, 0.0021],
   ['SKU-CHEESE-MOZ-200', '马苏里拉芝士200g', '6901000005001', 'CAT-L3-MOZZARELLA', 'ACTIVE', 180, 1, 0.0007],
   ['SKU-CHEESE-CREAM-180', '奶油芝士180g', '6901000005002', 'CAT-L3-CREAM-CHEESE', 'ACTIVE', 120, 1, 0.0006],
-  ['SKU-CHEESE-SLICE-144', '奶酪片144g*12', '6901000005003', 'CAT-L3-CREAM-CHEESE', 'INACTIVE', 120, 12, 0.005]
+  ['SKU-CHEESE-SLICE-144', '奶酪片144g*12', '6901000005003', 'CAT-L3-CREAM-CHEESE', 'INACTIVE', 120, 12, 0.005],
+  ['SKU-RGD-GHE-250G-01CN-YAK-001', '藏区牦牛酥油250g', '6901000006001', 'CAT-L3-GHEE', 'ACTIVE', 365, 1, 0.0007],
+  ['SKU-RGD-GHE-500G-01CN-SAS-001', '南亚牛乳澄清黄油500g', '6901000006002', 'CAT-L3-GHEE', 'ACTIVE', 365, 1, 0.0012],
+  ['SKU-RGD-FER-330ML-12BT-KEF-001', '高加索克菲尔发酵乳饮料330ml*12', '6901000006003', 'CAT-L3-KEFIR', 'ACTIVE', 28, 12, 0.016],
+  ['SKU-RGD-CRM-200G-01BX-EUR-001', '欧美酸奶油200g', '6901000006004', 'CAT-L3-SOUR-CREAM', 'ACTIVE', 45, 1, 0.0006],
+  ['SKU-RGD-RAW-250ML-12BX-CAM-001', '骆驼奶制品250ml*12', '6901000006005', 'CAT-L3-CAMEL-MILK', 'ACTIVE', 180, 12, 0.014],
+  ['SKU-RGD-FER-250ML-12BT-MAR-001', '传统发酵马奶250ml*12', '6901000006006', 'CAT-L3-MARE-MILK', 'ACTIVE', 30, 12, 0.014],
+  ['SKU-RGD-RAW-250ML-12BX-DNK-001', '驴奶制品250ml*12', '6901000006007', 'CAT-L3-DONKEY-MILK', 'ACTIVE', 180, 12, 0.014]
 ].map((x, i) => stamp({ id: i + 1, sku_code: x[0], sku_name: x[1], bar_code: x[2], category_code: x[3], lifecycle_status: x[4], shelf_life_days: x[5], unit_ratio: x[6], volume_m3: x[7] }));
 
 const skuMap = new Map(sku.map((s) => [s.sku_code, s]));
@@ -414,7 +428,12 @@ db.master = {
   calendar
 };
 
-db.biz = { products, orders, pasture_stats };
+db.biz = {
+  ...(db.biz || {}),
+  products,
+  orders,
+  pasture_stats
+};
 db.meta = { ...(db.meta || {}), updated_at: now, storage_mode: 'local-json' };
 
 fs.writeFileSync(dbPath, JSON.stringify(db, null, 2), 'utf8');

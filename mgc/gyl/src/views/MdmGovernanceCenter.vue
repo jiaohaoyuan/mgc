@@ -289,6 +289,8 @@ const issueQuery = reactive({
 })
 const issueRows = ref<any[]>([])
 const issueTotal = ref(0)
+const qualityRunning = ref(false)
+const lastQualityRun = ref<any>(null)
 
 const loadRules = async () => {
   const res = await axios.get('/master/governance/quality/rules', { params: ruleQuery })
@@ -302,9 +304,34 @@ const loadIssues = async () => {
   issueTotal.value = res.data?.data?.total || 0
 }
 const runQualityCheck = async () => {
-  await axios.post('/master/governance/quality/run', {})
-  ElMessage.success('质量校验完成')
-  await loadIssues()
+  qualityRunning.value = true
+  try {
+    const res = await axios.post('/master/governance/quality/run', {})
+    lastQualityRun.value = res.data?.data || null
+    ElMessage.success(`质量校验完成：发现 ${lastQualityRun.value?.issue_count || 0} 条问题`)
+    await loadIssues()
+  } finally {
+    qualityRunning.value = false
+  }
+}
+
+const runSkuFormatQualityCheck = async () => {
+  qualityRunning.value = true
+  try {
+    const res = await axios.post('/master/governance/quality/run', {
+      object_types: ['SKU'],
+      rule_codes: ['SKU_FORMAT_STANDARD'],
+      trigger_mode: 'MANUAL'
+    })
+    lastQualityRun.value = res.data?.data || null
+    issueQuery.objectType = 'SKU'
+    issueQuery.status = 'OPEN'
+    issueQuery.page = 1
+    ElMessage.success(`SKU格式检查完成：发现 ${lastQualityRun.value?.issue_count || 0} 条问题`)
+    await loadIssues()
+  } finally {
+    qualityRunning.value = false
+  }
 }
 
 const resolveIssue = async (row: any) => {
@@ -800,9 +827,21 @@ watch(
           </el-form>
           <div>
             <el-button :icon="Plus" @click="openRuleDialog">新增规则</el-button>
-            <el-button type="success" :icon="CircleCheck" @click="runQualityCheck">执行校验</el-button>
+            <el-button type="warning" :icon="CircleCheck" :loading="qualityRunning" @click="runSkuFormatQualityCheck">执行SKU格式检查</el-button>
+            <el-button type="success" :icon="CircleCheck" :loading="qualityRunning" @click="runQualityCheck">执行全量校验</el-button>
           </div>
         </div>
+        <el-alert
+          v-if="lastQualityRun"
+          type="success"
+          :closable="false"
+          show-icon
+          class="quality-run-alert"
+        >
+          <template #default>
+            最近一次质量检查：{{ lastQualityRun.run?.run_no }}，规则 {{ lastQualityRun.run?.total_rules || 0 }} 条，问题 {{ lastQualityRun.issue_count || 0 }} 条。
+          </template>
+        </el-alert>
         <el-table :data="ruleRows" border stripe>
           <el-table-column prop="rule_code" label="规则编码" width="180" />
           <el-table-column prop="rule_name" label="规则名称" min-width="180" />
@@ -829,6 +868,11 @@ watch(
               </el-select>
             </el-form-item>
             <el-form-item>
+              <el-select v-model="issueQuery.objectType" placeholder="对象" clearable style="width: 140px">
+                <el-option v-for="item in objectTypes" :key="item.code" :label="item.label" :value="item.code" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
               <el-button type="primary" @click="loadIssues">查询问题</el-button>
             </el-form-item>
           </el-form>
@@ -840,6 +884,11 @@ watch(
             <template #default="{ row }">{{ objectTypeLabel(row.object_type) }}</template>
           </el-table-column>
           <el-table-column prop="target_code" label="目标编码" width="160" />
+          <el-table-column prop="severity" label="级别" width="90" align="center">
+            <template #default="{ row }">
+              <el-tag size="small" :type="row.severity === 'HIGH' ? 'danger' : 'warning'">{{ row.severity }}</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="message" label="问题描述" min-width="220" show-overflow-tooltip />
           <el-table-column prop="status" label="状态" width="100" align="center">
             <template #default="{ row }">
@@ -1112,6 +1161,9 @@ watch(
   display: flex;
   justify-content: flex-end;
   margin: 12px 0;
+}
+.quality-run-alert {
+  margin-bottom: 12px;
 }
 .detail-section {
   margin-top: 12px;

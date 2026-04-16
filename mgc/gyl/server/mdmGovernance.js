@@ -105,14 +105,16 @@ const ensureMdmGovernanceStructures = (db) => {
   db.biz.inventory_ledger = arr(db.biz.inventory_ledger);
   db.biz.transfer_orders = arr(db.biz.transfer_orders);
 
-  if (!db.platform.mdm_quality_rules.length) {
-    db.platform.mdm_quality_rules = DEFAULT_QUALITY_RULES.map((rule) => ({
+  DEFAULT_QUALITY_RULES.forEach((rule) => {
+    if (db.platform.mdm_quality_rules.some((row) => String(row.rule_code) === String(rule.rule_code))) return;
+    db.platform.mdm_quality_rules.push({
       ...rule,
+      id: nextId(db.platform.mdm_quality_rules),
       created_by: '系统初始化',
       created_at: nowIso(),
       updated_at: nowIso()
-    }));
-  }
+    });
+  });
 };
 
 const getObjectConfig = (objectType) => OBJECT_CONFIG[normalize(objectType).toUpperCase()] || null;
@@ -547,6 +549,73 @@ const runRuleCheck = (db, rule) => {
   }
 
   return issues;
+};
+
+const runQualityCheckCore = (db, body = {}, operator = '系统') => {
+  ensureMdmGovernanceStructures(db);
+
+  const selectedRuleIds = arr(body.rule_ids).map((id) => toNum(id, 0)).filter((id) => id > 0);
+  const selectedRuleCodes = arr(body.rule_codes).map((code) => normalize(code).toUpperCase()).filter(Boolean);
+  const selectedObjectTypes = arr(body.object_types).map((code) => normalize(code).toUpperCase()).filter(Boolean);
+  const rules = arr(db.platform.mdm_quality_rules).filter((row) => Number(row.status) === 1)
+    .filter((row) => (!selectedRuleIds.length || selectedRuleIds.includes(Number(row.id))))
+    .filter((row) => (!selectedRuleCodes.length || selectedRuleCodes.includes(String(row.rule_code).toUpperCase())))
+    .filter((row) => (!selectedObjectTypes.length || selectedObjectTypes.includes(String(row.object_type))));
+  if (!rules.length) throw new Error('没有可执行的规则');
+
+  const run = {
+    id: nextId(db.platform.mdm_quality_runs),
+    run_no: buildNo('QR', db.platform.mdm_quality_runs, 'run_no'),
+    trigger_mode: normalize(body.trigger_mode).toUpperCase() || 'MANUAL',
+    operator,
+    run_scope: {
+      rule_ids: rules.map((row) => row.id),
+      rule_codes: rules.map((row) => row.rule_code),
+      object_types: [...new Set(rules.map((row) => row.object_type))]
+    },
+    total_rules: rules.length,
+    total_issues: 0,
+    status: 'DONE',
+    started_at: nowIso(),
+    finished_at: '',
+    created_at: nowIso()
+  };
+  db.platform.mdm_quality_runs.push(run);
+
+  const generatedIssues = [];
+  rules.forEach((rule) => {
+    const issues = runRuleCheck(db, rule);
+    issues.forEach((issue) => {
+      generatedIssues.push({
+        id: nextId(arr(db.platform.mdm_quality_issues).concat(generatedIssues)),
+        run_id: run.id,
+        rule_id: rule.id,
+        rule_code: rule.rule_code,
+        rule_name: rule.rule_name,
+        object_type: issue.object_type,
+        target_id: issue.target_id,
+        target_code: issue.target_code,
+        severity: issue.severity || 'MEDIUM',
+        status: 'OPEN',
+        message: issue.message,
+        detail: clone(issue.detail),
+        created_at: nowIso(),
+        updated_at: nowIso(),
+        resolved_by: '',
+        resolved_at: '',
+        resolution: ''
+      });
+    });
+  });
+  db.platform.mdm_quality_issues.push(...generatedIssues);
+
+  run.total_issues = generatedIssues.length;
+  run.finished_at = nowIso();
+  return {
+    run,
+    issue_count: generatedIssues.length,
+    issue_preview: generatedIssues.slice(0, 100)
+  };
 };
 
 const createConflictRows = (db, taskId) => {
@@ -1165,67 +1234,7 @@ const registerMdmGovernanceRoutes = ({ app, superAdminRequired, apiOk, apiErr })
     let runSummary = null;
     try {
       updateDb((db) => {
-        ensureMdmGovernanceStructures(db);
-
-        const selectedRuleIds = arr(body.rule_ids).map((id) => toNum(id, 0)).filter((id) => id > 0);
-        const selectedObjectTypes = arr(body.object_types).map((code) => normalize(code).toUpperCase()).filter(Boolean);
-        const rules = arr(db.platform.mdm_quality_rules).filter((row) => Number(row.status) === 1)
-          .filter((row) => (!selectedRuleIds.length || selectedRuleIds.includes(Number(row.id))))
-          .filter((row) => (!selectedObjectTypes.length || selectedObjectTypes.includes(String(row.object_type))));
-        if (!rules.length) throw new Error('没有可执行的规则');
-
-        const run = {
-          id: nextId(db.platform.mdm_quality_runs),
-          run_no: buildNo('QR', db.platform.mdm_quality_runs, 'run_no'),
-          trigger_mode: normalize(body.trigger_mode).toUpperCase() || 'MANUAL',
-          operator,
-          run_scope: {
-            rule_ids: rules.map((row) => row.id),
-            object_types: [...new Set(rules.map((row) => row.object_type))]
-          },
-          total_rules: rules.length,
-          total_issues: 0,
-          status: 'DONE',
-          started_at: nowIso(),
-          finished_at: '',
-          created_at: nowIso()
-        };
-        db.platform.mdm_quality_runs.push(run);
-
-        const generatedIssues = [];
-        rules.forEach((rule) => {
-          const issues = runRuleCheck(db, rule);
-          issues.forEach((issue) => {
-            generatedIssues.push({
-              id: nextId(arr(db.platform.mdm_quality_issues).concat(generatedIssues)),
-              run_id: run.id,
-              rule_id: rule.id,
-              rule_code: rule.rule_code,
-              rule_name: rule.rule_name,
-              object_type: issue.object_type,
-              target_id: issue.target_id,
-              target_code: issue.target_code,
-              severity: issue.severity || 'MEDIUM',
-              status: 'OPEN',
-              message: issue.message,
-              detail: clone(issue.detail),
-              created_at: nowIso(),
-              updated_at: nowIso(),
-              resolved_by: '',
-              resolved_at: '',
-              resolution: ''
-            });
-          });
-        });
-        db.platform.mdm_quality_issues.push(...generatedIssues);
-
-        run.total_issues = generatedIssues.length;
-        run.finished_at = nowIso();
-        runSummary = {
-          run,
-          issue_count: generatedIssues.length,
-          issue_preview: generatedIssues.slice(0, 100)
-        };
+        runSummary = runQualityCheckCore(db, body, operator);
       });
     } catch (error) {
       return apiErr(res, req, 400, error?.message || '执行失败');
@@ -1479,5 +1488,6 @@ const registerMdmGovernanceRoutes = ({ app, superAdminRequired, apiOk, apiErr })
 
 module.exports = {
   registerMdmGovernanceRoutes,
-  ensureMdmGovernanceStructures
+  ensureMdmGovernanceStructures,
+  runQualityCheckCore
 };
