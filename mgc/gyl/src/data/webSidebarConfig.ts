@@ -109,6 +109,7 @@ export const webSidebarConfig: SidebarSection[] = [
         defaultOpen: true,
         children: [
           { type: 'item', id: 'mdm-sku', label: 'SKU管理', icon: 'Goods', path: '/mdm/sku', requiresSuperAdmin: true },
+          { type: 'item', id: 'mdm-spu', label: '标准商品SPU', icon: 'GoodsFilled', path: '/mdm/spu', requiresSuperAdmin: true },
           { type: 'item', id: 'mdm-category', label: '品类管理', icon: 'List', path: '/mdm/category', requiresSuperAdmin: true }
         ]
       },

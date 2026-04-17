@@ -18,10 +18,13 @@ import { useAppStore } from '@/stores/appStore'
 import { storeToRefs } from 'pinia'
 
 const appStore = useAppStore()
-const { users: tableData, permissionTree, departments: departmentTree } = storeToRefs(appStore)
-
-const roleList = appStore.roles
-const postList = appStore.posts
+const {
+  users: tableData,
+  permissionTree,
+  departments: departmentTree,
+  roles: roleList,
+  posts: postList
+} = storeToRefs(appStore)
 
 
 // 搜索
@@ -91,7 +94,7 @@ const formData = reactive<{
 })
 
 const PHONE_REGEX = /^1[3-9]\d{9}$/
-const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+const EMAIL_REGEX = /^(?=.{6,254}$)(?=.{1,64}@)[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])$/
 
 const validatePhone = (_rule: any, value: string, callback: (error?: Error) => void) => {
   const phone = String(value || '').trim()
@@ -131,14 +134,14 @@ rules.phone = [{ validator: validatePhone, trigger: 'blur' }]
 rules.email = [{ validator: validateEmail, trigger: 'blur' }]
 
 const availablePosts = computed(() => {
-  if (formData.deptIds.length === 0) return postList
+  if (formData.deptIds.length === 0) return postList.value
   const lastDeptId = formData.deptIds[formData.deptIds.length - 1] as number
-  return getPostsByDeptId(lastDeptId, postList, departmentTree.value)
+  return getPostsByDeptId(lastDeptId, postList.value, departmentTree.value)
 })
 
 // 选中角色后的权限预览数据
 const previewPermissions = computed(() => {
-  const selectedRoles = roleList.filter(r => formData.roleIds.includes(r.id))
+  const selectedRoles = roleList.value.filter(r => formData.roleIds.includes(r.id))
   const allPermIds = new Set<number>()
   selectedRoles.forEach(r => r.permissionIds.forEach(id => allPermIds.add(id)))
   // 过滤权限树只留有权限的节点
@@ -162,14 +165,14 @@ watch(() => formData.deptIds, () => {
 })
 
 // 获取角色名
-function getRoleName(id: number) {
-  return roleList.find(r => r.id === id)?.name || ''
+function getRoleName(id: number | string) {
+  return roleList.value.find(r => String(r.id) === String(id))?.name || `未匹配角色(${id})`
 }
 
 // 获取岗位名
 function getPostName(id: string | number) {
-  // DB岗位ID是字符串(如'J211')，用==兼容类型比较
-  return (postList as any[]).find(p => p.id == id)?.name || id
+  // 后端岗位ID可能是字符串(如'J311')，统一转字符串比较，避免空标签显示成方框。
+  return postList.value.find(p => String(p.id) === String(id))?.name || `未匹配岗位(${id})`
 }
 
 // 权限检查：只有超级管理员可操作
@@ -496,8 +499,25 @@ function handleResetPwd(row: UserItem) {
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="邮箱">
-                  <el-input v-model="formData.email" placeholder="请输入" />
+                <el-form-item prop="email">
+                  <template #label>
+                    <span class="form-label-with-tip">
+                      邮箱
+                      <el-tooltip placement="top" effect="dark">
+                        <template #content>
+                          <div class="email-format-tip">
+                            <strong>支持的邮箱格式</strong>
+                            <span>常见格式：user@example.com、name.surname@company.com</span>
+                            <span>Plus 标签：user+tag@gmail.com</span>
+                            <span>多级域名/子域名：user@mail.example.com</span>
+                            <span>域名支持字母、数字、连字符和 punycode；暂不支持中文本地名、IP 邮箱或引号邮箱。</span>
+                          </div>
+                        </template>
+                        <button type="button" class="email-format-help" aria-label="查看支持的邮箱格式">?</button>
+                      </el-tooltip>
+                    </span>
+                  </template>
+                  <el-input v-model="formData.email" placeholder="例如 user@example.com" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -593,3 +613,45 @@ function handleResetPwd(row: UserItem) {
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.form-label-with-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.email-format-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  cursor: help;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.email-format-help:hover,
+.email-format-help:focus-visible {
+  border-color: #60a5fa;
+  background: #dbeafe;
+  outline: none;
+}
+
+.email-format-tip {
+  display: grid;
+  max-width: 360px;
+  gap: 6px;
+  line-height: 1.55;
+}
+
+.email-format-tip strong {
+  color: #fff;
+}
+</style>

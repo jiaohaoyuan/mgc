@@ -843,7 +843,22 @@ onBeforeUnmount(() => {
         <section class="ops-panel">
           <div class="ops-panel__header">
             <div>
-              <h3>高风险仓库</h3>
+              <h3 class="ops-panel__title-with-help">
+                高风险仓库
+                <el-tooltip placement="top" effect="dark">
+                  <template #content>
+                    <div class="ops-risk-help">
+                      <strong>高风险仓库如何评估</strong>
+                      <span>数据来源：库存预警表 inventory_warnings。</span>
+                      <span>统计范围：状态不是 CLOSED 的预警，即 OPEN/PROCESSING。</span>
+                      <span>分组口径：按 warehouse_code 汇总同一仓库下的预警。</span>
+                      <span>评估字段：活跃预警数 count、严重数 critical_count、高级数 high_count、关联数量 related_qty、影响 SKU 数 affected_skus。</span>
+                      <span>当前排序：critical_count 降序，其次 count 降序，再按 related_qty 降序，取前 6 个仓库。</span>
+                    </div>
+                  </template>
+                  <button type="button" class="ops-help-tip" aria-label="查看高风险仓库评估标准">?</button>
+                </el-tooltip>
+              </h3>
               <p>按活跃预警数和严重等级排序</p>
             </div>
           </div>
@@ -1270,6 +1285,46 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 16px;
   color: #0f172a;
+}
+
+.ops-panel__title-with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ops-help-tip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #fecdd3;
+  border-radius: 999px;
+  background: #fff1f2;
+  color: #be123c;
+  cursor: help;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ops-help-tip:hover,
+.ops-help-tip:focus-visible {
+  border-color: #fb7185;
+  background: #ffe4e6;
+  outline: none;
+}
+
+.ops-risk-help {
+  display: grid;
+  max-width: 420px;
+  gap: 6px;
+  line-height: 1.55;
+}
+
+.ops-risk-help strong {
+  color: #fff;
 }
 
 .ops-panel__header p {

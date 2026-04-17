@@ -208,6 +208,7 @@ export const useAppStore = defineStore('app', () => {
             '/workflow-center',
             '/management-cockpit',
             '/mdm/sku',
+            '/mdm/spu',
             '/mdm/reseller-relation',
             '/mdm/category',
             '/mdm/warehouse',

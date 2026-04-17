@@ -169,6 +169,12 @@ const router = createRouter({
             meta: { title: 'SKU管理', icon: 'Goods', requiresSuperAdmin: true, permissionPath: '/mdm/sku' }
         },
         {
+            path: '/mdm/spu',
+            name: 'MdmSpuList',
+            component: () => import('@/views/MdmSpuList.vue'),
+            meta: { title: '标准商品SPU', icon: 'GoodsFilled', requiresSuperAdmin: true, permissionPath: '/mdm/spu' }
+        },
+        {
             path: '/mdm/reseller-relation',
             name: 'MdmResellerRelation',
             component: () => import('@/views/MdmResellerRelation.vue'),

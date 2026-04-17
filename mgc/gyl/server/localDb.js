@@ -2,6 +2,7 @@
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { SKU_RULE_DICT_TYPES, SKU_RULE_DICT_ITEMS } = require('./skuRules');
+const { repairOrBuildSpuRows } = require('./spuCatalog');
 
 const DATA_DIR = path.join(__dirname, 'local-data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -25,6 +26,10 @@ const DEFAULT_PLATFORM_PAGES = [
     { id: 48, name: '流程协同与待办中心', path: '/workflow-center', permission: 'biz:workflow:center:view', parent_id: 20 },
     { id: 49, name: '经营分析与管理驾驶舱', path: '/management-cockpit', permission: 'biz:management:cockpit:view', parent_id: 20 },
     { id: 50, name: '企业级平台能力中心', path: '/enterprise-platform', permission: 'sys:enterprise:platform:view', parent_id: 10 }
+];
+
+const DEFAULT_MDM_PAGES = [
+    { id: 314, name: '标准商品SPU', path: '/mdm/spu', permission: 'mdm:spu:view', parent_id: 30, icon: 'GoodsFilled', sort_no: 300 }
 ];
 
 const BASE_DICT_TYPES = [
@@ -246,6 +251,7 @@ const createSeedDb = () => {
             reseller: [],
             org: [],
             sku: [],
+            spu: [],
             reseller_relation: [],
             rltn_warehouse_sku: [],
             rltn_org_reseller: [],
@@ -344,6 +350,7 @@ const ensurePlatformStructures = (db) => {
     db.master.reseller = ensureArray(db.master.reseller);
     db.master.org = ensureArray(db.master.org);
     db.master.sku = ensureArray(db.master.sku);
+    db.master.spu = ensureArray(db.master.spu);
     db.master.reseller_relation = ensureArray(db.master.reseller_relation);
     db.master.rltn_warehouse_sku = ensureArray(db.master.rltn_warehouse_sku);
     db.master.rltn_org_reseller = ensureArray(db.master.rltn_org_reseller);
@@ -449,6 +456,57 @@ const ensurePlatformStructures = (db) => {
     const beforePages = db.system.pages.length;
     db.system.pages = upsertRowsByPath(db.system.pages, incomingPages);
     if (db.system.pages.length !== beforePages) changed = true;
+
+    DEFAULT_MDM_PAGES.forEach((page) => {
+        const existing = db.system.pages.find((row) => String(row.path) === String(page.path));
+        const next = {
+            id: page.id,
+            name: page.name,
+            alias: `P${page.id}`,
+            code: page.permission,
+            permission: page.permission,
+            parent_id: page.parent_id,
+            parent_ids: `0,${page.parent_id}`,
+            type: 'menu',
+            path: page.path,
+            icon: page.icon || 'Menu',
+            moudel_id: page.parent_id,
+            sort_no: page.sort_no ?? page.id,
+            status: 1,
+            created_time: nowIso(),
+            updated_time: nowIso()
+        };
+        if (!existing) {
+            db.system.pages.push(next);
+            changed = true;
+            return;
+        }
+        const patch = {};
+        ['name', 'alias', 'code', 'permission', 'parent_id', 'parent_ids', 'type', 'icon', 'moudel_id', 'sort_no', 'status'].forEach((key) => {
+            if (String(existing[key] ?? '') !== String(next[key] ?? '')) patch[key] = next[key];
+        });
+        if (Object.keys(patch).length) {
+            Object.assign(existing, patch, { updated_time: nowIso() });
+            changed = true;
+        }
+    });
+
+    const spuRepair = repairOrBuildSpuRows(db.master.spu, {
+        skuRows: db.master.sku,
+        categoryRows: db.master.category,
+        timeIso: nowIso()
+    });
+    if (spuRepair.changed) {
+        db.master.spu = spuRepair.rows;
+        changed = true;
+    }
+
+    db.master.sku.forEach((sku) => {
+        if (Object.prototype.hasOwnProperty.call(sku, 'spu_code') && !String(sku.spu_code || '').trim()) {
+            delete sku.spu_code;
+            changed = true;
+        }
+    });
 
     const superAdmin = db.system.roles.find((role) => Number(role.id) === 1);
     if (!superAdmin) {

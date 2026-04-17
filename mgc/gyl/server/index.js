@@ -26,6 +26,7 @@ const {
     normalizeCode: normalizeSkuCode,
     validateSkuCode
 } = require('./skuRules');
+const { normalizeSpuRow, withSpuMetrics } = require('./spuCatalog');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -93,7 +94,8 @@ const contains = (text, keyword) => String(text || '').toLowerCase().includes(St
 const normalizeDictCode = (value) => String(value || '').trim().toUpperCase();
 const isValidDictCode = (value) => /^[A-Z][A-Z0-9_]{1,63}$/.test(String(value || ''));
 const PHONE_REGEX = /^1[3-9]\d{9}$/;
-const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+// 支持主流邮箱格式（含 plus-tag、多级域名、子域名、punycode 域名）
+const EMAIL_REGEX = /^(?=.{6,254}$)(?=.{1,64}@)[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])$/;
 const validateDictCodeOrThrow = (value, label) => {
     if (!isValidDictCode(value)) throw new Error(`${label}仅支持大写字母、数字、下划线，且必须字母开头`);
 };
@@ -369,6 +371,7 @@ const resolveMasterPermissionPath = (req) => {
 
     const rules = [
         [/^\/master\/sku(?:\/|$)/, '/mdm/sku'],
+        [/^\/master\/spu(?:\/|$)/, '/mdm/spu'],
         [/^\/master\/reseller_rltn(?:\/|$)/, '/mdm/reseller-relation'],
         [/^\/master\/category(?:\/|$)/, '/mdm/category'],
         [/^\/master\/warehouse(?:\/|$)/, '/mdm/warehouse'],
@@ -2620,6 +2623,17 @@ const withMasterFilter = (rows, { keyword = '', status = '' }, fields) => {
     return list;
 };
 
+const getSpuPayload = (body, db) => {
+    const payload = normalizeSpuRow(body, {
+        categoryRows: db.master?.category || [],
+        timeIso: nowIso()
+    });
+    if (!/^SPU-[A-Z0-9-]{2,60}$/.test(payload.spu_code)) {
+        throw new Error('SPU编码需以 SPU- 开头，仅支持大写字母、数字和连字符');
+    }
+    return payload;
+};
+
 const formatSkuRow = (row) => ({
     ...row,
     sku_code: row.sku_code === undefined ? '' : normalizeSkuCode(row.sku_code),
@@ -3180,6 +3194,20 @@ app.get('/api/master/RESELLER_RLTN/export', superAdminRequired, (req, res) => {
 });
 const genericListConfigs = [
     {
+        route: 'spu',
+        table: 'spu',
+        codeField: 'spu_code',
+        nameField: 'spu_name',
+        keywordFields: ['spu_code', 'spu_name', 'category_code', 'category_name', 'product_line', 'process_type', 'origin_region'],
+        extraFilter: (rows, q) => rows.filter(r =>
+            (!q.categoryCode || contains(r.category_code, q.categoryCode)) &&
+            (!q.productLine || contains(r.product_line, q.productLine)) &&
+            (!q.lifecycleStatus || String(r.lifecycle_status) === String(q.lifecycleStatus))
+        ),
+        decorateRows: (rows, db) => withSpuMetrics(rows, db.master?.sku || []),
+        formatPayload: getSpuPayload
+    },
+    {
         route: 'warehouse',
         table: 'warehouse',
         codeField: 'warehouse_code',
@@ -3212,20 +3240,24 @@ const genericListConfigs = [
 genericListConfigs.forEach((cfg) => {
     app.get(`/api/master/${cfg.route}`, superAdminRequired, (req, res) => {
         const { page = 1, pageSize = 20, keyword = '', status = '' } = req.query || {};
-        let rows = withMasterFilter(readDb().master[cfg.table], { keyword, status }, cfg.keywordFields);
-        rows = cfg.extraFilter(rows, req.query || {});
+        const db = readDb();
+        let rows = withMasterFilter(db.master[cfg.table], { keyword, status }, cfg.keywordFields);
+        rows = cfg.extraFilter ? cfg.extraFilter(rows, req.query || {}) : rows;
+        rows = cfg.decorateRows ? cfg.decorateRows(rows, db) : rows;
         rows.sort((a, b) => toNum(b.id) - toNum(a.id));
         apiOk(res, req, paginate(rows, page, pageSize), '获取成功');
     });
 
     app.post(`/api/master/${cfg.route}`, superAdminRequired, (req, res) => {
         const body = req.body || {};
-        if (!body[cfg.codeField]) return apiErr(res, req, 400, '编码不能为空');
         try {
             updateDb((db) => {
+                const payload = cfg.formatPayload ? cfg.formatPayload(body, db) : body;
+                if (!payload[cfg.codeField]) throw new Error('编码不能为空');
+                if (cfg.nameField && !payload[cfg.nameField]) throw new Error('名称不能为空');
                 const rows = db.master[cfg.table];
-                if (rows.some(r => String(r[cfg.codeField]) === String(body[cfg.codeField]))) throw new Error('编码已存在');
-                rows.push({ id: nextId(rows), ...body, status: toNum(body.status, 1), created_time: nowIso(), updated_time: nowIso() });
+                if (rows.some(r => String(r[cfg.codeField]) === String(payload[cfg.codeField]))) throw new Error('编码已存在');
+                rows.push({ id: nextId(rows), ...payload, status: toNum(payload.status, 1), created_time: nowIso(), updated_time: nowIso() });
             });
         } catch (error) {
             return apiErr(res, req, 400, error.message || '新增失败');
@@ -3239,7 +3271,8 @@ genericListConfigs.forEach((cfg) => {
         updateDb((db) => {
             const row = db.master[cfg.table].find(r => Number(r.id) === id);
             if (!row) return;
-            Object.assign(row, { ...req.body, updated_time: nowIso() });
+            const payload = cfg.formatPayload ? cfg.formatPayload({ ...row, ...req.body }, db) : req.body;
+            Object.assign(row, { ...payload, id: row.id, updated_time: nowIso() });
             found = true;
         });
         if (!found) return apiErr(res, req, 404, '数据不存在');
