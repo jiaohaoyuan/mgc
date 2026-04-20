@@ -10,7 +10,7 @@ import {
   Warning
 } from '@element-plus/icons-vue'
 import axios from 'axios'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 interface OptionItem {
   code: string
@@ -20,7 +20,138 @@ interface OptionItem {
 
 const activeTab = ref('request')
 const route = useRoute()
+const router = useRouter()
 const loading = ref(false)
+
+interface LinkedPageMeta {
+  path: string
+  title: string
+  icon: string
+}
+
+interface DataPageBlueprintItem {
+  code: string
+  label: string
+  icon: string
+  pagePaths: string[]
+}
+
+const DATA_PAGE_BLUEPRINT: DataPageBlueprintItem[] = [
+  {
+    code: 'SKU',
+    label: 'SKU',
+    icon: 'Goods',
+    pagePaths: ['/mdm/sku', '/mdm/spu', '/mdm/reseller-relation', '/mdm/rltn/warehouse-sku', '/mdm/rltn/product-sku', '/intelligent', '/intelligent-closed-loop', '/inventory-ops', '/channel-dealer-ops', '/management-cockpit', '/mdm/governance']
+  },
+  {
+    code: 'SPU',
+    label: '标准商品SPU',
+    icon: 'GoodsFilled',
+    pagePaths: ['/mdm/spu', '/mdm/sku', '/mdm/category', '/management-cockpit', '/mdm/governance']
+  },
+  {
+    code: 'CATEGORY',
+    label: '品类',
+    icon: 'List',
+    pagePaths: ['/mdm/category', '/mdm/sku', '/mdm/spu', '/intelligent', '/management-cockpit', '/mdm/governance']
+  },
+  {
+    code: 'WAREHOUSE',
+    label: '仓库',
+    icon: 'HomeFilled',
+    pagePaths: ['/mdm/warehouse', '/mdm/rltn/warehouse-sku', '/inventory-ops', '/intelligent-closed-loop', '/channel-dealer-ops', '/management-cockpit', '/mdm/governance']
+  },
+  {
+    code: 'FACTORY',
+    label: '工厂',
+    icon: 'SetUp',
+    pagePaths: ['/mdm/factory', '/inventory-ops', '/management-cockpit', '/mdm/governance']
+  },
+  {
+    code: 'CHANNEL',
+    label: '渠道',
+    icon: 'DataAnalysis',
+    pagePaths: ['/mdm/channel', '/channel-dealer-ops', '/management-cockpit', '/mdm/governance']
+  },
+  {
+    code: 'RESELLER',
+    label: '经销商',
+    icon: 'UserFilled',
+    pagePaths: ['/mdm/reseller', '/mdm/reseller-relation', '/mdm/rltn/org-reseller', '/channel-dealer-ops', '/intelligent-closed-loop', '/management-cockpit', '/mdm/governance']
+  },
+  {
+    code: 'ORG',
+    label: '组织',
+    icon: 'OfficeBuilding',
+    pagePaths: ['/mdm/org', '/mdm/rltn/org-reseller', '/workflow-center', '/management-cockpit', '/mdm/governance']
+  },
+  {
+    code: 'CALENDAR',
+    label: '业务日历',
+    icon: 'Calendar',
+    pagePaths: ['/mdm/calendar', '/workflow-center', '/intelligent', '/management-cockpit', '/mdm/governance']
+  },
+  {
+    code: 'RESELLER_RLTN',
+    label: 'SKU-经销关系',
+    icon: 'Connection',
+    pagePaths: ['/mdm/reseller-relation', '/channel-dealer-ops', '/intelligent-closed-loop', '/mdm/governance']
+  },
+  {
+    code: 'RLTN_WAREHOUSE_SKU',
+    label: '仓库-SKU关系',
+    icon: 'Connection',
+    pagePaths: ['/mdm/rltn/warehouse-sku', '/inventory-ops', '/intelligent-closed-loop', '/mdm/governance']
+  },
+  {
+    code: 'RLTN_ORG_RESELLER',
+    label: '组织-经销关系',
+    icon: 'Connection',
+    pagePaths: ['/mdm/rltn/org-reseller', '/channel-dealer-ops', '/workflow-center', '/mdm/governance']
+  },
+  {
+    code: 'RLTN_PRODUCT_SKU',
+    label: '产品-SKU关系',
+    icon: 'Connection',
+    pagePaths: ['/mdm/rltn/product-sku', '/intelligent', '/intelligent-closed-loop', '/inventory-ops', '/mdm/governance']
+  }
+]
+
+const routeMetaMap = computed(() => {
+  const map = new Map<string, LinkedPageMeta>()
+  router.getRoutes().forEach((record) => {
+    if (!record.path || !String(record.path).startsWith('/')) return
+    const title = String(record.meta?.title || record.name || record.path)
+    const icon = String(record.meta?.icon || 'DataBoard')
+    map.set(record.path, {
+      path: record.path,
+      title,
+      icon
+    })
+  })
+  return map
+})
+
+const dataPageIconRows = computed(() => {
+  return DATA_PAGE_BLUEPRINT.map((item) => {
+    const uniquePaths = [...new Set(item.pagePaths)]
+    const pages = uniquePaths.map((path) => {
+      const routeMeta = routeMetaMap.value.get(path)
+      return routeMeta || {
+        path,
+        title: path,
+        icon: 'DataBoard'
+      }
+    })
+    return {
+      code: item.code,
+      label: item.label,
+      icon: item.icon,
+      pages,
+      pageCount: pages.length
+    }
+  })
+})
 
 const objectTypes = ref<OptionItem[]>([])
 const requestStatuses = ref<string[]>([])
@@ -604,6 +735,46 @@ watch(
       <el-button type="primary" :icon="Refresh" @click="initialize">刷新全部</el-button>
     </div>
 
+    <section class="data-page-link-section">
+      <div class="data-page-link-header">
+        <h3>数据关联页面图标</h3>
+        <p>用于快速识别“每个数据对象”会影响到哪些页面。</p>
+      </div>
+      <el-table :data="dataPageIconRows" border stripe>
+        <el-table-column label="数据对象" width="220">
+          <template #default="{ row }">
+            <div class="data-object-cell">
+              <el-icon><component :is="row.icon" /></el-icon>
+              <div class="data-object-text">
+                <span>{{ row.label }}</span>
+                <small>{{ row.code }}</small>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="关联页面图标" min-width="460">
+          <template #default="{ row }">
+            <div class="page-chip-list">
+              <el-tooltip
+                v-for="page in row.pages"
+                :key="`${row.code}-${page.path}`"
+                :content="page.path"
+                placement="top"
+              >
+                <span class="page-chip">
+                  <el-icon><component :is="page.icon" /></el-icon>
+                  <span>{{ page.title }}</span>
+                </span>
+              </el-tooltip>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="页面数" width="90" align="center">
+          <template #default="{ row }">{{ row.pageCount }}</template>
+        </el-table-column>
+      </el-table>
+    </section>
+
     <el-tabs v-model="activeTab" type="border-card">
       <el-tab-pane label="申请审批" name="request">
         <div class="toolbar">
@@ -1170,5 +1341,79 @@ watch(
   background: #fff;
   padding: 12px;
   border-radius: 10px;
+}
+
+.data-page-link-section {
+  margin-bottom: 12px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.data-page-link-header {
+  margin-bottom: 10px;
+}
+
+.data-page-link-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.data-page-link-header p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.data-object-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.data-object-cell .el-icon {
+  font-size: 16px;
+  color: #2563eb;
+}
+
+.data-object-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.data-object-text span {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.data-object-text small {
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+}
+
+.page-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.page-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.page-chip .el-icon {
+  font-size: 13px;
 }
 </style>
