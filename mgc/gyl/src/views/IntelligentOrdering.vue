@@ -21,7 +21,7 @@ import {
 } from '@element-plus/icons-vue'
 
 // --- API 地址 ---
-const API_BASE = 'http://localhost:3000/api'
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api'
 
 // --- 数据状态容器 ---
 const products = ref<any[]>([])

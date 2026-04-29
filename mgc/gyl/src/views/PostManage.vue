@@ -148,7 +148,7 @@ async function handleDelete(row: PostItem) {
 }
 
 import axios from 'axios'
-const API_BASE = 'http://localhost:3000/api'
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api'
 
 async function handleSubmit() {
   await formRef.value?.validate()

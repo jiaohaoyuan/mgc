@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 import { Odometer, User, Key, Lock, Message, Phone } from '@element-plus/icons-vue'
 
 const router = useRouter()
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api'
 
 const activeStep = ref(0)
 const loading = ref(false)
@@ -42,7 +43,7 @@ const handleGetCode = async () => {
   
   smsLoading.value = true
   try {
-    const res = await fetch('http://localhost:3000/api/sms/send-code', {
+    const res = await fetch(`${API_BASE}/sms/send-code`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -73,7 +74,7 @@ const nextStep = async () => {
     }
     loading.value = true
     try {
-      const res = await fetch('http://localhost:3000/api/sms/verify-code', {
+      const res = await fetch(`${API_BASE}/sms/verify-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,7 +100,7 @@ const nextStep = async () => {
     }
     loading.value = true
     try {
-      const res = await fetch('http://localhost:3000/api/admin/verify-helper-code', {
+      const res = await fetch(`${API_BASE}/admin/verify-helper-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -144,7 +145,7 @@ const handleReset = async () => {
 
   loading.value = true
   try {
-    const res = await fetch('http://localhost:3000/api/reset-password', {
+    const res = await fetch(`${API_BASE}/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

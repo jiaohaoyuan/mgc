@@ -337,9 +337,9 @@ const closeException = async (id: number) => {
 
 const importDemo = async () => {
   const rows = [
-    { group_no: 'G-1', customer_code: 'RS-SZ-LH', sku_code: 'SKU-UHT-250-12', order_qty: 120, unit: '箱', unit_price: 36 },
-    { group_no: 'G-1', customer_code: 'RS-SZ-LH', sku_code: 'SKU-PASTEUR-950', order_qty: 90, unit: '箱', unit_price: 48 },
-    { group_no: 'G-2', customer_code: 'RS-DY-FLAG', sku_code: 'SKU-UHT-250-12', order_qty: 200, unit: '箱', unit_price: 35 }
+    { group_no: 'G-1', customer_code: 'RS-SZ-LH', sku_code: 'SKU-UHT-UHT-250ML-12BX-PLN-001', order_qty: 120, unit: '箱', unit_price: 36 },
+    { group_no: 'G-1', customer_code: 'RS-SZ-LH', sku_code: 'SKU-FRM-PAS-950ML-01BT-PLN-001', order_qty: 90, unit: '箱', unit_price: 48 },
+    { group_no: 'G-2', customer_code: 'RS-DY-FLAG', sku_code: 'SKU-UHT-UHT-250ML-12BX-PLN-001', order_qty: 200, unit: '箱', unit_price: 35 }
   ]
   await axios.post('/orders/phase2/import', { rows })
   ElMessage.success('示例批量导入完成')

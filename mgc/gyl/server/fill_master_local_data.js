@@ -1,5 +1,6 @@
 ﻿const fs = require('fs');
 const path = require('path');
+const { buildDairyCategoryRows } = require('./dairyCategoryCatalog');
 
 const dbPath = path.join(__dirname, 'local-data', 'db.json');
 const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
@@ -13,29 +14,7 @@ const stamp = (row) => ({
   ...row
 });
 
-const category = [
-  ['CAT-L1-DAIRY', '乳制品', 1, null, 1],
-  ['CAT-L1-NUTRITION', '营养品', 1, null, 2],
-  ['CAT-L2-LIQUID', '液态奶', 2, 'CAT-L1-DAIRY', 1],
-  ['CAT-L2-YOGURT', '酸奶', 2, 'CAT-L1-DAIRY', 2],
-  ['CAT-L2-CHEESE', '奶酪', 2, 'CAT-L1-DAIRY', 3],
-  ['CAT-L2-REGIONAL-DAIRY', '特殊或地域性奶制品', 2, 'CAT-L1-DAIRY', 4],
-  ['CAT-L2-MILKPOWDER', '奶粉', 2, 'CAT-L1-NUTRITION', 1],
-  ['CAT-L3-UHT', '常温纯奶', 3, 'CAT-L2-LIQUID', 1],
-  ['CAT-L3-PASTEUR', '巴氏鲜奶', 3, 'CAT-L2-LIQUID', 2],
-  ['CAT-L3-RTD-YOG', '常温酸奶饮品', 3, 'CAT-L2-YOGURT', 1],
-  ['CAT-L3-CHILLED-YOG', '冷藏酸奶', 3, 'CAT-L2-YOGURT', 2],
-  ['CAT-L3-CREAM-CHEESE', '奶油芝士', 3, 'CAT-L2-CHEESE', 1],
-  ['CAT-L3-MOZZARELLA', '马苏里拉', 3, 'CAT-L2-CHEESE', 2],
-  ['CAT-L3-GHEE', '酥油/澄清黄油', 3, 'CAT-L2-REGIONAL-DAIRY', 1],
-  ['CAT-L3-KEFIR', '克菲尔发酵乳', 3, 'CAT-L2-REGIONAL-DAIRY', 2],
-  ['CAT-L3-SOUR-CREAM', '酸奶油', 3, 'CAT-L2-REGIONAL-DAIRY', 3],
-  ['CAT-L3-CAMEL-MILK', '骆驼奶制品', 3, 'CAT-L2-REGIONAL-DAIRY', 4],
-  ['CAT-L3-MARE-MILK', '马奶制品', 3, 'CAT-L2-REGIONAL-DAIRY', 5],
-  ['CAT-L3-DONKEY-MILK', '驴奶制品', 3, 'CAT-L2-REGIONAL-DAIRY', 6],
-  ['CAT-L3-ADULT-POWDER', '成人奶粉', 3, 'CAT-L2-MILKPOWDER', 1],
-  ['CAT-L3-CHILD-POWDER', '儿童奶粉', 3, 'CAT-L2-MILKPOWDER', 2]
-].map((x, i) => stamp({ id: i + 1, category_code: x[0], category_name: x[1], level: x[2], parent_code: x[3], sort_order: x[4] }));
+const category = buildDairyCategoryRows(now);
 
 const factory = [
   ['FAC-ANJI', '安吉液态奶工厂', '认养一头牛乳业', '液态奶工厂', 1, '浙江省', '湖州市', '安吉县', '递铺街道乳业路1号'],
@@ -152,32 +131,32 @@ const org = [
 const oMap = new Map(org.map((o) => [o.org_code, o.org_name]));
 
 const sku = [
-  ['SKU-UHT-250-12', '常温纯牛奶250ml*12', '6901000001001', 'CAT-L3-UHT', 'ACTIVE', 180, 12, 0.014],
-  ['SKU-UHT-250-24', '常温纯牛奶250ml*24', '6901000001002', 'CAT-L3-UHT', 'ACTIVE', 180, 24, 0.028],
-  ['SKU-UHT-200-10', '全脂纯牛奶200ml*10', '6901000001003', 'CAT-L3-UHT', 'ACTIVE', 180, 10, 0.011],
-  ['SKU-UHT-1L-12', '常温纯牛奶1L*12', '6901000001004', 'CAT-L3-UHT', 'ACTIVE', 180, 12, 0.043],
-  ['SKU-UHT-HIGHCAL-250-12', '高钙纯牛奶250ml*12', '6901000001005', 'CAT-L3-UHT', 'ACTIVE', 180, 12, 0.014],
-  ['SKU-UHT-A2-250-12', 'A2β-酪蛋白纯牛奶250ml*12', '6901000001006', 'CAT-L3-UHT', 'ACTIVE', 180, 12, 0.014],
-  ['SKU-UHT-ORGANIC-250-12', '有机纯牛奶250ml*12', '6901000001007', 'CAT-L3-UHT', 'ACTIVE', 180, 12, 0.014],
-  ['SKU-PASTEUR-950', '巴氏鲜奶950ml', '6901000002001', 'CAT-L3-PASTEUR', 'ACTIVE', 7, 1, 0.0015],
-  ['SKU-PASTEUR-450', '巴氏鲜奶450ml', '6901000002002', 'CAT-L3-PASTEUR', 'ACTIVE', 7, 1, 0.0008],
-  ['SKU-PASTEUR-HIGHCAL-950', '高钙鲜奶950ml', '6901000002003', 'CAT-L3-PASTEUR', 'ACTIVE', 10, 1, 0.0015],
-  ['SKU-PASTEUR-CHILD-750', '儿童鲜奶750ml', '6901000002004', 'CAT-L3-PASTEUR', 'ACTIVE', 7, 1, 0.0012],
-  ['SKU-YOG-CHILLED-ORIGIN-200-10', '低温原味酸奶200g*10', '6901000003001', 'CAT-L3-CHILLED-YOG', 'ACTIVE', 21, 10, 0.0075],
-  ['SKU-YOG-CHILLED-STRAW-200-10', '低温草莓酸奶200g*10', '6901000003002', 'CAT-L3-CHILLED-YOG', 'ACTIVE', 21, 10, 0.0075],
-  ['SKU-YOG-CHILLED-BLUEB-200-10', '低温蓝莓酸奶200g*10', '6901000003003', 'CAT-L3-CHILLED-YOG', 'ACTIVE', 21, 10, 0.0075],
-  ['SKU-YOG-CHILLED-0SUGAR-200-10', '低温0蔗糖酸奶200g*10', '6901000003004', 'CAT-L3-CHILLED-YOG', 'ACTIVE', 21, 10, 0.0075],
-  ['SKU-YOG-DRINK-ORIGIN-330', '常温风味酸奶330ml*12', '6901000003005', 'CAT-L3-RTD-YOG', 'ACTIVE', 120, 12, 0.016],
-  ['SKU-YOG-DRINK-MANGO-330', '芒果风味酸奶330ml*12', '6901000003006', 'CAT-L3-RTD-YOG', 'ACTIVE', 120, 12, 0.016],
-  ['SKU-YOG-GREEK-135-12', '希腊酸奶135g*12', '6901000003007', 'CAT-L3-CHILLED-YOG', 'ACTIVE', 28, 12, 0.0045],
-  ['SKU-PROBIOTIC-100-30', '益生菌饮品100ml*30', '6901000003008', 'CAT-L3-RTD-YOG', 'ACTIVE', 60, 30, 0.012],
-  ['SKU-POWDER-ADULT-800', '成人高钙奶粉800g', '6901000004001', 'CAT-L3-ADULT-POWDER', 'ACTIVE', 540, 1, 0.0022],
-  ['SKU-POWDER-ADULT-HIGHPRO-800', '成人高蛋白奶粉800g', '6901000004002', 'CAT-L3-ADULT-POWDER', 'ACTIVE', 540, 1, 0.0022],
-  ['SKU-POWDER-CHILD-700', '儿童成长奶粉700g', '6901000004003', 'CAT-L3-CHILD-POWDER', 'ACTIVE', 540, 1, 0.002],
-  ['SKU-POWDER-MIDDLE-750', '中老年益生菌奶粉750g', '6901000004004', 'CAT-L3-ADULT-POWDER', 'ACTIVE', 540, 1, 0.0021],
-  ['SKU-CHEESE-MOZ-200', '马苏里拉芝士200g', '6901000005001', 'CAT-L3-MOZZARELLA', 'ACTIVE', 180, 1, 0.0007],
-  ['SKU-CHEESE-CREAM-180', '奶油芝士180g', '6901000005002', 'CAT-L3-CREAM-CHEESE', 'ACTIVE', 120, 1, 0.0006],
-  ['SKU-CHEESE-SLICE-144', '奶酪片144g*12', '6901000005003', 'CAT-L3-CREAM-CHEESE', 'INACTIVE', 120, 12, 0.005],
+  ['SKU-UHT-UHT-250ML-12BX-PLN-001', '常温纯牛奶250ml*12', '6901000001001', 'CAT-L3-UHT', 'ACTIVE', 180, 12, 0.014],
+  ['SKU-UHT-UHT-250ML-24BX-PLN-001', '常温纯牛奶250ml*24', '6901000001002', 'CAT-L3-UHT', 'ACTIVE', 180, 24, 0.028],
+  ['SKU-UHT-UHT-200ML-10BX-PLN-001', '全脂纯牛奶200ml*10', '6901000001003', 'CAT-L3-UHT', 'ACTIVE', 180, 10, 0.011],
+  ['SKU-UHT-UHT-1L-12BX-PLN-001', '常温纯牛奶1L*12', '6901000001004', 'CAT-L3-UHT', 'ACTIVE', 180, 12, 0.043],
+  ['SKU-UHT-UHT-250ML-12BX-HCL-001', '高钙纯牛奶250ml*12', '6901000001005', 'CAT-L3-UHT', 'ACTIVE', 180, 12, 0.014],
+  ['SKU-UHT-UHT-250ML-12BX-A2N-001', 'A2β-酪蛋白纯牛奶250ml*12', '6901000001006', 'CAT-L3-UHT', 'ACTIVE', 180, 12, 0.014],
+  ['SKU-UHT-UHT-250ML-12BX-ORG-001', '有机纯牛奶250ml*12', '6901000001007', 'CAT-L3-UHT', 'ACTIVE', 180, 12, 0.014],
+  ['SKU-FRM-PAS-950ML-01BT-PLN-001', '巴氏鲜奶950ml', '6901000002001', 'CAT-L3-PASTEUR', 'ACTIVE', 7, 1, 0.0015],
+  ['SKU-FRM-PAS-450ML-01BT-PLN-001', '巴氏鲜奶450ml', '6901000002002', 'CAT-L3-PASTEUR', 'ACTIVE', 7, 1, 0.0008],
+  ['SKU-FRM-PAS-950ML-01BT-HCL-001', '高钙鲜奶950ml', '6901000002003', 'CAT-L3-PASTEUR', 'ACTIVE', 10, 1, 0.0015],
+  ['SKU-FRM-PAS-750ML-01BT-CHD-001', '儿童鲜奶750ml', '6901000002004', 'CAT-L3-PASTEUR', 'ACTIVE', 7, 1, 0.0012],
+  ['SKU-YOG-CHL-200G-10CP-PLN-001', '低温原味酸奶200g*10', '6901000003001', 'CAT-L3-CHILLED-YOG', 'ACTIVE', 21, 10, 0.0075],
+  ['SKU-YOG-CHL-200G-10CP-STR-001', '低温草莓酸奶200g*10', '6901000003002', 'CAT-L3-CHILLED-YOG', 'ACTIVE', 21, 10, 0.0075],
+  ['SKU-YOG-CHL-200G-10CP-BLU-001', '低温蓝莓酸奶200g*10', '6901000003003', 'CAT-L3-CHILLED-YOG', 'ACTIVE', 21, 10, 0.0075],
+  ['SKU-YOG-CHL-200G-10CP-ZSG-001', '低温0蔗糖酸奶200g*10', '6901000003004', 'CAT-L3-CHILLED-YOG', 'ACTIVE', 21, 10, 0.0075],
+  ['SKU-YOG-RTD-330ML-12BX-PLN-001', '常温风味酸奶330ml*12', '6901000003005', 'CAT-L3-RTD-YOG', 'ACTIVE', 120, 12, 0.016],
+  ['SKU-YOG-RTD-330ML-12BX-MNG-001', '芒果风味酸奶330ml*12', '6901000003006', 'CAT-L3-RTD-YOG', 'ACTIVE', 120, 12, 0.016],
+  ['SKU-YOG-GRK-135G-12CP-PLN-001', '希腊酸奶135g*12', '6901000003007', 'CAT-L3-GREEK-YOG', 'ACTIVE', 28, 12, 0.0045],
+  ['SKU-DRK-RTD-100ML-30BT-PRB-001', '益生菌饮品100ml*30', '6901000003008', 'CAT-L3-PROBIOTIC-DRK', 'ACTIVE', 60, 30, 0.012],
+  ['SKU-PWD-PWD-800G-01CN-HCL-001', '成人高钙奶粉800g', '6901000004001', 'CAT-L3-ADULT-POWDER', 'ACTIVE', 540, 1, 0.0022],
+  ['SKU-PWD-PWD-800G-01CN-HPR-001', '成人高蛋白奶粉800g', '6901000004002', 'CAT-L3-ADULT-POWDER', 'ACTIVE', 540, 1, 0.0022],
+  ['SKU-PWD-PWD-700G-01CN-CHD-001', '儿童成长奶粉700g', '6901000004003', 'CAT-L3-CHILD-POWDER', 'ACTIVE', 540, 1, 0.002],
+  ['SKU-PWD-PWD-750G-01CN-MID-001', '中老年益生菌奶粉750g', '6901000004004', 'CAT-L3-MIDDLE-POWDER', 'ACTIVE', 540, 1, 0.0021],
+  ['SKU-CHS-MOZ-200G-01BG-PLN-001', '马苏里拉芝士200g', '6901000005001', 'CAT-L3-MOZZARELLA', 'ACTIVE', 180, 1, 0.0007],
+  ['SKU-CHS-CRM-180G-01BX-PLN-001', '奶油芝士180g', '6901000005002', 'CAT-L3-CREAM-CHEESE', 'ACTIVE', 120, 1, 0.0006],
+  ['SKU-CHS-SLC-144G-12BX-PLN-001', '奶酪片144g*12', '6901000005003', 'CAT-L3-CHEESE-SLICE', 'INACTIVE', 120, 12, 0.005],
   ['SKU-RGD-GHE-250G-01CN-YAK-001', '藏区牦牛酥油250g', '6901000006001', 'CAT-L3-GHEE', 'ACTIVE', 365, 1, 0.0007],
   ['SKU-RGD-GHE-500G-01CN-SAS-001', '南亚牛乳澄清黄油500g', '6901000006002', 'CAT-L3-GHEE', 'ACTIVE', 365, 1, 0.0012],
   ['SKU-RGD-FER-330ML-12BT-KEF-001', '高加索克菲尔发酵乳饮料330ml*12', '6901000006003', 'CAT-L3-KEFIR', 'ACTIVE', 28, 12, 0.016],
@@ -229,10 +208,10 @@ const reseller = rDef.map((x, i) => {
 });
 const codes = activeSku.map((s) => s.sku_code);
 const coreUht = codes.filter((c) => c.startsWith('SKU-UHT-'));
-const fresh = codes.filter((c) => c.startsWith('SKU-PASTEUR-'));
-const yogurt = codes.filter((c) => c.startsWith('SKU-YOG-') || c.startsWith('SKU-PROBIOTIC-'));
-const powder = codes.filter((c) => c.startsWith('SKU-POWDER-'));
-const cheese = codes.filter((c) => c.startsWith('SKU-CHEESE-'));
+const fresh = codes.filter((c) => c.startsWith('SKU-FRM-'));
+const yogurt = codes.filter((c) => c.startsWith('SKU-YOG-') || c.startsWith('SKU-DRK-'));
+const powder = codes.filter((c) => c.startsWith('SKU-PWD-'));
+const cheese = codes.filter((c) => c.startsWith('SKU-CHS-'));
 
 const pickSku = (r) => {
   if (r.lv2_channel_code === 'CH-L2-ECOM') return [...coreUht.slice(0, 6), ...fresh.slice(0, 3), ...yogurt.slice(0, 4), ...powder.slice(0, 3), ...cheese.slice(0, 1)];

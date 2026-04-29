@@ -49,6 +49,8 @@ const handleReset = () => {
 
 const handleSelectionChange = (sel: any[]) => { selectedRows.value = sel }
 const selectedIds = computed(() => selectedRows.value.map(r => r.id))
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api'
+const importAction = `${API_BASE}/master/import`
 const uploadHeaders = computed(() => ({
   Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`
 }))
@@ -321,7 +323,7 @@ onMounted(fetchList)
     <!-- 页头 -->
     <div class="page-header">
       <div class="page-title">
-        <span class="title-icon">馃</span>
+        <span class="title-icon">关系</span>
         <div>
           <h2>经销关系授权管理</h2>
           <p class="subtitle">Master Data Management 路 SKU × 经销商授权</p>
@@ -593,7 +595,7 @@ onMounted(fetchList)
         </el-alert>
         <el-upload
           drag
-          action="http://localhost:3000/api/master/import"
+          :action="importAction"
           :headers="uploadHeaders"
           :data="{ tableType: 'RESELLER_RLTN' }"
           :before-upload="beforeUpload"

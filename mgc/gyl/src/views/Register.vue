@@ -9,6 +9,7 @@ import { storeToRefs } from 'pinia'
 const router = useRouter()
 const appStore = useAppStore()
 const { roles, posts, departments, users } = storeToRefs(appStore)
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api'
 
 const currentStep = ref(0)
 const loading = ref(false)
@@ -69,7 +70,7 @@ const handleFinish = async () => {
       roleIds: [...assignForm.roleIds]
     }
 
-    const res = await fetch('http://localhost:3000/api/register', {
+    const res = await fetch(`${API_BASE}/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

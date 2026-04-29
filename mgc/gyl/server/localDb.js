@@ -3,6 +3,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const { SKU_RULE_DICT_TYPES, SKU_RULE_DICT_ITEMS } = require('./skuRules');
 const { repairOrBuildSpuRows } = require('./spuCatalog');
+const { migrateDairyCategoryData } = require('./dairyCategoryCatalog');
 
 const DATA_DIR = path.join(__dirname, 'local-data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -490,6 +491,10 @@ const ensurePlatformStructures = (db) => {
             changed = true;
         }
     });
+
+    if (migrateDairyCategoryData(db, { timeIso: nowIso() })) {
+        changed = true;
+    }
 
     const spuRepair = repairOrBuildSpuRows(db.master.spu, {
         skuRows: db.master.sku,

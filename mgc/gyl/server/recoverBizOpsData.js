@@ -1,4 +1,4 @@
-const { updateDb, nextId, nowIso, DB_FILE } = require('./localDb');
+﻿const { updateDb, nextId, nowIso, DB_FILE } = require('./localDb');
 const { enrichInventoryOpsRealistic } = require('./inventoryOpsSeedScenarios');
 
 const force = process.argv.includes('--force');
@@ -19,10 +19,10 @@ const addDays = (dayString, offsetDays) => {
 
 const skuFamily = (skuCode = '') => {
     if (skuCode.startsWith('SKU-UHT-')) return 'UHT';
-    if (skuCode.startsWith('SKU-PASTEUR-')) return 'FRESH';
-    if (skuCode.startsWith('SKU-YOG-') || skuCode.startsWith('SKU-PROBIOTIC-')) return 'YOGURT';
-    if (skuCode.startsWith('SKU-POWDER-')) return 'POWDER';
-    if (skuCode.startsWith('SKU-CHEESE-')) return 'CHEESE';
+    if (skuCode.startsWith('SKU-FRM-')) return 'FRESH';
+    if (skuCode.startsWith('SKU-YOG-') || skuCode.startsWith('SKU-DRK-')) return 'YOGURT';
+    if (skuCode.startsWith('SKU-PWD-')) return 'POWDER';
+    if (skuCode.startsWith('SKU-CHS-')) return 'CHEESE';
     return 'OTHER';
 };
 
@@ -138,21 +138,21 @@ updateDb((db) => {
             qty: row.total_qty,
             before_available_qty: 0,
             after_available_qty: row.available_qty,
-            operator: '系统恢复',
+            operator: 'system-recovery',
             biz_time: nowIso(),
-            remark: '恢复脚本初始化库存'
+            remark: 'Recovery script initialized inventory'
         });
         return row;
     };
 
     if (shouldSeedLedger) {
-        upsertLedger('WH-HQ-HZ', 'SKU-UHT-250-24', 420, 120, 120);
-        upsertLedger('WH-HQ-HZ', 'SKU-UHT-A2-250-12', 220, 80, 100);
-        upsertLedger('WH-HQ-HZ', 'SKU-POWDER-ADULT-HIGHPRO-800', 160, 40, 360);
-        upsertLedger('WH-DC-SUZHOU', 'SKU-UHT-250-24', 140, 48, 90);
-        upsertLedger('WH-RDC-NORTH-TJ', 'SKU-POWDER-ADULT-HIGHPRO-800', 90, 28, 420);
-        upsertLedger('WH-RDC-EAST-SH', 'SKU-UHT-1L-12', 110, 36, 130);
-        upsertLedger('WH-DC-CHANGSHA', 'SKU-PASTEUR-950', 72, 28, 4);
+        upsertLedger('WH-HQ-HZ', 'SKU-UHT-UHT-250ML-24BX-PLN-001', 420, 120, 120);
+        upsertLedger('WH-HQ-HZ', 'SKU-UHT-UHT-250ML-12BX-A2N-001', 220, 80, 100);
+        upsertLedger('WH-HQ-HZ', 'SKU-PWD-PWD-800G-01CN-HPR-001', 160, 40, 360);
+        upsertLedger('WH-DC-SUZHOU', 'SKU-UHT-UHT-250ML-24BX-PLN-001', 140, 48, 90);
+        upsertLedger('WH-RDC-NORTH-TJ', 'SKU-PWD-PWD-800G-01CN-HPR-001', 90, 28, 420);
+        upsertLedger('WH-RDC-EAST-SH', 'SKU-UHT-UHT-1L-12BX-PLN-001', 110, 36, 130);
+        upsertLedger('WH-DC-CHANGSHA', 'SKU-FRM-PAS-950ML-01BT-PLN-001', 72, 28, 4);
     }
 
     const addOrder = (payload = {}) => {
@@ -167,7 +167,7 @@ updateDb((db) => {
 
         const reseller = resellerMap.get(String(payload.customer_code)) || {};
         const createdAt = payload.created_at || nowIso();
-        const createdBy = payload.created_by || '系统恢复';
+        const createdBy = payload.created_by || 'system-recovery';
         const header = {
             id: nextId(db.biz.order_headers),
             order_no: orderNo,
@@ -185,7 +185,7 @@ updateDb((db) => {
             total_amount: 0,
             submitted_at: payload.submitted_at || createdAt,
             reviewed_at: payload.reviewed_at || createdAt,
-            reviewed_by: payload.reviewed_by || '系统恢复',
+            reviewed_by: payload.reviewed_by || 'system-recovery',
             review_comment: payload.review_comment || '',
             has_exception: 0,
             current_allocation_version: 0,
@@ -208,7 +208,7 @@ updateDb((db) => {
                 sku_code: skuCode,
                 sku_name: sku.sku_name || skuCode,
                 order_qty: qty,
-                unit: line.unit || '箱',
+                unit: line.unit || 'box',
                 unit_price: unitPrice,
                 line_amount: Number((qty * unitPrice).toFixed(2)),
                 suggested_warehouse_code: line.suggested_warehouse_code || reseller.default_warehouse_code || '',
@@ -268,7 +268,7 @@ updateDb((db) => {
                 order_no: orderNo,
                 version_no: 1,
                 weights: { ...db.biz.order_allocation_weights },
-                plan_summary: payload.plan_summary || '恢复脚本自动分配',
+                plan_summary: payload.plan_summary || 'Recovery script auto allocation',
                 details: lines.map((line) => ({
                     line_id: line.id,
                     line_no: line.line_no,
@@ -304,7 +304,7 @@ updateDb((db) => {
 
     if (superAccount) {
         const userId = Number(superAccount.id);
-        const userName = superAccount.nick_name || superAccount.login_id || `用户${userId}`;
+        const userName = superAccount.nick_name || superAccount.login_id || `user${userId}`;
         const hasPending = db.platform.workflow_todos.some((row) => Number(row.assignee_id) === userId && String(row.status) === 'PENDING');
         if (!hasPending) {
             const approvalId = nextId(db.platform.workflow_approvals);
@@ -312,22 +312,22 @@ updateDb((db) => {
                 id: approvalId,
                 biz_type: 'ORDER',
                 biz_id: 'SO202604090018',
-                title: '订单审批：线上波峰保供单',
+                title: 'Order approval: online peak supply order',
                 status: 'PENDING',
-                applicant_name: '陈建国',
+                applicant_name: 'system-recovery',
                 applicant_id: userId,
                 reviewer_id: userId,
                 reviewer_name: userName,
                 submitted_at: nowIso(),
                 reviewed_at: '',
                 review_comment: '',
-                records: [{ action: 'SUBMIT', operator: '陈建国', comment: '提交审批', created_at: nowIso() }]
+                records: [{ action: 'SUBMIT', operator: 'system-recovery', comment: 'Submit approval', created_at: nowIso() }]
             });
             db.platform.workflow_todos.push({
                 id: nextId(db.platform.workflow_todos),
                 todo_type: 'APPROVAL',
-                title: '待审批：线上波峰保供单',
-                summary: '订单审批待处理',
+                title: 'Pending approval: online peak supply order',
+                summary: 'Order approval pending',
                 biz_type: 'ORDER',
                 biz_id: 'SO202604090018',
                 priority: 'P1',
@@ -349,8 +349,8 @@ updateDb((db) => {
             db.platform.workflow_messages.push({
                 id: nextId(db.platform.workflow_messages),
                 category: 'SYSTEM',
-                title: '库存恢复完成',
-                content: '业务运营数据已恢复，可刷新页面查看',
+                title: 'Inventory recovery complete',
+                content: 'Business operation data has been recovered. Refresh the page to view it.',
                 status: 'UNREAD',
                 priority: 'P2',
                 receiver_id: userId,

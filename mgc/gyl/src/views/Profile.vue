@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api'
 
 const loading = ref(true)
 const userInfo = ref<any>(null)
@@ -33,7 +34,7 @@ const fetchProfile = async () => {
   }
 
   try {
-    const res = await fetch(`http://localhost:3000/api/profile/${username}`)
+    const res = await fetch(`${API_BASE}/profile/${username}`)
     const data = await res.json()
     if (data.code === 200) {
       userInfo.value = data.data

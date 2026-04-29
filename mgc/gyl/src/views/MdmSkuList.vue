@@ -104,6 +104,8 @@ const handleSelectionChange = (selection: any[]) => {
 }
 
 const selectedIds = computed(() => selectedRows.value.map(r => r.id))
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api'
+const importAction = `${API_BASE}/master/import`
 const uploadHeaders = computed(() => ({
   Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`
 }))
@@ -956,7 +958,7 @@ onMounted(() => {
         </el-alert>
         <el-upload
           drag
-          action="http://localhost:3000/api/master/import"
+          :action="importAction"
           :headers="uploadHeaders"
           :data="{ tableType: 'SKU' }"
           :before-upload="beforeUpload"

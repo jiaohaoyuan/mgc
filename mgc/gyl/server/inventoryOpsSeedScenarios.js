@@ -27,10 +27,10 @@ const buildClock = () => {
 
 const family = (skuCode = '') => {
     if (skuCode.startsWith('SKU-UHT-')) return 'UHT';
-    if (skuCode.startsWith('SKU-PASTEUR-')) return 'FRESH';
-    if (skuCode.startsWith('SKU-YOG-') || skuCode.startsWith('SKU-PROBIOTIC-')) return 'YOGURT';
-    if (skuCode.startsWith('SKU-POWDER-')) return 'POWDER';
-    if (skuCode.startsWith('SKU-CHEESE-')) return 'CHEESE';
+    if (skuCode.startsWith('SKU-FRM-')) return 'FRESH';
+    if (skuCode.startsWith('SKU-YOG-') || skuCode.startsWith('SKU-DRK-')) return 'YOGURT';
+    if (skuCode.startsWith('SKU-PWD-')) return 'POWDER';
+    if (skuCode.startsWith('SKU-CHS-')) return 'CHEESE';
     return 'OTHER';
 };
 
@@ -312,20 +312,20 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
         }));
     };
 
-    const hqUht24 = findLedger('WH-HQ-HZ', 'SKU-UHT-250-24');
-    const hqA2 = findLedger('WH-HQ-HZ', 'SKU-UHT-A2-250-12');
-    const hqPowder = findLedger('WH-HQ-HZ', 'SKU-POWDER-ADULT-HIGHPRO-800');
-    const suzhouUht = findLedger('WH-DC-SUZHOU', 'SKU-UHT-250-24');
-    const northPowder = findLedger('WH-RDC-NORTH-TJ', 'SKU-POWDER-ADULT-HIGHPRO-800');
-    const eastUht1L = findLedger('WH-RDC-EAST-SH', 'SKU-UHT-1L-12');
-    const changshaFresh = findLedger('WH-DC-CHANGSHA', 'SKU-PASTEUR-950');
+    const hqUht24 = findLedger('WH-HQ-HZ', 'SKU-UHT-UHT-250ML-24BX-PLN-001');
+    const hqA2 = findLedger('WH-HQ-HZ', 'SKU-UHT-UHT-250ML-12BX-A2N-001');
+    const hqPowder = findLedger('WH-HQ-HZ', 'SKU-PWD-PWD-800G-01CN-HPR-001');
+    const suzhouUht = findLedger('WH-DC-SUZHOU', 'SKU-UHT-UHT-250ML-24BX-PLN-001');
+    const northPowder = findLedger('WH-RDC-NORTH-TJ', 'SKU-PWD-PWD-800G-01CN-HPR-001');
+    const eastUht1L = findLedger('WH-RDC-EAST-SH', 'SKU-UHT-UHT-1L-12BX-PLN-001');
+    const changshaFresh = findLedger('WH-DC-CHANGSHA', 'SKU-FRM-PAS-950ML-01BT-PLN-001');
 
     const beijingA2 = seedPositiveLedger({
         warehouse_code: 'WH-DC-BEIJING',
-        sku_code: 'SKU-UHT-A2-250-12',
+        sku_code: 'SKU-UHT-UHT-250ML-12BX-A2N-001',
         production_date: add(now, -84),
         expiry_date: add(now, 96),
-        batch_no: batchNo('WH-DC-BEIJING', 'SKU-UHT-A2-250-12', add(now, -84)),
+        batch_no: batchNo('WH-DC-BEIJING', 'SKU-UHT-UHT-250ML-12BX-A2N-001', add(now, -84)),
         safety_qty: 90,
         qty: 36,
         source_doc_type: 'PURCHASE',
@@ -338,10 +338,10 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
 
     const shenzhenYog = seedPositiveLedger({
         warehouse_code: 'WH-DC-SHENZHEN',
-        sku_code: 'SKU-YOG-CHILLED-0SUGAR-200-10',
+        sku_code: 'SKU-YOG-CHL-200G-10CP-ZSG-001',
         production_date: add(now, -4),
         expiry_date: add(now, 17),
-        batch_no: batchNo('WH-DC-SHENZHEN', 'SKU-YOG-CHILLED-0SUGAR-200-10', add(now, -4)),
+        batch_no: batchNo('WH-DC-SHENZHEN', 'SKU-YOG-CHL-200G-10CP-ZSG-001', add(now, -4)),
         safety_qty: 80,
         qty: 28,
         source_doc_type: 'PURCHASE',
@@ -353,10 +353,10 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
     });
     const westCheese = seedPositiveLedger({
         warehouse_code: 'WH-RDC-WEST-CD',
-        sku_code: 'SKU-CHEESE-CREAM-180',
+        sku_code: 'SKU-CHS-CRM-180G-01BX-PLN-001',
         production_date: add(now, -115),
         expiry_date: add(now, 5),
-        batch_no: batchNo('WH-RDC-WEST-CD', 'SKU-CHEESE-CREAM-180', add(now, -115)),
+        batch_no: batchNo('WH-RDC-WEST-CD', 'SKU-CHS-CRM-180G-01BX-PLN-001', add(now, -115)),
         safety_qty: 18,
         qty: 24,
         source_doc_type: 'PURCHASE',
@@ -369,10 +369,10 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
 
     const gzYogNew = seedPositiveLedger({
         warehouse_code: 'WH-RDC-SOUTH-GZ',
-        sku_code: 'SKU-YOG-CHILLED-0SUGAR-200-10',
+        sku_code: 'SKU-YOG-CHL-200G-10CP-ZSG-001',
         production_date: add(now, -1),
         expiry_date: add(now, 20),
-        batch_no: batchNo('WH-RDC-SOUTH-GZ', 'SKU-YOG-CHILLED-0SUGAR-200-10', add(now, -1)),
+        batch_no: batchNo('WH-RDC-SOUTH-GZ', 'SKU-YOG-CHL-200G-10CP-ZSG-001', add(now, -1)),
         safety_qty: 72,
         qty: 180,
         source_doc_type: 'PURCHASE',
@@ -385,10 +385,10 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
 
     const qingdaoPowder = seedPositiveLedger({
         warehouse_code: 'WH-DC-QINGDAO',
-        sku_code: 'SKU-POWDER-ADULT-HIGHPRO-800',
+        sku_code: 'SKU-PWD-PWD-800G-01CN-HPR-001',
         production_date: add(now, -152),
         expiry_date: add(now, 388),
-        batch_no: batchNo('WH-DC-QINGDAO', 'SKU-POWDER-ADULT-HIGHPRO-800', add(now, -152)),
+        batch_no: batchNo('WH-DC-QINGDAO', 'SKU-PWD-PWD-800G-01CN-HPR-001', add(now, -152)),
         safety_qty: 42,
         qty: 18,
         source_doc_type: 'PURCHASE',
@@ -401,10 +401,10 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
 
     const foshanYog = seedPositiveLedger({
         warehouse_code: 'WH-DC-FOSHAN',
-        sku_code: 'SKU-YOG-CHILLED-0SUGAR-200-10',
+        sku_code: 'SKU-YOG-CHL-200G-10CP-ZSG-001',
         production_date: add(now, -5),
         expiry_date: add(now, 14),
-        batch_no: batchNo('WH-DC-FOSHAN', 'SKU-YOG-CHILLED-0SUGAR-200-10', add(now, -5)),
+        batch_no: batchNo('WH-DC-FOSHAN', 'SKU-YOG-CHL-200G-10CP-ZSG-001', add(now, -5)),
         safety_qty: 56,
         qty: 16,
         source_doc_type: 'PURCHASE',
@@ -417,10 +417,10 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
 
     const xianPowder = seedPositiveLedger({
         warehouse_code: 'WH-DC-XIAN',
-        sku_code: 'SKU-POWDER-ADULT-HIGHPRO-800',
+        sku_code: 'SKU-PWD-PWD-800G-01CN-HPR-001',
         production_date: add(now, -148),
         expiry_date: add(now, 392),
-        batch_no: batchNo('WH-DC-XIAN', 'SKU-POWDER-ADULT-HIGHPRO-800', add(now, -148)),
+        batch_no: batchNo('WH-DC-XIAN', 'SKU-PWD-PWD-800G-01CN-HPR-001', add(now, -148)),
         safety_qty: 36,
         qty: 12,
         source_doc_type: 'PURCHASE',
@@ -488,7 +488,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             review_comment: '线上波峰单优先释放',
             created_by: '陈建国',
             created_at: iso(-1, 12, 40),
-            lines: [{ sku_code: 'SKU-UHT-250-24', order_qty: 120, suggested_warehouse_code: 'WH-HQ-HZ' }],
+            lines: [{ sku_code: 'SKU-UHT-UHT-250ML-24BX-PLN-001', order_qty: 120, suggested_warehouse_code: 'WH-HQ-HZ' }],
             audits: [
                 { action: 'CREATE', comment: '京东波峰单创建', operator: '陈建国', created_at: iso(-1, 12, 40) },
                 { action: 'SUBMIT', comment: '提交审核', operator: '陈建国', created_at: iso(-1, 12, 46) },
@@ -542,7 +542,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             review_comment: '华北临时补货订单',
             created_by: '陈建国',
             created_at: iso(-2, 13, 20),
-            lines: [{ sku_code: 'SKU-UHT-A2-250-12', order_qty: 24, suggested_warehouse_code: 'WH-DC-BEIJING' }],
+            lines: [{ sku_code: 'SKU-UHT-UHT-250ML-12BX-A2N-001', order_qty: 24, suggested_warehouse_code: 'WH-DC-BEIJING' }],
             audits: [
                 { action: 'CREATE', comment: '客户追单创建', operator: '陈建国', created_at: iso(-2, 13, 20) },
                 { action: 'SUBMIT', comment: '提交审核', operator: '陈建国', created_at: iso(-2, 13, 28) },
@@ -568,7 +568,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             transfer_no: 'TR202604090002',
             out_warehouse_code: 'WH-RDC-SOUTH-GZ',
             in_warehouse_code: 'WH-DC-SHENZHEN',
-            sku_code: 'SKU-YOG-CHILLED-0SUGAR-200-10',
+            sku_code: 'SKU-YOG-CHL-200G-10CP-ZSG-001',
             batch_no: gzYogNew.batch_no,
             qty: 90,
             reason: '深圳低温酸奶库存跌破安全值，申请同城补位',
@@ -588,7 +588,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             transfer_no: 'TR202604090003',
             out_warehouse_code: 'WH-HQ-HZ',
             in_warehouse_code: 'WH-DC-BEIJING',
-            sku_code: 'SKU-UHT-A2-250-12',
+            sku_code: 'SKU-UHT-UHT-250ML-12BX-A2N-001',
             batch_no: hqA2.batch_no,
             qty: 120,
             reason: '北京仓A2常温库存低于安全值，周末会员店促销前补货',
@@ -612,7 +612,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             transfer_no: 'TR202604090004',
             out_warehouse_code: 'WH-HQ-HZ',
             in_warehouse_code: 'WH-DC-SUZHOU',
-            sku_code: 'SKU-UHT-250-24',
+            sku_code: 'SKU-UHT-UHT-250ML-24BX-PLN-001',
             batch_no: hqUht24.batch_no,
             qty: 180,
             reason: '华东电商次日达波峰备货，提前前置常温库存',
@@ -657,7 +657,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             transfer_no: 'TR202604090005',
             out_warehouse_code: 'WH-RDC-WEST-CD',
             in_warehouse_code: 'WH-DC-CHANGSHA',
-            sku_code: 'SKU-CHEESE-CREAM-180',
+            sku_code: 'SKU-CHS-CRM-180G-01BX-PLN-001',
             batch_no: westCheese.batch_no,
             qty: 18,
             reason: '原计划跨区补位长沙门店试吃活动',
@@ -683,7 +683,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             transfer_no: 'TR202604100001',
             out_warehouse_code: 'WH-HQ-HZ',
             in_warehouse_code: 'WH-DC-NANJING',
-            sku_code: 'SKU-POWDER-ADULT-HIGHPRO-800',
+            sku_code: 'SKU-PWD-PWD-800G-01CN-HPR-001',
             batch_no: hqPowder.batch_no,
             qty: 60,
             reason: '华东会员日奶粉礼盒预热备货',
@@ -702,7 +702,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             transfer_no: 'TR202604090006',
             out_warehouse_code: 'WH-RDC-NORTH-TJ',
             in_warehouse_code: 'WH-DC-QINGDAO',
-            sku_code: 'SKU-POWDER-ADULT-HIGHPRO-800',
+            sku_code: 'SKU-PWD-PWD-800G-01CN-HPR-001',
             batch_no: northPowder.batch_no,
             qty: 48,
             reason: '青岛仓成人奶粉低库存，北区RDC紧急补位',
@@ -748,7 +748,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
 
         const qingdaoTransferBatch = ensureLedger({
             warehouse_code: 'WH-DC-QINGDAO',
-            sku_code: 'SKU-POWDER-ADULT-HIGHPRO-800',
+            sku_code: 'SKU-PWD-PWD-800G-01CN-HPR-001',
             batch_no: northPowder.batch_no,
             production_date: northPowder.production_date,
             expiry_date: northPowder.expiry_date,
@@ -780,7 +780,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             transfer_no: 'TR202604090007',
             out_warehouse_code: 'WH-RDC-SOUTH-GZ',
             in_warehouse_code: 'WH-DC-FOSHAN',
-            sku_code: 'SKU-YOG-CHILLED-0SUGAR-200-10',
+            sku_code: 'SKU-YOG-CHL-200G-10CP-ZSG-001',
             batch_no: gzYogNew.batch_no,
             qty: 72,
             reason: '佛山便利系统周末促销，低温酸奶需提前前置',
@@ -804,7 +804,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             transfer_no: 'TR202604100002',
             out_warehouse_code: 'WH-HQ-HZ',
             in_warehouse_code: 'WH-DC-XIAN',
-            sku_code: 'SKU-POWDER-ADULT-HIGHPRO-800',
+            sku_code: 'SKU-PWD-PWD-800G-01CN-HPR-001',
             batch_no: hqPowder.batch_no,
             qty: 54,
             reason: '西安仓会员店团购奶粉备货，申请总部补位',
@@ -824,7 +824,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             transfer_no: 'TR202604100003',
             out_warehouse_code: 'WH-RDC-EAST-SH',
             in_warehouse_code: 'WH-DC-NANJING',
-            sku_code: 'SKU-UHT-1L-12',
+            sku_code: 'SKU-UHT-UHT-1L-12BX-PLN-001',
             batch_no: eastUht1L.batch_no,
             qty: 96,
             reason: '华东直播预热场次增加，先建草稿调拨单评估库存前置',
@@ -853,7 +853,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             review_comment: '青岛门店促销保供',
             created_by: '陈建国',
             created_at: iso(0, 9, 28),
-            lines: [{ sku_code: 'SKU-POWDER-ADULT-HIGHPRO-800', order_qty: 24, suggested_warehouse_code: 'WH-DC-QINGDAO' }],
+            lines: [{ sku_code: 'SKU-PWD-PWD-800G-01CN-HPR-001', order_qty: 24, suggested_warehouse_code: 'WH-DC-QINGDAO' }],
             audits: [
                 { action: 'CREATE', comment: '门店周末促销加单', operator: '陈建国', created_at: iso(0, 9, 28) },
                 { action: 'SUBMIT', comment: '提交审核', operator: '陈建国', created_at: iso(0, 9, 36) },
@@ -883,7 +883,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             review_comment: '长沙门店鲜奶补货加急履约',
             created_by: '陈建国',
             created_at: iso(0, 9, 58),
-            lines: [{ sku_code: 'SKU-PASTEUR-950', order_qty: 36, suggested_warehouse_code: 'WH-DC-CHANGSHA' }],
+            lines: [{ sku_code: 'SKU-FRM-PAS-950ML-01BT-PLN-001', order_qty: 36, suggested_warehouse_code: 'WH-DC-CHANGSHA' }],
             audits: [
                 { action: 'CREATE', comment: '长沙门店鲜奶追单', operator: '陈建国', created_at: iso(0, 9, 58) },
                 { action: 'SUBMIT', comment: '提交审核', operator: '陈建国', created_at: iso(0, 10, 6) },
@@ -913,7 +913,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
             review_comment: '西南门店试吃活动临时加单',
             created_by: '陈建国',
             created_at: iso(-1, 12, 10),
-            lines: [{ sku_code: 'SKU-CHEESE-CREAM-180', order_qty: 12, suggested_warehouse_code: 'WH-RDC-WEST-CD' }],
+            lines: [{ sku_code: 'SKU-CHS-CRM-180G-01BX-PLN-001', order_qty: 12, suggested_warehouse_code: 'WH-RDC-WEST-CD' }],
             audits: [
                 { action: 'CREATE', comment: '试吃活动临时加单', operator: '陈建国', created_at: iso(-1, 12, 10) },
                 { action: 'SUBMIT', comment: '提交审核', operator: '陈建国', created_at: iso(-1, 12, 18) },
@@ -952,49 +952,49 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
         row.updated_at = patch.updated_at || iso();
     };
 
-    markWarning((row) => row.type === 'LOW_STOCK' && row.warehouse_code === 'WH-DC-SHENZHEN' && row.sku_code === 'SKU-YOG-CHILLED-0SUGAR-200-10', {
+    markWarning((row) => row.type === 'LOW_STOCK' && row.warehouse_code === 'WH-DC-SHENZHEN' && row.sku_code === 'SKU-YOG-CHL-200G-10CP-ZSG-001', {
         status: 'PROCESSING',
         handled_by: '李强',
         handled_at: iso(-1, 10, 12),
         handle_comment: '已提交调拨申请 TR202604090002，待供应链经理审核',
         updated_at: iso(-1, 10, 12)
     });
-    markWarning((row) => row.type === 'LOW_STOCK' && row.warehouse_code === 'WH-DC-BEIJING' && row.sku_code === 'SKU-UHT-A2-250-12', {
+    markWarning((row) => row.type === 'LOW_STOCK' && row.warehouse_code === 'WH-DC-BEIJING' && row.sku_code === 'SKU-UHT-UHT-250ML-12BX-A2N-001', {
         status: 'PROCESSING',
         handled_by: '林文超',
         handled_at: iso(-1, 14, 15),
         handle_comment: '已审批调拨 TR202604090003，待总部仓出库',
         updated_at: iso(-1, 14, 15)
     });
-    markWarning((row) => row.type === 'OVER_STOCK' && row.warehouse_code === 'WH-HQ-HZ' && row.sku_code === 'SKU-UHT-250-24', {
+    markWarning((row) => row.type === 'OVER_STOCK' && row.warehouse_code === 'WH-HQ-HZ' && row.sku_code === 'SKU-UHT-UHT-250ML-24BX-PLN-001', {
         status: 'PROCESSING',
         handled_by: '林文超',
         handled_at: iso(-1, 16, 15),
         handle_comment: '已通过直营网销出库和区域调拨分流库存',
         updated_at: iso(-1, 16, 15)
     });
-    markWarning((row) => row.type === 'NEAR_EXPIRY' && row.warehouse_code === 'WH-RDC-WEST-CD' && row.sku_code === 'SKU-CHEESE-CREAM-180', {
+    markWarning((row) => row.type === 'NEAR_EXPIRY' && row.warehouse_code === 'WH-RDC-WEST-CD' && row.sku_code === 'SKU-CHS-CRM-180G-01BX-PLN-001', {
         status: 'PROCESSING',
         handled_by: '李强',
         handled_at: iso(-1, 11, 30),
         handle_comment: '改为西南本地临促处理，跨区调拨单 TR202604090005 已取消',
         updated_at: iso(-1, 11, 30)
     });
-    markWarning((row) => row.type === 'LOW_STOCK' && row.warehouse_code === 'WH-DC-FOSHAN' && row.sku_code === 'SKU-YOG-CHILLED-0SUGAR-200-10', {
+    markWarning((row) => row.type === 'LOW_STOCK' && row.warehouse_code === 'WH-DC-FOSHAN' && row.sku_code === 'SKU-YOG-CHL-200G-10CP-ZSG-001', {
         status: 'PROCESSING',
         handled_by: '林文超',
         handled_at: iso(-1, 15, 30),
         handle_comment: '佛山活动备货调拨 TR202604090007 已审核通过，待广州RDC出库',
         updated_at: iso(-1, 15, 30)
     });
-    markWarning((row) => row.type === 'LOW_STOCK' && row.warehouse_code === 'WH-DC-XIAN' && row.sku_code === 'SKU-POWDER-ADULT-HIGHPRO-800', {
+    markWarning((row) => row.type === 'LOW_STOCK' && row.warehouse_code === 'WH-DC-XIAN' && row.sku_code === 'SKU-PWD-PWD-800G-01CN-HPR-001', {
         status: 'PROCESSING',
         handled_by: '李强',
         handled_at: iso(0, 9, 6),
         handle_comment: '已提交调拨申请 TR202604100002，等待供应链审核',
         updated_at: iso(0, 9, 6)
     });
-    markWarning((row) => row.type === 'NEAR_EXPIRY' && row.warehouse_code === 'WH-DC-CHANGSHA' && row.sku_code === 'SKU-PASTEUR-950', {
+    markWarning((row) => row.type === 'NEAR_EXPIRY' && row.warehouse_code === 'WH-DC-CHANGSHA' && row.sku_code === 'SKU-FRM-PAS-950ML-01BT-PLN-001', {
         status: 'PROCESSING',
         handled_by: '李强',
         handled_at: iso(0, 10, 22),
@@ -1009,8 +1009,8 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
         status: 'CLOSED',
         warehouse_code: 'WH-DC-ZHENGZHOU',
         warehouse_name: whMap.get('WH-DC-ZHENGZHOU')?.warehouse_name || '郑州城市分拨仓',
-        sku_code: 'SKU-PASTEUR-950',
-        sku_name: skuMap.get('SKU-PASTEUR-950')?.sku_name || '巴氏鲜奶950ml',
+        sku_code: 'SKU-FRM-PAS-950ML-01BT-PLN-001',
+        sku_name: skuMap.get('SKU-FRM-PAS-950ML-01BT-PLN-001')?.sku_name || '巴氏鲜奶950ml',
         batch_no: '',
         message: '华中鲜奶缺口已通过跨仓调拨补齐',
         related_qty: 80,
@@ -1027,8 +1027,8 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
         status: 'CLOSED',
         warehouse_code: 'WH-DC-QINGDAO',
         warehouse_name: whMap.get('WH-DC-QINGDAO')?.warehouse_name || '青岛城市分拨仓',
-        sku_code: 'SKU-POWDER-ADULT-HIGHPRO-800',
-        sku_name: skuMap.get('SKU-POWDER-ADULT-HIGHPRO-800')?.sku_name || '成人高蛋白奶粉800g',
+        sku_code: 'SKU-PWD-PWD-800G-01CN-HPR-001',
+        sku_name: skuMap.get('SKU-PWD-PWD-800G-01CN-HPR-001')?.sku_name || '成人高蛋白奶粉800g',
         batch_no: '',
         message: '青岛仓成人奶粉低库存已通过北区调拨补齐',
         related_qty: 48,
@@ -1041,7 +1041,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
     db.biz.inventory_warnings
         .filter((row) => row.type === 'LOW_STOCK'
             && row.warehouse_code === 'WH-DC-QINGDAO'
-            && row.sku_code === 'SKU-POWDER-ADULT-HIGHPRO-800'
+            && row.sku_code === 'SKU-PWD-PWD-800G-01CN-HPR-001'
             && row.status === 'OPEN')
         .forEach((row) => {
             row.status = 'CLOSED';
@@ -1086,7 +1086,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
         request_path: '/api/inventory-ops/transactions',
         trace_id: 'trace-inv-adjust-0001',
         message: '苏州仓常温奶盘点差异已调整',
-        request_summary: { warehouse_code: 'WH-DC-SUZHOU', sku_code: 'SKU-UHT-250-24', qty: -32 },
+        request_summary: { warehouse_code: 'WH-DC-SUZHOU', sku_code: 'SKU-UHT-UHT-250ML-24BX-PLN-001', qty: -32 },
         after_snapshot: { source_doc_no: 'CC202604090001' },
         created_at: iso(-1, 18, 20)
     });
@@ -1100,7 +1100,7 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
         request_path: '/api/inventory-ops/transactions',
         trace_id: 'trace-inv-damage-0001',
         message: '深圳低温酸奶冷链异常报损已登记',
-        request_summary: { warehouse_code: 'WH-DC-SHENZHEN', sku_code: 'SKU-YOG-CHILLED-0SUGAR-200-10', qty: 10 },
+        request_summary: { warehouse_code: 'WH-DC-SHENZHEN', sku_code: 'SKU-YOG-CHL-200G-10CP-ZSG-001', qty: 10 },
         after_snapshot: { source_doc_no: 'DM202604090001' },
         created_at: iso(-1, 9, 18)
     });
@@ -1280,4 +1280,3 @@ const enrichInventoryOpsRealistic = (db, options = {}) => {
 };
 
 module.exports = { enrichInventoryOpsRealistic };
-

@@ -131,19 +131,19 @@ const DEFAULT_SPU_DEFINITIONS = [
     {
         spu_code: 'SPU-YOG-GREEK',
         spu_name: '希腊酸奶',
-        category_code: 'CAT-L3-CHILLED-YOG',
+        category_code: 'CAT-L3-GREEK-YOG',
         product_line: '酸奶',
         milk_source: '发酵乳',
         process_type: '希腊式发酵',
         origin_region: '全国奶源',
         storage_type: '冷藏',
         shelf_life_days: 28,
-        match: { categoryCode: 'CAT-L3-CHILLED-YOG', nameIncludes: ['希腊酸奶'] }
+        match: { categoryCode: 'CAT-L3-GREEK-YOG', nameIncludes: ['希腊酸奶'] }
     },
     {
         spu_code: 'SPU-PROBIOTIC-DRINK',
         spu_name: '益生菌饮品',
-        category_code: 'CAT-L3-RTD-YOG',
+        category_code: 'CAT-L3-PROBIOTIC-DRK',
         product_line: '乳饮品',
         milk_source: '益生菌发酵乳',
         process_type: '益生菌发酵',
@@ -191,14 +191,14 @@ const DEFAULT_SPU_DEFINITIONS = [
     {
         spu_code: 'SPU-POWDER-MIDDLE',
         spu_name: '中老年益生菌奶粉',
-        category_code: 'CAT-L3-ADULT-POWDER',
+        category_code: 'CAT-L3-MIDDLE-POWDER',
         product_line: '奶粉',
         milk_source: '奶粉基粉',
         process_type: '喷雾干燥',
         origin_region: '成人营养线',
         storage_type: '常温干燥',
         shelf_life_days: 540,
-        match: { categoryCode: 'CAT-L3-ADULT-POWDER', nameIncludes: ['中老年'] }
+        match: { categoryCode: 'CAT-L3-MIDDLE-POWDER', nameIncludes: ['中老年'] }
     },
     {
         spu_code: 'SPU-CHEESE-MOZ',
@@ -227,14 +227,14 @@ const DEFAULT_SPU_DEFINITIONS = [
     {
         spu_code: 'SPU-CHEESE-SLICE',
         spu_name: '奶酪片',
-        category_code: 'CAT-L3-CREAM-CHEESE',
+        category_code: 'CAT-L3-CHEESE-SLICE',
         product_line: '奶酪',
         milk_source: '牛奶',
         process_type: '再制奶酪',
         origin_region: '奶酪工艺线',
         storage_type: '冷藏',
         shelf_life_days: 120,
-        match: { categoryCode: 'CAT-L3-CREAM-CHEESE', nameIncludes: ['奶酪片'] }
+        match: { categoryCode: 'CAT-L3-CHEESE-SLICE', nameIncludes: ['奶酪片'] }
     },
     {
         spu_code: 'SPU-RGD-GHEE-YAK',

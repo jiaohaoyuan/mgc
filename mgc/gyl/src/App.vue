@@ -31,6 +31,12 @@ const AUTH_ROUTE_SET = new Set(['/login', '/forgot-password'])
 const sectionOpenState = ref<Record<string, boolean>>({})
 const groupOpenState = ref<Record<string, boolean>>({})
 const sidebarNavRef = ref<HTMLElement | null>(null)
+const isRouteChanging = ref(false)
+const pendingNavigationPath = ref('')
+let navigationFeedbackTimer: number | undefined
+let removeRouteBeforeEach: (() => void) | undefined
+let removeRouteAfterEach: (() => void) | undefined
+let removeRouteErrorHandler: (() => void) | undefined
 
 const COMMON_ROUTE_PRELOADERS: Array<() => Promise<unknown>> = [
   () => import('@/views/WorkflowCenter.vue'),
@@ -257,6 +263,56 @@ const toggleGroup = (groupId: string) => {
   groupOpenState.value[groupId] = !groupOpenState.value[groupId]
 }
 
+const clearNavigationFeedback = (delay = 120) => {
+  if (navigationFeedbackTimer) {
+    window.clearTimeout(navigationFeedbackTimer)
+  }
+
+  navigationFeedbackTimer = window.setTimeout(() => {
+    isRouteChanging.value = false
+    pendingNavigationPath.value = ''
+  }, delay)
+}
+
+const preloadRouteComponent = (path: string) => {
+  const matched = router.getRoutes().find((record) => record.path === path)
+  const component = matched?.components?.default as unknown
+  if (typeof component !== 'function') return
+
+  void Promise.resolve(component()).catch(() => {})
+}
+
+const shouldUseNativeNavigation = (event?: MouseEvent) => {
+  return Boolean(event?.button || event?.metaKey || event?.ctrlKey || event?.shiftKey || event?.altKey)
+}
+
+const navigateTo = async (path: string, event?: MouseEvent) => {
+  if (shouldUseNativeNavigation(event)) return
+  event?.preventDefault()
+
+  if (!path || path === route.path) {
+    ensureOpenStateForRoute(route.path)
+    void scrollActiveParentIntoView()
+    ElMessage.info('已在当前页面')
+    return
+  }
+
+  pendingNavigationPath.value = path
+  isRouteChanging.value = true
+
+  try {
+    const failure = await router.push(path)
+    if (failure) {
+      clearNavigationFeedback(0)
+      return
+    }
+  } catch {
+    ElMessage.error('页面跳转失败，请稍后重试')
+  } finally {
+    clearNavigationFeedback()
+  }
+}
+
 const scrollActiveParentIntoView = async () => {
   if (!appReady.value) return
   await nextTick()
@@ -279,6 +335,20 @@ const scrollActiveParentIntoView = async () => {
 }
 
 onMounted(async () => {
+  removeRouteBeforeEach = router.beforeEach((to, from) => {
+    if (to.fullPath !== from.fullPath) {
+      isRouteChanging.value = true
+      pendingNavigationPath.value = to.path
+    }
+    return true
+  })
+  removeRouteAfterEach = router.afterEach(() => {
+    clearNavigationFeedback()
+  })
+  removeRouteErrorHandler = router.onError(() => {
+    clearNavigationFeedback(0)
+  })
+
   if (route.path !== '/login' && route.path !== '/forgot-password' && localStorage.getItem('accessToken')) {
     try {
       if (!appStore.authLoaded) {
@@ -315,6 +385,10 @@ watch(() => [permissionSignature.value, isSuperAdmin.value], () => {
 
 onBeforeUnmount(() => {
   clearInterval(clockTimer)
+  if (navigationFeedbackTimer) window.clearTimeout(navigationFeedbackTimer)
+  removeRouteBeforeEach?.()
+  removeRouteAfterEach?.()
+  removeRouteErrorHandler?.()
 })
 
 const helperCodeDialogVisible = ref(false)
@@ -381,6 +455,7 @@ const handleLogout = () => {
   </div>
 
   <div v-else class="layout-container">
+    <div v-if="isRouteChanging" class="route-progress"></div>
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-logo">奶</div>
@@ -411,11 +486,19 @@ const handleLogout = () => {
                     v-for="item in child.children"
                     :key="item.path"
                     :to="item.path"
-                    class="nav-subitem"
-                    :class="{ active: route.path === item.path }"
+                    custom
+                    v-slot="{ href }"
                   >
-                    <div class="nav-dot"></div>
-                    {{ item.label }}
+                    <a
+                      :href="href"
+                      class="nav-subitem"
+                      :class="{ active: route.path === item.path, pending: pendingNavigationPath === item.path }"
+                      @click="navigateTo(item.path, $event)"
+                      @pointerenter="preloadRouteComponent(item.path)"
+                    >
+                      <div class="nav-dot"></div>
+                      {{ item.label }}
+                    </a>
                   </router-link>
                 </div>
               </div>
@@ -423,11 +506,19 @@ const handleLogout = () => {
               <router-link
                 v-else
                 :to="child.path"
-                class="nav-item"
-                :class="{ active: route.path === child.path }"
+                custom
+                v-slot="{ href }"
               >
-                <span class="nav-icon"><el-icon><component :is="child.icon" /></el-icon></span>
-                {{ child.label }}
+                <a
+                  :href="href"
+                  class="nav-item"
+                  :class="{ active: route.path === child.path, pending: pendingNavigationPath === child.path }"
+                  @click="navigateTo(child.path, $event)"
+                  @pointerenter="preloadRouteComponent(child.path)"
+                >
+                  <span class="nav-icon"><el-icon><component :is="child.icon" /></el-icon></span>
+                  {{ child.label }}
+                </a>
               </router-link>
             </template>
           </div>
@@ -459,13 +550,13 @@ const handleLogout = () => {
         <div class="topbar-actions">
           <span style="font-size: 13px; color: var(--text-secondary)">{{ currentTime }}</span>
           <el-badge :value="unreadCount" :max="99">
-            <el-icon :size="20" style="cursor: pointer; color: var(--text-secondary)" @click="router.push('/workflow-center')"><Bell /></el-icon>
+            <el-icon :size="20" style="cursor: pointer; color: var(--text-secondary)" @click="navigateTo('/workflow-center')"><Bell /></el-icon>
           </el-badge>
           <el-dropdown>
             <div class="topbar-avatar">{{ currentUser?.nickname?.slice(0,1) || '用' }}</div>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="router.push('/profile')">个人中心</el-dropdown-item>
+                <el-dropdown-item @click="navigateTo('/profile')">个人中心</el-dropdown-item>
                 <el-dropdown-item v-if="isSuperAdmin" @click="openHelperCodeDialog">
                   <el-icon style="margin-right:4px"><Key /></el-icon>查看辅助动态码
                 </el-dropdown-item>
@@ -535,6 +626,31 @@ const handleLogout = () => {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 240px;
+  right: 0;
+  height: 3px;
+  z-index: 1000;
+  overflow: hidden;
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.route-progress::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+  animation: routeProgress 0.9s ease-in-out infinite;
+}
+
+@keyframes routeProgress {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(260%); }
+}
+
 .helper-code-display {
   font-size: 40px;
   font-weight: 800;
@@ -602,4 +718,15 @@ const handleLogout = () => {
 .nav-subitem:hover .nav-dot { background: #cbd5e1; }
 .nav-subitem.active { color: #fff; background: rgba(59, 130, 246, 0.15); font-weight: 500; }
 .nav-subitem.active .nav-dot { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.6); }
+.nav-item.pending,
+.nav-subitem.pending {
+  color: #fff;
+  background: rgba(13, 148, 136, 0.18);
+  pointer-events: none;
+}
+
+.nav-item.pending .nav-icon,
+.nav-subitem.pending .nav-dot {
+  opacity: 0.72;
+}
 </style>

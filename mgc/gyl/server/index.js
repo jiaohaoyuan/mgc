@@ -508,7 +508,19 @@ const apiPermissionRequired = (req, res, next) => {
     next();
 };
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 15 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const ext = path.extname(file.originalname || '').toLowerCase();
+        if (!['.xlsx', '.xls'].includes(ext)) {
+            const err = new Error('仅支持上传 Excel 文件');
+            err.statusCode = 400;
+            return cb(err);
+        }
+        return cb(null, true);
+    }
+});
 
 app.set('trust proxy', 1);
 app.use((req, res, next) => {
