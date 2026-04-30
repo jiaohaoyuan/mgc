@@ -205,6 +205,7 @@ export const useAppStore = defineStore('app', () => {
             '/intelligent-closed-loop',
             '/inventory-ops',
             '/channel-dealer-ops',
+            '/demand/channel-plan',
             '/workflow-center',
             '/management-cockpit',
             '/mdm/sku',

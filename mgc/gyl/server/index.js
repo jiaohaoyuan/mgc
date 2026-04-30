@@ -17,6 +17,7 @@ const { registerOrderPhase2Routes } = require('./orderPhase2');
 const { registerInventoryOpsRoutes } = require('./inventoryOps');
 const { registerMdmGovernanceRoutes, runQualityCheckCore } = require('./mdmGovernance');
 const { registerChannelDealerOpsRoutes } = require('./channelDealerOps');
+const { registerChannelDemandPlanRoutes } = require('./channelDemandPlan');
 const { registerWorkflowCenterRoutes } = require('./workflowCenter');
 const { registerManagementCockpitRoutes } = require('./managementCockpit');
 const {
@@ -67,6 +68,7 @@ const API_PERMISSION_RULES = [
     { matcher: /^\/inventory(?:\/|$)/, permissionPath: '/intelligent' },
     { matcher: /^\/inventory-ops(?:\/|$)/, permissionPath: '/inventory-ops' },
     { matcher: /^\/channel-dealer-ops(?:\/|$)/, permissionPath: '/channel-dealer-ops' },
+    { matcher: /^\/demand\/channel-plan(?:\/|$)/, permissionPath: '/demand/channel-plan' },
     { matcher: /^\/workflow-center(?:\/|$)/, permissionPath: '/workflow-center' },
     { matcher: /^\/management-cockpit(?:\/|$)/, permissionPath: '/management-cockpit' },
     { matcher: /^\/platform(?:\/|$)/, permissionPath: '/enterprise-platform' }
@@ -2603,6 +2605,14 @@ registerChannelDealerOpsRoutes({
     apiErr,
     paginate,
     contains
+});
+
+registerChannelDemandPlanRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate
 });
 
 registerWorkflowCenterRoutes({

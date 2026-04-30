@@ -26,7 +26,8 @@ const DEFAULT_PLATFORM_PAGES = [
     { id: 47, name: '渠道与经销商经营中心', path: '/channel-dealer-ops', permission: 'biz:channel:dealer:ops:view', parent_id: 20 },
     { id: 48, name: '流程协同与待办中心', path: '/workflow-center', permission: 'biz:workflow:center:view', parent_id: 20 },
     { id: 49, name: '经营分析与管理驾驶舱', path: '/management-cockpit', permission: 'biz:management:cockpit:view', parent_id: 20 },
-    { id: 50, name: '企业级平台能力中心', path: '/enterprise-platform', permission: 'sys:enterprise:platform:view', parent_id: 10 }
+    { id: 50, name: '企业级平台能力中心', path: '/enterprise-platform', permission: 'sys:enterprise:platform:view', parent_id: 10 },
+    { id: 51, name: '渠道需求计划', path: '/demand/channel-plan', permission: 'biz:demand:channel-plan:view', parent_id: 20 }
 ];
 
 const DEFAULT_MDM_PAGES = [
@@ -186,6 +187,7 @@ const createSeedDb = () => {
         [25, '渠道与经销商经营中心', '/channel-dealer-ops', 'biz:channel:dealer:ops:view', 20],
         [26, '流程协同与待办中心', '/workflow-center', 'biz:workflow:center:view', 20],
         [27, '经营分析与管理驾驶舱', '/management-cockpit', 'biz:management:cockpit:view', 20],
+        [28, '渠道需求计划', '/demand/channel-plan', 'biz:demand:channel-plan:view', 20],
         [31, 'SKU管理', '/mdm/sku', 'mdm:sku:view', 30],
         [32, '经销关系', '/mdm/reseller-relation', 'mdm:relation:view', 30]
     ].map(([id, name, pathVal, permission, parent]) => ({
@@ -286,7 +288,15 @@ const createSeedDb = () => {
             transfer_tracks: [],
             inventory_warnings: [],
             warehouse_capabilities: [],
-            inventory_locks: []
+            inventory_locks: [],
+            channel_demand_plans: [],
+            channel_demand_plan_channels: [],
+            channel_demand_plan_skus: [],
+            channel_demand_plan_versions: [],
+            channel_demand_plan_channel_statuses: [],
+            channel_demand_plan_data: [],
+            product_lock_rules: [],
+            downstream_demand_plan_jobs: []
         },
         platform: {
             dict_types: cloneJson(DEFAULT_DICT_TYPES),
@@ -615,7 +625,7 @@ const ensurePlatformStructures = (db) => {
     });
 
     const intelligentPage = db.system.pages.find((page) => String(page.path) === '/intelligent');
-    const inheritedPages = ['/intelligent-closed-loop', '/inventory-ops', '/channel-dealer-ops', '/workflow-center', '/management-cockpit']
+    const inheritedPages = ['/intelligent-closed-loop', '/inventory-ops', '/channel-dealer-ops', '/workflow-center', '/management-cockpit', '/demand/channel-plan']
         .map((p) => db.system.pages.find((page) => String(page.path) === p))
         .filter(Boolean);
     if (intelligentPage && inheritedPages.length) {
@@ -656,6 +666,14 @@ const ensurePlatformStructures = (db) => {
     ensureBizArray('inventory_warnings');
     ensureBizArray('warehouse_capabilities');
     ensureBizArray('inventory_locks');
+    ensureBizArray('channel_demand_plans');
+    ensureBizArray('channel_demand_plan_channels');
+    ensureBizArray('channel_demand_plan_skus');
+    ensureBizArray('channel_demand_plan_versions');
+    ensureBizArray('channel_demand_plan_channel_statuses');
+    ensureBizArray('channel_demand_plan_data');
+    ensureBizArray('product_lock_rules');
+    ensureBizArray('downstream_demand_plan_jobs');
 
     if (!db.biz.order_allocation_weights || typeof db.biz.order_allocation_weights !== 'object' || Array.isArray(db.biz.order_allocation_weights)) {
         db.biz.order_allocation_weights = {

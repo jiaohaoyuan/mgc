@@ -44,6 +44,7 @@ const COMMON_ROUTE_PRELOADERS: Array<() => Promise<unknown>> = [
   () => import('@/views/IntelligentOrdering.vue'),
   () => import('@/views/InventoryOpsCenter.vue'),
   () => import('@/views/ChannelDealerOpsCenter.vue'),
+  () => import('@/views/ChannelDemandPlan.vue'),
   () => import('@/views/OrderClosedLoopCenter.vue'),
   () => import('@/views/PastureOverview.vue'),
   () => import('@/views/DictCenter.vue'),

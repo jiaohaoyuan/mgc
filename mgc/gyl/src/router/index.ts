@@ -139,6 +139,12 @@ const router = createRouter({
             meta: { title: '渠道与经销商经营中心', icon: 'DataLine', permissionPath: '/channel-dealer-ops' }
         },
         {
+            path: '/demand/channel-plan',
+            name: 'ChannelDemandPlan',
+            component: () => import('@/views/ChannelDemandPlan.vue'),
+            meta: { title: '渠道需求计划', icon: 'Calendar', permissionPath: '/demand/channel-plan' }
+        },
+        {
             path: '/workflow-center',
             name: 'WorkflowCenter',
             component: () => import('@/views/WorkflowCenter.vue'),

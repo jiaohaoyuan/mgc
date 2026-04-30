@@ -87,6 +87,13 @@ export const webSidebarConfig: SidebarSection[] = [
       },
       {
         type: 'item',
+        id: 'channel-demand-plan',
+        label: '渠道需求计划',
+        icon: 'Calendar',
+        path: '/demand/channel-plan'
+      },
+      {
+        type: 'item',
         id: 'pasture',
         label: '牧场与奶源运营中心',
         icon: 'Van',
