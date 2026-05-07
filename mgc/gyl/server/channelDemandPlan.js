@@ -1,3 +1,4 @@
+const XLSX = require('xlsx');
 const { readDb, updateDb, nextId, nowIso } = require('./localDb');
 
 const PLAN_STATUS = {
@@ -319,6 +320,56 @@ const decoratePlanRow = (db, row) => {
         latest_version_label: latestVersion?.version_label || '',
         latest_version_status: latestVersion?.status ?? ''
     };
+};
+
+const sortWeekCodes = (values = []) =>
+    [...arr(values)].sort((a, b) => {
+        const left = parseWeekCode(a);
+        const right = parseWeekCode(b);
+        if (left.year !== right.year) return left.year - right.year;
+        return left.week - right.week;
+    });
+
+const buildVersionMatrixView = (rows, weekRows) => {
+    const orderedWeeks = sortWeekCodes(arr(weekRows).map((item) => item.plan_week));
+    const rowMap = new Map();
+
+    arr(rows).forEach((row) => {
+        const key = `${row.lv2_channel_code}__${row.sku_code}`;
+        if (!rowMap.has(key)) {
+            rowMap.set(key, {
+                lv2_channel_code: row.lv2_channel_code,
+                lv2_channel_name: row.lv2_channel_name,
+                sku_code: row.sku_code,
+                sku_name: row.sku_name,
+                lv3_category_code: row.lv3_category_code || '',
+                lv3_category_name: row.lv3_category_name || '',
+                cells: {}
+            });
+        }
+        rowMap.get(key).cells[row.plan_week] = row;
+    });
+
+    return [...rowMap.values()]
+        .map((item) => ({
+            ...item,
+            values: orderedWeeks.map((weekCode) => {
+                const cell = item.cells[weekCode];
+                return cell?.plan_value ?? '';
+            })
+        }))
+        .sort((a, b) => {
+            const channelCompare = String(a.lv2_channel_name || '').localeCompare(String(b.lv2_channel_name || ''));
+            if (channelCompare !== 0) return channelCompare;
+            const categoryCompare = String(a.lv3_category_name || '').localeCompare(String(b.lv3_category_name || ''));
+            if (categoryCompare !== 0) return categoryCompare;
+            return String(a.sku_name || '').localeCompare(String(b.sku_name || ''));
+        });
+};
+
+const sanitizeSheetName = (text, fallback = 'Sheet') => {
+    const value = String(text || '').replace(/[\\/?*\[\]:]/g, ' ').trim();
+    return (value || fallback).slice(0, 31);
 };
 
 const parseScopedChannelPayload = (db, channelCodes = []) => {
@@ -770,6 +821,33 @@ const createVersionCore = (db, planCode, body, operator) => {
     return versionRow;
 };
 
+const rollVersionCore = (db, planCode, body, operator) => {
+    const plan = getPlanRow(db, planCode);
+    if (!plan) throw new Error('计划不存在');
+
+    const versions = getVersionRows(db, planCode);
+    const referenceVersionCode = normalize(body.reference_version_code);
+    const referenceVersion = referenceVersionCode
+        ? versions.find((row) => String(row.version_code) === referenceVersionCode)
+        : versions[0];
+
+    if (!referenceVersion) {
+        throw new Error('当前计划暂无可滚动的参考版本，请先创建首个版本');
+    }
+
+    const beginWeek = normalize(body.begin_week) || addWeeksToWeekCode(referenceVersion.end_week, 1);
+    const weekCount = Math.min(26, Math.max(1, toNum(body.week_count, plan.week_count || referenceVersion.week_count || 8)));
+    const versionLabel = normalize(body.version_label) || `滚动版本 ${versions.length + 1}`;
+
+    return createVersionCore(db, planCode, {
+        begin_week: beginWeek,
+        week_count: weekCount,
+        last_version_code: referenceVersion.version_code,
+        create_type: 2,
+        version_label: versionLabel
+    }, operator);
+};
+
 const rebuildVersionLocksCore = (db, versionCode, operator, isSuperAdmin) => {
     if (!isSuperAdmin) throw createBizError('仅超级管理员可刷新锁定快照', 403);
     const version = getVersionRow(db, versionCode);
@@ -783,6 +861,235 @@ const rebuildVersionLocksCore = (db, versionCode, operator, isSuperAdmin) => {
     syncPlanStatus(db, version.plan_code, operator);
 
     return getVersionDetail(db, versionCode);
+};
+
+const buildChannelSkuGroups = (rows, onlyChanged) => {
+    const channelMap = new Map();
+
+    // Pre-compute total weeks per SKU+channel combo from ALL rows (for denominator)
+    const skuTotalWeeks = new Map();
+    rows.forEach((row) => {
+        const key = `${row.lv2_channel_code}__${row.sku_code}`;
+        if (!skuTotalWeeks.has(key)) skuTotalWeeks.set(key, new Set());
+        skuTotalWeeks.get(key).add(row.plan_week);
+    });
+
+    rows.forEach((row) => {
+        if (onlyChanged && !row.changed) return;
+
+        const channelKey = row.lv2_channel_code;
+        if (!channelMap.has(channelKey)) {
+            channelMap.set(channelKey, {
+                lv2_channel_code: row.lv2_channel_code,
+                lv2_channel_name: row.lv2_channel_name,
+                changed_cells: 0,
+                total_delta: 0,
+                total_increase: 0,
+                total_decrease: 0,
+                skuMap: new Map()
+            });
+        }
+        const channel = channelMap.get(channelKey);
+        if (row.changed) {
+            channel.changed_cells += 1;
+            channel.total_delta += row.delta_value;
+            if (row.delta_value > 0) channel.total_increase += row.delta_value;
+            if (row.delta_value < 0) channel.total_decrease += Math.abs(row.delta_value);
+        }
+
+        const skuKey = row.sku_code;
+        if (!channel.skuMap.has(skuKey)) {
+            const totalWeeksKey = `${row.lv2_channel_code}__${row.sku_code}`;
+            channel.skuMap.set(skuKey, {
+                sku_code: row.sku_code,
+                sku_name: row.sku_name,
+                lv3_category_name: row.lv3_category_name,
+                total_source: 0,
+                total_target: 0,
+                total_delta: 0,
+                changed_weeks: 0,
+                total_weeks: (skuTotalWeeks.get(totalWeeksKey) || new Set()).size,
+                weeks: []
+            });
+        }
+        const sku = channel.skuMap.get(skuKey);
+
+        sku.total_source += (row.source_value ?? 0);
+        sku.total_target += (row.target_value ?? 0);
+        sku.total_delta += row.delta_value;
+        if (row.changed) sku.changed_weeks += 1;
+        sku.weeks.push({
+            plan_week: row.plan_week,
+            source_value: row.source_value,
+            target_value: row.target_value,
+            delta_value: row.delta_value,
+            source_locked: row.source_locked,
+            target_locked: row.target_locked
+        });
+    });
+
+    const groups = [...channelMap.values()]
+        .map((channel) => ({
+            lv2_channel_code: channel.lv2_channel_code,
+            lv2_channel_name: channel.lv2_channel_name,
+            changed_cells: channel.changed_cells,
+            total_delta: channel.total_delta,
+            total_increase: channel.total_increase,
+            total_decrease: channel.total_decrease,
+            skus: [...channel.skuMap.values()]
+                .map((sku) => ({
+                    sku_code: sku.sku_code,
+                    sku_name: sku.sku_name,
+                    lv3_category_name: sku.lv3_category_name,
+                    total_source: sku.total_source,
+                    total_target: sku.total_target,
+                    total_delta: sku.total_delta,
+                    changed_weeks: sku.changed_weeks,
+                    total_weeks: sku.total_weeks,
+                    weeks: sku.weeks.sort((a, b) => {
+                        const left = parseWeekCode(a.plan_week);
+                        const right = parseWeekCode(b.plan_week);
+                        if (left.year !== right.year) return left.year - right.year;
+                        return left.week - right.week;
+                    })
+                }))
+                .sort((a, b) => {
+                    const categoryCompare = String(a.lv3_category_name || '').localeCompare(String(b.lv3_category_name || ''));
+                    if (categoryCompare !== 0) return categoryCompare;
+                    return String(a.sku_name || '').localeCompare(String(b.sku_name || ''));
+                })
+        }))
+        .sort((a, b) => String(a.lv2_channel_name || '').localeCompare(String(b.lv2_channel_name || '')));
+
+    return groups;
+};
+
+const compareVersionCore = (db, sourceVersionCode, targetVersionCode, onlyChanged = true) => {
+    const sourceVersion = getVersionRow(db, sourceVersionCode);
+    const targetVersion = getVersionRow(db, targetVersionCode);
+    if (!sourceVersion) throw new Error('对比源版本不存在');
+    if (!targetVersion) throw new Error('对比目标版本不存在');
+    if (String(sourceVersion.plan_code) !== String(targetVersion.plan_code)) {
+        throw createBizError('仅支持同一计划下的版本对比', 409);
+    }
+
+    const sourceRows = arr(db.biz.channel_demand_plan_data).filter((row) => String(row.version_code) === String(sourceVersionCode));
+    const targetRows = arr(db.biz.channel_demand_plan_data).filter((row) => String(row.version_code) === String(targetVersionCode));
+    const sourceMap = new Map(sourceRows.map((row) => [`${row.lv2_channel_code}__${row.sku_code}__${row.plan_week}`, row]));
+    const targetMap = new Map(targetRows.map((row) => [`${row.lv2_channel_code}__${row.sku_code}__${row.plan_week}`, row]));
+    const keys = [...new Set([...sourceMap.keys(), ...targetMap.keys()])];
+
+    const rows = keys.map((key) => {
+        const source = sourceMap.get(key) || null;
+        const target = targetMap.get(key) || null;
+        const sourceValue = source?.plan_value ?? null;
+        const targetValue = target?.plan_value ?? null;
+        return {
+            lv2_channel_code: source?.lv2_channel_code || target?.lv2_channel_code || '',
+            lv2_channel_name: source?.lv2_channel_name || target?.lv2_channel_name || '',
+            sku_code: source?.sku_code || target?.sku_code || '',
+            sku_name: source?.sku_name || target?.sku_name || '',
+            lv3_category_name: source?.lv3_category_name || target?.lv3_category_name || '',
+            plan_week: source?.plan_week || target?.plan_week || '',
+            source_value: sourceValue,
+            target_value: targetValue,
+            delta_value: (targetValue ?? 0) - (sourceValue ?? 0),
+            source_locked: Number(source?.is_locked || 0) === 1,
+            target_locked: Number(target?.is_locked || 0) === 1,
+            changed: sourceValue !== targetValue
+        };
+    });
+
+    const filteredRows = onlyChanged ? rows.filter((row) => row.changed) : rows;
+    filteredRows.sort((a, b) => {
+        const channelCompare = String(a.lv2_channel_name || '').localeCompare(String(b.lv2_channel_name || ''));
+        if (channelCompare !== 0) return channelCompare;
+        const categoryCompare = String(a.lv3_category_name || '').localeCompare(String(b.lv3_category_name || ''));
+        if (categoryCompare !== 0) return categoryCompare;
+        const skuCompare = String(a.sku_name || '').localeCompare(String(b.sku_name || ''));
+        if (skuCompare !== 0) return skuCompare;
+        const left = parseWeekCode(a.plan_week);
+        const right = parseWeekCode(b.plan_week);
+        if (left.year !== right.year) return left.year - right.year;
+        return left.week - right.week;
+    });
+
+    return {
+        plan: decoratePlanRow(db, getPlanRow(db, sourceVersion.plan_code)),
+        source_version: decorateVersionRow(db, sourceVersion),
+        target_version: decorateVersionRow(db, targetVersion),
+        summary: {
+            total_cells: rows.length,
+            changed_cells: rows.filter((row) => row.changed).length,
+            increased_cells: rows.filter((row) => row.changed && row.delta_value > 0).length,
+            decreased_cells: rows.filter((row) => row.changed && row.delta_value < 0).length,
+            unchanged_cells: rows.filter((row) => !row.changed).length
+        },
+        rows: filteredRows,
+        channel_groups: buildChannelSkuGroups(rows, onlyChanged)
+    };
+};
+
+const exportVersionWorkbookCore = (db, versionCode) => {
+    const version = getVersionRow(db, versionCode);
+    if (!version) throw new Error('版本不存在');
+    if (Number(version.status) !== PLAN_STATUS.CONFIRMED) {
+        throw createBizError('仅支持导出已确认版本', 409);
+    }
+
+    const plan = getPlanRow(db, version.plan_code);
+    if (!plan) throw new Error('计划不存在');
+
+    const weekRows = buildWeekSequence(version.begin_week, version.week_count);
+    const workbook = XLSX.utils.book_new();
+    const summarySheet = XLSX.utils.aoa_to_sheet([
+        ['计划编码', plan.plan_code],
+        ['计划名称', plan.plan_name],
+        ['版本号', version.version_code],
+        ['版本名称', version.version_label || version.version_code],
+        ['开始周', version.begin_week],
+        ['结束周', version.end_week],
+        ['覆盖周数', version.week_count],
+        ['状态', '已确认'],
+        ['确认人', version.confirmed_by || ''],
+        ['确认时间', version.confirmed_time || '']
+    ]);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, sanitizeSheetName('版本概览', '概览'));
+
+    const channelStatuses = getVersionChannelStatuses(db, versionCode);
+    channelStatuses.forEach((channelStatus) => {
+        const channelRows = getVersionDataRows(db, versionCode, channelStatus.lv2_channel_code);
+        const matrixRows = buildVersionMatrixView(channelRows, weekRows);
+        const header = [
+            '三级品类',
+            'SKU',
+            'SKU编码',
+            ...weekRows.map((item) => `${item.plan_week}\n${item.week_start_date}~${item.week_end_date}`)
+        ];
+        const data = matrixRows.map((row) => [
+            row.lv3_category_name,
+            row.sku_name,
+            row.sku_code,
+            ...row.values
+        ]);
+        const sheet = XLSX.utils.aoa_to_sheet([
+            ['渠道', channelStatus.lv2_channel_name],
+            ['提交状态', Number(channelStatus.submit_status) === 1 ? '已提交' : '未提交'],
+            [],
+            header,
+            ...data
+        ]);
+        XLSX.utils.book_append_sheet(
+            workbook,
+            sheet,
+            sanitizeSheetName(channelStatus.lv2_channel_name || channelStatus.lv2_channel_code, `渠道${channelStatus.lv2_channel_code}`)
+        );
+    });
+
+    return {
+        filename: `${version.version_code}.xlsx`,
+        buffer: XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+    };
 };
 
 const getVersionDetail = (db, versionCode) => {
@@ -1093,6 +1400,19 @@ const registerChannelDemandPlanRoutes = ({ app, authRequired, apiOk, apiErr, pag
         }
     });
 
+    app.post('/api/demand/channel-plan/:planCode/version/roll', authRequired, (req, res) => {
+        try {
+            const operator = req.user?.nickname || req.user?.username || '系统';
+            const out = updateDb((db) => {
+                ensureChannelDemandPlanStructures(db);
+                return rollVersionCore(db, req.params.planCode, req.body || {}, operator);
+            });
+            apiOk(res, req, out, '滚动生成成功');
+        } catch (error) {
+            apiErr(res, req, error.statusCode || 400, error.message || '滚动生成失败', { details: error.details || null });
+        }
+    });
+
     app.get('/api/demand/channel-plan/version/:versionCode', authRequired, (req, res) => {
         try {
             const db = readDb();
@@ -1100,6 +1420,26 @@ const registerChannelDemandPlanRoutes = ({ app, authRequired, apiOk, apiErr, pag
             apiOk(res, req, getVersionDetail(db, req.params.versionCode), '获取成功');
         } catch (error) {
             apiErr(res, req, 404, error.message || '获取失败');
+        }
+    });
+
+    app.get('/api/demand/channel-plan/version/:versionCode/compare', authRequired, (req, res) => {
+        try {
+            const db = readDb();
+            ensureChannelDemandPlanStructures(db);
+            apiOk(
+                res,
+                req,
+                compareVersionCore(
+                    db,
+                    req.params.versionCode,
+                    req.query.targetVersionCode,
+                    String(req.query.onlyChanged ?? '1') !== '0'
+                ),
+                '获取成功'
+            );
+        } catch (error) {
+            apiErr(res, req, error.statusCode || 400, error.message || '版本对比失败', { details: error.details || null });
         }
     });
 
@@ -1237,6 +1577,19 @@ const registerChannelDemandPlanRoutes = ({ app, authRequired, apiOk, apiErr, pag
             apiOk(res, req, out, '刷新锁定快照成功');
         } catch (error) {
             apiErr(res, req, error.statusCode || 400, error.message || '刷新锁定快照失败', { details: error.details || null });
+        }
+    });
+
+    app.get('/api/demand/channel-plan/version/:versionCode/export', authRequired, (req, res) => {
+        try {
+            const db = readDb();
+            ensureChannelDemandPlanStructures(db);
+            const out = exportVersionWorkbookCore(db, req.params.versionCode);
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(out.filename)}`);
+            res.send(out.buffer);
+        } catch (error) {
+            apiErr(res, req, error.statusCode || 400, error.message || '导出失败', { details: error.details || null });
         }
     });
 };

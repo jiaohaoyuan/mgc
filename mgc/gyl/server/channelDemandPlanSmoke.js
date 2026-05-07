@@ -38,6 +38,10 @@ const getDraftPlan = (plans) =>
     plans.find((row) => String(row.plan_code) === 'CDP-DEMO-ECOM-PRIVATE')
     || plans.find((row) => Number(row.status) === 0);
 
+const getConfirmedPlan = (plans) =>
+    plans.find((row) => String(row.plan_code) === 'CDP-DEMO-EAST-CORE')
+    || plans.find((row) => Number(row.status) === 3);
+
 async function main() {
     log(`API base: ${API_BASE}`);
     await login();
@@ -65,6 +69,11 @@ async function main() {
         throw new Error('expected seeded draft plan, run node seedChannelDemandPlanMock.js first');
     }
     log(`plan list ok: using ${draftPlan.plan_code}`);
+
+    const confirmedPlan = getConfirmedPlan(plans);
+    if (!confirmedPlan) {
+        throw new Error('expected seeded confirmed plan for export test');
+    }
 
     const rulesRes = await client.get('/demand/channel-plan/product-lock-rules');
     const rules = rulesRes.data?.data || [];
@@ -123,6 +132,48 @@ async function main() {
         throw new Error('rebuild locks did not preserve locked state');
     }
     log('rebuild locks ok');
+
+    const refreshedVersionsRes = await client.get(`/demand/channel-plan/${draftPlan.plan_code}/version`);
+    const refreshedVersions = refreshedVersionsRes.data?.data || [];
+    const existedRolledVersion = refreshedVersions.find((item) =>
+        String(item.last_version_code) === version.version_code && Number(item.create_type) === 2
+    );
+    const rolledVersionCode = existedRolledVersion?.version_code || (
+        await client.post(`/demand/channel-plan/${draftPlan.plan_code}/version/roll`, {
+            reference_version_code: version.version_code
+        })
+    ).data?.data?.version_code;
+    if (!rolledVersionCode) {
+        throw new Error('roll version did not return version_code');
+    }
+    log(`roll version ok: ${rolledVersionCode}`);
+
+    const compareRes = await client.get(`/demand/channel-plan/version/${version.version_code}/compare`, {
+        params: {
+            targetVersionCode: rolledVersionCode,
+            onlyChanged: 0
+        }
+    });
+    const compareSummary = compareRes.data?.data?.summary || {};
+    if (!compareRes.data?.data?.target_version?.version_code || Number(compareSummary.total_cells || 0) < 1) {
+        throw new Error('version compare verification failed');
+    }
+    log('version compare ok');
+
+    const confirmedVersionsRes = await client.get(`/demand/channel-plan/${confirmedPlan.plan_code}/version`);
+    const confirmedVersions = confirmedVersionsRes.data?.data || [];
+    const confirmedVersion = confirmedVersions.find((item) => Number(item.status) === 3);
+    if (!confirmedVersion?.version_code) {
+        throw new Error('expected confirmed version for export');
+    }
+    const exportRes = await client.get(`/demand/channel-plan/version/${confirmedVersion.version_code}/export`, {
+        responseType: 'arraybuffer'
+    });
+    const contentType = String(exportRes.headers['content-type'] || '');
+    if (!contentType.includes('spreadsheetml') || !exportRes.data || exportRes.data.byteLength < 1000) {
+        throw new Error('export verification failed');
+    }
+    log('version export ok');
 
     log('smoke passed');
 }

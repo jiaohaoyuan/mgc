@@ -45,6 +45,8 @@ const versionDialogVisible = ref(false)
 const versionDetailVisible = ref(false)
 const lockRuleDrawerVisible = ref(false)
 const lockRuleDialogVisible = ref(false)
+const rollDialogVisible = ref(false)
+const compareDialogVisible = ref(false)
 
 const planSaving = ref(false)
 const versionSaving = ref(false)
@@ -52,6 +54,9 @@ const detailLoading = ref(false)
 const lockRuleLoading = ref(false)
 const lockRuleSaving = ref(false)
 const rebuildLocking = ref(false)
+const rollingVersion = ref(false)
+const compareLoading = ref(false)
+const exportingVersionCode = ref('')
 
 const lockRules = ref<any[]>([])
 const editingLockRuleId = ref<number | null>(null)
@@ -76,12 +81,40 @@ const versionForm = reactive({
   last_version_code: ''
 })
 
+const rollForm = reactive({
+  reference_version_code: '',
+  begin_week: '',
+  week_count: 8,
+  version_label: ''
+})
+
 const lockRuleForm = reactive({
   sku_code: '',
   channel_codes: [] as string[],
   start_date: '',
   end_date: '',
   remark: ''
+})
+
+const compareForm = reactive({
+  source_version_code: '',
+  target_version_code: '',
+  only_changed: true
+})
+
+const compareActiveChannels = ref<string[]>([])
+const compareResult = reactive<{
+  source_version: any | null
+  target_version: any | null
+  summary: Record<string, number>
+  rows: any[]
+  channel_groups: any[]
+}>({
+  source_version: null,
+  target_version: null,
+  summary: {},
+  rows: [],
+  channel_groups: []
 })
 
 const versionDetail = reactive<{
@@ -130,6 +163,15 @@ const resetVersionForm = () => {
   })
 }
 
+const resetRollForm = () => {
+  Object.assign(rollForm, {
+    reference_version_code: versionRows.value[0]?.version_code || '',
+    begin_week: '',
+    week_count: activePlan.value?.week_count || 8,
+    version_label: ''
+  })
+}
+
 const resetLockRuleForm = () => {
   editingLockRuleId.value = null
   Object.assign(lockRuleForm, {
@@ -139,6 +181,20 @@ const resetLockRuleForm = () => {
     end_date: '',
     remark: ''
   })
+}
+
+const resetCompareForm = () => {
+  Object.assign(compareForm, {
+    source_version_code: versionRows.value[0]?.version_code || '',
+    target_version_code: versionRows.value[1]?.version_code || '',
+    only_changed: true
+  })
+  compareResult.source_version = null
+  compareResult.target_version = null
+  compareResult.summary = {}
+  compareResult.rows = []
+  compareResult.channel_groups = []
+  compareActiveChannels.value = []
 }
 
 const buildCellKey = (skuCode: string, planWeek: string) => `${skuCode}__${planWeek}`
@@ -151,10 +207,21 @@ const statusText = (status: unknown) => {
   return '草稿'
 }
 
+const createTypeText = (type: unknown) => String(type) === '2' ? '滚动自动' : '手动'
+
 const lifecycleTagType = (status: string) => {
   if (status === 'ACTIVE') return 'danger'
   if (status === 'EXPIRED') return 'info'
   return 'success'
+}
+
+const formatCompareValue = (value: unknown) => value === null || value === undefined || value === '' ? '-' : String(value)
+
+const expandAllChannels = () => {
+  compareActiveChannels.value = compareResult.channel_groups.map((g: any) => g.lv2_channel_code)
+}
+const collapseAllChannels = () => {
+  compareActiveChannels.value = []
 }
 
 const hydrateDraftValues = () => {
@@ -294,6 +361,40 @@ const openVersionDialog = async (row?: any) => {
   versionDialogVisible.value = true
 }
 
+const openRollDialog = async (row?: any) => {
+  if (row) {
+    activePlan.value = row
+    await openVersions(row)
+  }
+  if (!activePlan.value) {
+    ElMessage.warning('请先选择计划')
+    return
+  }
+  if (versionRows.value.length < 1) {
+    ElMessage.warning('当前计划还没有版本，无法滚动生成')
+    return
+  }
+  resetRollForm()
+  rollDialogVisible.value = true
+}
+
+const openCompareDialog = async (row?: any) => {
+  if (row) {
+    activePlan.value = row
+    await openVersions(row)
+  }
+  if (!activePlan.value) {
+    ElMessage.warning('请先选择计划')
+    return
+  }
+  if (versionRows.value.length < 2) {
+    ElMessage.warning('当前计划至少需要两个版本才能对比')
+    return
+  }
+  resetCompareForm()
+  compareDialogVisible.value = true
+}
+
 const openLockRuleDrawer = async () => {
   lockRuleDrawerVisible.value = true
   await fetchLockRules()
@@ -349,6 +450,56 @@ const saveVersion = async () => {
   }
 }
 
+const saveRollVersion = async () => {
+  if (!activePlan.value?.plan_code) {
+    ElMessage.warning('请先选择计划')
+    return
+  }
+  rollingVersion.value = true
+  try {
+    await axios.post(`/demand/channel-plan/${activePlan.value.plan_code}/version/roll`, rollForm)
+    ElMessage.success('滚动版本生成成功')
+    rollDialogVisible.value = false
+    await Promise.all([
+      openVersions(activePlan.value),
+      fetchPlans()
+    ])
+  } finally {
+    rollingVersion.value = false
+  }
+}
+
+const runVersionCompare = async () => {
+  if (!compareForm.source_version_code || !compareForm.target_version_code) {
+    ElMessage.warning('请选择要对比的两个版本')
+    return
+  }
+  if (compareForm.source_version_code === compareForm.target_version_code) {
+    ElMessage.warning('对比源版本和目标版本不能相同')
+    return
+  }
+  compareLoading.value = true
+  try {
+    const res = await axios.get(`/demand/channel-plan/version/${compareForm.source_version_code}/compare`, {
+      params: {
+        targetVersionCode: compareForm.target_version_code,
+        onlyChanged: compareForm.only_changed ? 1 : 0
+      }
+    })
+    const data = res.data?.data || {}
+    compareResult.source_version = data.source_version || null
+    compareResult.target_version = data.target_version || null
+    compareResult.summary = data.summary || {}
+    compareResult.rows = data.rows || []
+    compareResult.channel_groups = data.channel_groups || []
+    compareActiveChannels.value = (data.channel_groups || [])
+      .filter((g: any) => g.changed_cells > 0)
+      .map((g: any) => g.lv2_channel_code)
+  } finally {
+    compareLoading.value = false
+  }
+}
+
 const saveLockRule = async () => {
   lockRuleSaving.value = true
   try {
@@ -380,6 +531,33 @@ const removeLockRule = async (row: any) => {
   await axios.delete(`/demand/channel-plan/product-lock-rules/${row.id}`)
   ElMessage.success('锁定规则删除成功')
   await fetchLockRules()
+}
+
+const exportVersion = async (row: any) => {
+  if (!row?.version_code) return
+  exportingVersionCode.value = row.version_code
+  try {
+    const res = await axios.get(`/demand/channel-plan/version/${row.version_code}/export`, {
+      responseType: 'blob'
+    })
+    const disposition = String(res.headers['content-disposition'] || '')
+    const matched = disposition.match(/filename\*=UTF-8''([^;]+)/)
+    const filename = matched?.[1] ? decodeURIComponent(matched[1]) : `${row.version_code}.xlsx`
+    const blob = new Blob([res.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('版本导出成功')
+  } finally {
+    exportingVersionCode.value = ''
+  }
 }
 
 const canEditCell = (cell: any) => {
@@ -581,7 +759,7 @@ onMounted(async () => {
         <template #default="{ row }">{{ String(row.plan_type) === '2' ? '月度' : '周度' }}</template>
       </el-table-column>
       <el-table-column prop="create_type" label="创建方式" width="100">
-        <template #default="{ row }">{{ String(row.create_type) === '2' ? '滚动自动' : '手动' }}</template>
+        <template #default="{ row }">{{ createTypeText(row.create_type) }}</template>
       </el-table-column>
       <el-table-column prop="status" label="计划状态" width="100">
         <template #default="{ row }">{{ statusText(row.status) }}</template>
@@ -613,6 +791,8 @@ onMounted(async () => {
     <el-drawer v-model="versionDrawerVisible" :title="activePlan ? `${activePlan.plan_name} - 版本列表` : '版本列表'" size="900px">
       <div class="toolbar">
         <el-button type="primary" @click="openVersionDialog()">新建版本</el-button>
+        <el-button @click="openRollDialog()">滚动生成版本</el-button>
+        <el-button @click="openCompareDialog()">版本对比</el-button>
       </div>
       <el-table :data="versionRows" v-loading="versionLoading" border stripe>
         <el-table-column prop="version_code" label="版本号" width="240" />
@@ -626,9 +806,18 @@ onMounted(async () => {
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">{{ statusText(row.status) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openVersionDetail(row)">编辑</el-button>
+            <el-button
+              v-if="String(row.status) === '3'"
+              link
+              type="warning"
+              :loading="exportingVersionCode === row.version_code"
+              @click="exportVersion(row)"
+            >
+              导出
+            </el-button>
             <el-button
               v-if="isSuperAdmin && String(row.status) !== '3'"
               link
@@ -879,6 +1068,173 @@ onMounted(async () => {
       </template>
     </el-dialog>
 
+    <el-dialog v-model="rollDialogVisible" title="滚动生成版本" width="700px">
+      <el-form label-width="110px">
+        <el-form-item label="所属计划">
+          <el-input :model-value="activePlan?.plan_name || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="参考版本">
+          <el-select v-model="rollForm.reference_version_code" placeholder="请选择参考版本" style="width: 100%">
+            <el-option
+              v-for="row in versionRows"
+              :key="row.version_code"
+              :label="`${row.version_label || row.version_code} (${row.version_code})`"
+              :value="row.version_code"
+            />
+          </el-select>
+        </el-form-item>
+        <div class="toolbar">
+          <el-form-item label="开始周">
+            <el-input v-model="rollForm.begin_week" placeholder="可空，默认取参考版本结束周的下一周" style="width: 260px" />
+          </el-form-item>
+          <el-form-item label="覆盖周数">
+            <el-input-number v-model="rollForm.week_count" :min="1" :max="26" style="width: 160px" />
+          </el-form-item>
+        </div>
+        <el-form-item label="版本名称">
+          <el-input v-model="rollForm.version_label" placeholder="可空，系统默认生成滚动版本名称" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="rollDialogVisible = false">关闭</el-button>
+        <el-button type="primary" :loading="rollingVersion" @click="saveRollVersion">生成</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="compareDialogVisible" title="版本对比" width="1120px" top="6vh">
+      <div class="toolbar" style="margin-bottom: 12px">
+        <el-select v-model="compareForm.source_version_code" placeholder="对比源版本" style="width: 280px">
+          <el-option
+            v-for="row in versionRows"
+            :key="row.version_code"
+            :label="`${row.version_label || row.version_code} (${row.version_code})`"
+            :value="row.version_code"
+          />
+        </el-select>
+        <el-select v-model="compareForm.target_version_code" placeholder="目标版本" style="width: 280px">
+          <el-option
+            v-for="row in versionRows"
+            :key="row.version_code"
+            :label="`${row.version_label || row.version_code} (${row.version_code})`"
+            :value="row.version_code"
+          />
+        </el-select>
+        <el-checkbox v-model="compareForm.only_changed">只看差异</el-checkbox>
+        <el-button type="primary" :loading="compareLoading" @click="runVersionCompare">开始对比</el-button>
+      </div>
+
+      <div v-if="compareResult.source_version && compareResult.target_version" class="compare-summary">
+        <el-tag type="info">源版本：{{ compareResult.source_version.version_label || compareResult.source_version.version_code }}</el-tag>
+        <el-tag type="success">目标版本：{{ compareResult.target_version.version_label || compareResult.target_version.version_code }}</el-tag>
+        <el-tag type="warning">变更单元格：{{ compareResult.summary.changed_cells || 0 }}</el-tag>
+        <el-tag>增加：{{ compareResult.summary.increased_cells || 0 }}</el-tag>
+        <el-tag>减少：{{ compareResult.summary.decreased_cells || 0 }}</el-tag>
+        <div class="compare-toggle-btns">
+          <el-button link type="primary" size="small" @click="expandAllChannels">全部展开</el-button>
+          <el-button link type="primary" size="small" @click="collapseAllChannels">全部收起</el-button>
+        </div>
+      </div>
+
+      <div v-loading="compareLoading" class="compare-report-body">
+        <el-empty v-if="!compareResult.channel_groups.length" description="无对比结果" />
+
+        <el-collapse v-model="compareActiveChannels">
+          <el-collapse-item
+            v-for="group in compareResult.channel_groups"
+            :key="group.lv2_channel_code"
+            :name="group.lv2_channel_code"
+          >
+            <template #title>
+              <div class="channel-collapse-title">
+                <span class="channel-name">{{ group.lv2_channel_name }}</span>
+                <span class="channel-stats">
+                  <el-tag v-if="group.changed_cells > 0" size="small" type="warning">{{ group.changed_cells }} 处变更</el-tag>
+                  <el-tag v-else size="small" type="info">无变更</el-tag>
+                  <span v-if="group.total_delta !== 0" class="channel-net-delta" :class="group.total_delta > 0 ? 'delta-increase' : 'delta-decrease'">
+                    净变化 {{ group.total_delta > 0 ? '+' : '' }}{{ group.total_delta }}
+                  </span>
+                  <span v-else class="channel-net-delta delta-zero">净变化 0</span>
+                </span>
+              </div>
+            </template>
+
+            <el-table :data="group.skus" border stripe size="small" class="sku-summary-table">
+              <el-table-column type="expand">
+                <template #default="{ row: skuRow }">
+                  <div class="week-detail-panel">
+                    <div class="week-detail-header">
+                      <span>{{ skuRow.sku_name }} 周次明细</span>
+                      <span class="week-detail-summary">
+                        汇总：{{ formatCompareValue(skuRow.total_source) }} → {{ formatCompareValue(skuRow.total_target) }}
+                        <span :class="skuRow.total_delta > 0 ? 'delta-increase' : skuRow.total_delta < 0 ? 'delta-decrease' : ''">
+                          ({{ skuRow.total_delta > 0 ? '+' : '' }}{{ skuRow.total_delta }})
+                        </span>
+                      </span>
+                    </div>
+                    <el-table :data="skuRow.weeks" border stripe size="small">
+                      <el-table-column prop="plan_week" label="周次" width="110" />
+                      <el-table-column label="源版本值" width="120" align="right">
+                        <template #default="{ row: weekRow }">{{ formatCompareValue(weekRow.source_value) }}</template>
+                      </el-table-column>
+                      <el-table-column label="目标版本值" width="120" align="right">
+                        <template #default="{ row: weekRow }">{{ formatCompareValue(weekRow.target_value) }}</template>
+                      </el-table-column>
+                      <el-table-column label="差值" width="110" align="right">
+                        <template #default="{ row: weekRow }">
+                          <span :class="weekRow.delta_value > 0 ? 'delta-increase' : weekRow.delta_value < 0 ? 'delta-decrease' : ''">
+                            {{ weekRow.delta_value > 0 ? '+' : '' }}{{ weekRow.delta_value !== 0 ? weekRow.delta_value : '-' }}
+                          </span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="源锁定" width="80" align="center">
+                        <template #default="{ row: weekRow }">
+                          <el-tag v-if="weekRow.source_locked" size="small" type="danger">是</el-tag>
+                          <span v-else class="text-muted">否</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="目标锁定" width="80" align="center">
+                        <template #default="{ row: weekRow }">
+                          <el-tag v-if="weekRow.target_locked" size="small" type="danger">是</el-tag>
+                          <span v-else class="text-muted">否</span>
+                        </template>
+                      </el-table-column>
+                    </el-table>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="lv3_category_name" label="三级品类" width="150" />
+              <el-table-column prop="sku_name" label="SKU" min-width="200" show-overflow-tooltip />
+              <el-table-column prop="sku_code" label="SKU编码" width="170" />
+              <el-table-column label="源版本汇总" width="110" align="right">
+                <template #default="{ row: skuRow }">{{ formatCompareValue(skuRow.total_source) }}</template>
+              </el-table-column>
+              <el-table-column label="目标版本汇总" width="110" align="right">
+                <template #default="{ row: skuRow }">{{ formatCompareValue(skuRow.total_target) }}</template>
+              </el-table-column>
+              <el-table-column label="变化量" width="110" align="right">
+                <template #default="{ row: skuRow }">
+                  <span :class="skuRow.total_delta > 0 ? 'delta-increase' : skuRow.total_delta < 0 ? 'delta-decrease' : ''">
+                    {{ skuRow.total_delta > 0 ? '+' : '' }}{{ skuRow.total_delta !== 0 ? skuRow.total_delta : '-' }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column label="变更/总周数" width="110" align="center">
+                <template #default="{ row: skuRow }">
+                  <span :class="skuRow.changed_weeks > 0 ? 'text-warning' : 'text-muted'">
+                    {{ skuRow.changed_weeks }} / {{ skuRow.total_weeks }}
+                  </span>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-collapse-item>
+        </el-collapse>
+      </div>
+
+      <template #footer>
+        <el-button @click="compareDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog v-model="lockRuleDialogVisible" :title="editingLockRuleId ? '编辑锁定规则' : '新建锁定规则'" width="720px">
       <el-form label-width="110px">
         <el-form-item label="SKU">
@@ -942,6 +1298,102 @@ onMounted(async () => {
 
 .detail-toolbar {
   margin-bottom: 12px;
+}
+
+.compare-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.compare-toggle-btns {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.compare-report-body {
+  max-height: 56vh;
+  overflow-y: auto;
+}
+
+.channel-collapse-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding-right: 16px;
+}
+
+.channel-collapse-title .channel-name {
+  font-weight: 600;
+  font-size: 15px;
+  min-width: 140px;
+}
+
+.channel-collapse-title .channel-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.channel-net-delta {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.delta-increase {
+  color: #67c23a;
+  font-weight: 600;
+}
+
+.delta-decrease {
+  color: #f56c6c;
+  font-weight: 600;
+}
+
+.delta-zero {
+  color: var(--el-text-color-secondary);
+}
+
+.text-muted {
+  color: var(--el-text-color-secondary);
+}
+
+.text-warning {
+  color: var(--el-color-warning);
+  font-weight: 500;
+}
+
+.sku-summary-table {
+  margin-bottom: 8px;
+}
+
+.week-detail-panel {
+  padding: 12px 20px;
+  background: var(--el-fill-color-lighter);
+}
+
+.week-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.week-detail-summary {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.week-detail-summary .delta-increase,
+.week-detail-summary .delta-decrease {
+  font-weight: 600;
 }
 
 .pager {
