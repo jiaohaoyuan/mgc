@@ -1,7 +1,7 @@
 {
   "meta": {
     "created_at": "2026-04-09T03:02:20.246Z",
-    "updated_at": "2026-05-07T09:38:07.764Z",
+    "updated_at": "2026-05-09T07:12:19.061Z",
     "storage_mode": "local-json",
     "helper_code": "952746",
     "helper_code_updated_at": "2026-04-09T03:02:20.246Z",
@@ -56472,6 +56472,36 @@
         "before_snapshot": null,
         "after_snapshot": null,
         "created_at": "2026-05-07T09:37:58.549Z"
+      },
+      {
+        "id": 114,
+        "log_type": "BUSINESS",
+        "module_code": "auth",
+        "biz_object_type": "account",
+        "biz_object_id": 1,
+        "action_type": "LOGIN",
+        "operator_id": 1,
+        "operator_name": "焦浩元",
+        "operator_roles": [
+          "超级管理员",
+          "平台管理员",
+          "业务运营经理",
+          "仓配运营主管",
+          "主数据治理专员"
+        ],
+        "operator_ip": "::1",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0",
+        "request_path": "/api/login",
+        "request_method": "POST",
+        "trace_id": "6c312f84-d273-4b2e-ba5d-9ee445e03995",
+        "result_status": "SUCCESS",
+        "message": "用户登录 jiaohaoyuan",
+        "request_summary": {
+          "username": "jiaohaoyuan"
+        },
+        "before_snapshot": null,
+        "after_snapshot": null,
+        "created_at": "2026-05-09T07:12:19.049Z"
       }
     ],
     "import_tasks": [
@@ -66750,6 +66780,21 @@
         "message": "登录成功：jiaohaoyuan",
         "metadata": {},
         "created_at": "2026-05-07T09:37:58.561Z"
+      },
+      {
+        "id": 84,
+        "event_type": "LOGIN",
+        "username": "jiaohaoyuan",
+        "user_id": 1,
+        "module_code": "auth",
+        "action_type": "LOGIN_SUCCESS",
+        "result": "SUCCESS",
+        "risk_level": "LOW",
+        "operator_ip": "::1",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0",
+        "message": "登录成功：jiaohaoyuan",
+        "metadata": {},
+        "created_at": "2026-05-09T07:12:19.061Z"
       }
     ],
     "system_configs": [
