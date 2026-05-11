@@ -528,17 +528,35 @@ const listLockRules = (db, query = {}) => {
     return rows;
 };
 
-const buildVersionMatrixRows = ({ db, plan, versionCode, weekRows, channels, skus, previousVersionCode, operator }) => {
+const buildVersionMatrixRows = ({ db, plan, versionCode, weekRows, channels, skus, previousVersionCode, operator, isRolling }) => {
     const previousValueMap = new Map();
+    let previousOrderedWeeks = [];
     if (previousVersionCode) {
-        arr(db.biz.channel_demand_plan_data)
-            .filter((row) => String(row.version_code) === String(previousVersionCode))
-            .forEach((row) => {
+        const previousData = arr(db.biz.channel_demand_plan_data)
+            .filter((row) => String(row.version_code) === String(previousVersionCode));
+
+        if (isRolling) {
+            // Rolling mode: match by relative week position (index) rather than exact week code,
+            // because the rolling version has shifted-forward weeks that won't match the reference.
+            previousOrderedWeeks = sortWeekCodes([...new Set(previousData.map((row) => row.plan_week))]);
+            previousData.forEach((row) => {
+                const weekIndex = previousOrderedWeeks.indexOf(row.plan_week);
+                if (weekIndex >= 0) {
+                    previousValueMap.set(
+                        `${row.lv2_channel_code}__${row.sku_code}__${weekIndex}`,
+                        row.plan_value === undefined ? null : row.plan_value
+                    );
+                }
+            });
+        } else {
+            // Normal mode: match by exact plan_week code (for same-period version inheritance).
+            previousData.forEach((row) => {
                 previousValueMap.set(
                     `${row.lv2_channel_code}__${row.sku_code}__${row.plan_week}`,
                     row.plan_value === undefined ? null : row.plan_value
                 );
             });
+        }
     }
 
     const categoryMap = getCategoryMap(db);
@@ -546,8 +564,10 @@ const buildVersionMatrixRows = ({ db, plan, versionCode, weekRows, channels, sku
     channels.forEach((channel) => {
         skus.forEach((sku) => {
             const category = categoryMap.get(String(sku.category_code)) || null;
-            weekRows.forEach((weekRow) => {
-                const key = `${channel.channel_code}__${sku.sku_code}__${weekRow.plan_week}`;
+            weekRows.forEach((weekRow, weekIndex) => {
+                const key = isRolling
+                    ? `${channel.channel_code}__${sku.sku_code}__${weekIndex}`
+                    : `${channel.channel_code}__${sku.sku_code}__${weekRow.plan_week}`;
                 rows.push({
                     id: nextId(db.biz.channel_demand_plan_data) + rows.length,
                     plan_code: plan.plan_code,
@@ -800,6 +820,7 @@ const createVersionCore = (db, planCode, body, operator) => {
         submit_by: ''
     }));
 
+    const isRolling = toNum(body.create_type, 1) === 2;
     const dataRows = buildVersionMatrixRows({
         db,
         plan,
@@ -808,7 +829,8 @@ const createVersionCore = (db, planCode, body, operator) => {
         channels,
         skus,
         previousVersionCode: lastVersionCode,
-        operator
+        operator,
+        isRolling
     });
 
     db.biz.channel_demand_plan_versions.push(versionRow);

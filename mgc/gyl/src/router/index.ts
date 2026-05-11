@@ -145,6 +145,12 @@ const router = createRouter({
             meta: { title: '渠道需求计划', icon: 'Calendar', permissionPath: '/demand/channel-plan' }
         },
         {
+            path: '/demand/channel-submission',
+            name: 'ChannelDemandSubmission',
+            component: () => import('@/views/ChannelDemandSubmission.vue'),
+            meta: { title: '渠道需求提报', icon: 'Box', permissionPath: '/demand/channel-submission' }
+        },
+        {
             path: '/workflow-center',
             name: 'WorkflowCenter',
             component: () => import('@/views/WorkflowCenter.vue'),

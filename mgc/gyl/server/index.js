@@ -18,6 +18,7 @@ const { registerInventoryOpsRoutes } = require('./inventoryOps');
 const { registerMdmGovernanceRoutes, runQualityCheckCore } = require('./mdmGovernance');
 const { registerChannelDealerOpsRoutes } = require('./channelDealerOps');
 const { registerChannelDemandPlanRoutes } = require('./channelDemandPlan');
+const { registerChannelDemandSubmissionRoutes } = require('./channelDemandSubmission');
 const { registerWorkflowCenterRoutes } = require('./workflowCenter');
 const { registerManagementCockpitRoutes } = require('./managementCockpit');
 const {
@@ -69,6 +70,7 @@ const API_PERMISSION_RULES = [
     { matcher: /^\/inventory-ops(?:\/|$)/, permissionPath: '/inventory-ops' },
     { matcher: /^\/channel-dealer-ops(?:\/|$)/, permissionPath: '/channel-dealer-ops' },
     { matcher: /^\/demand\/channel-plan(?:\/|$)/, permissionPath: '/demand/channel-plan' },
+    { matcher: /^\/demand\/channel-submission(?:\/|$)/, permissionPath: '/demand/channel-submission' },
     { matcher: /^\/workflow-center(?:\/|$)/, permissionPath: '/workflow-center' },
     { matcher: /^\/management-cockpit(?:\/|$)/, permissionPath: '/management-cockpit' },
     { matcher: /^\/platform(?:\/|$)/, permissionPath: '/enterprise-platform' }
@@ -2613,6 +2615,15 @@ registerChannelDemandPlanRoutes({
     apiOk,
     apiErr,
     paginate
+});
+
+registerChannelDemandSubmissionRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate,
+    appendOperationLog
 });
 
 registerWorkflowCenterRoutes({

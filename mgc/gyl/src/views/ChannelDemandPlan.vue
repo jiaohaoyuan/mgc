@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAppStore } from '@/stores/appStore'
 
+const router = useRouter()
 const appStore = useAppStore()
 const isSuperAdmin = computed(() => appStore.isSuperAdmin)
 
@@ -39,6 +41,8 @@ const versionDrawerVisible = ref(false)
 const versionLoading = ref(false)
 const versionRows = ref<any[]>([])
 const activePlan = ref<any | null>(null)
+const submissionLookup = ref<Record<string, any>>({})
+const submissionLookupLoading = ref(false)
 
 const planDialogVisible = ref(false)
 const versionDialogVisible = ref(false)
@@ -164,12 +168,20 @@ const resetVersionForm = () => {
 }
 
 const resetRollForm = () => {
+  const refCode = versionRows.value[0]?.version_code || ''
   Object.assign(rollForm, {
-    reference_version_code: versionRows.value[0]?.version_code || '',
+    reference_version_code: refCode,
     begin_week: '',
     week_count: activePlan.value?.week_count || 8,
     version_label: ''
   })
+  // Pre-fill suggested begin_week based on reference version's end
+  const refVer = versionRows.value.find((v: any) => v.version_code === refCode)
+  if (refVer?.end_week) {
+    rollForm.begin_week = activePlan.value?.plan_type === 2
+      ? refVer.end_week.replace('W', 'M')
+      : (addWeeksToWeekCode(refVer.end_week, 1) || '')
+  }
 }
 
 const resetLockRuleForm = () => {
@@ -198,6 +210,36 @@ const resetCompareForm = () => {
 }
 
 const buildCellKey = (skuCode: string, planWeek: string) => `${skuCode}__${planWeek}`
+
+const addWeeksToWeekCode = (weekCode: string, offset: number) => {
+  const match = /^(\d{4})W(0[1-9]|[1-4]\d|5[0-3])$/.exec(weekCode?.trim())
+  if (!match) return null
+  const year = Number(match[1])
+  const week = Number(match[2])
+  const jan4 = new Date(Date.UTC(year, 0, 4))
+  const jan4Day = jan4.getUTCDay() || 7
+  jan4.setUTCDate(jan4.getUTCDate() - jan4Day + 1 + (week - 1) * 7 + offset * 7)
+  const targetJan4 = new Date(Date.UTC(jan4.getUTCFullYear(), 0, 4))
+  const targetJan4Day = targetJan4.getUTCDay() || 7
+  targetJan4.setUTCDate(targetJan4.getUTCDate() - targetJan4Day + 1)
+  const targetWeek = Math.ceil(((jan4.getTime() - targetJan4.getTime()) / 86400000 + 1) / 7)
+  return `${jan4.getUTCFullYear()}W${String(targetWeek).padStart(2, '0')}`
+}
+
+const rollReferenceVersion = computed(() =>
+  versionRows.value.find((v: any) => v.version_code === rollForm.reference_version_code) || null
+)
+
+const suggestedRollBeginWeek = computed(() => {
+  if (!rollReferenceVersion.value?.end_week) return ''
+  return activePlan.value?.plan_type === 2
+    ? rollReferenceVersion.value.end_week.replace(/W/, 'M')
+    : addWeeksToWeekCode(rollReferenceVersion.value.end_week, 1) || ''
+})
+
+watch(() => rollForm.reference_version_code, () => {
+  rollForm.begin_week = suggestedRollBeginWeek.value
+})
 
 const statusText = (status: unknown) => {
   const value = String(status ?? '')
@@ -312,6 +354,37 @@ const openVersions = async (row: any) => {
     versionRows.value = res.data?.data || []
   } finally {
     versionLoading.value = false
+  }
+  // Fetch submission lookup for confirmed versions
+  fetchSubmissionLookup()
+}
+
+const fetchSubmissionLookup = async () => {
+  const confirmedCodes = versionRows.value
+    .filter((v: any) => String(v.status) === '3')
+    .map((v: any) => v.version_code)
+  if (confirmedCodes.length === 0) {
+    submissionLookup.value = {}
+    return
+  }
+  submissionLookupLoading.value = true
+  try {
+    const res = await axios.get('/demand/channel-submission/lookup-by-versions', {
+      params: { version_codes: confirmedCodes.join(',') }
+    })
+    submissionLookup.value = res.data?.data || {}
+  } catch {
+    submissionLookup.value = {}
+  } finally {
+    submissionLookupLoading.value = false
+  }
+}
+
+const goToSubmission = (versionCode: string) => {
+  const sub = submissionLookup.value[versionCode]
+  if (sub && sub.submission_no) {
+    // Navigate to submission page — submission list will show it
+    router.push('/demand/channel-submission')
   }
 }
 
@@ -764,7 +837,9 @@ onMounted(async () => {
       <el-table-column prop="status" label="计划状态" width="100">
         <template #default="{ row }">{{ statusText(row.status) }}</template>
       </el-table-column>
-      <el-table-column prop="week_count" label="覆盖周数" width="100" />
+      <el-table-column label="覆盖" width="100">
+        <template #default="{ row }">{{ row.week_count }}{{ String(row.plan_type) === '2' ? '个月' : '周' }}</template>
+      </el-table-column>
       <el-table-column prop="version_count" label="版本数" width="90" />
       <el-table-column prop="latest_version_code" label="最新版本" width="220" />
       <el-table-column prop="channel_count" label="渠道数" width="90" />
@@ -797,16 +872,22 @@ onMounted(async () => {
       <el-table :data="versionRows" v-loading="versionLoading" border stripe>
         <el-table-column prop="version_code" label="版本号" width="240" />
         <el-table-column prop="version_label" label="版本名称" min-width="160" />
-        <el-table-column prop="begin_week" label="开始周" width="110" />
-        <el-table-column prop="end_week" label="结束周" width="110" />
-        <el-table-column prop="week_count" label="周数" width="80" />
+        <el-table-column prop="begin_week" width="110">
+          <template #header><span>{{ activePlan?.plan_type === 2 ? '开始月' : '开始周' }}</span></template>
+        </el-table-column>
+        <el-table-column prop="end_week" width="110">
+          <template #header><span>{{ activePlan?.plan_type === 2 ? '结束月' : '结束周' }}</span></template>
+        </el-table-column>
+        <el-table-column prop="week_count" width="80">
+          <template #header><span>{{ activePlan?.plan_type === 2 ? '月数' : '周数' }}</span></template>
+        </el-table-column>
         <el-table-column prop="submitted_count" label="已提交渠道" width="110" />
         <el-table-column prop="channel_total" label="渠道总数" width="100" />
         <el-table-column prop="locked_cell_count" label="锁定格数" width="100" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">{{ statusText(row.status) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="300" fixed="right">
+        <el-table-column label="操作" width="400" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openVersionDetail(row)">编辑</el-button>
             <el-button
@@ -826,6 +907,24 @@ onMounted(async () => {
             >
               整体确认
             </el-button>
+            <template v-if="String(row.status) === '3'">
+              <el-button
+                v-if="submissionLookup[row.version_code]"
+                link
+                type="primary"
+                @click="goToSubmission(row.version_code)"
+              >
+                查看提报
+              </el-button>
+              <el-button
+                v-else
+                link
+                type="primary"
+                @click="goToSubmission(row.version_code)"
+              >
+                新建提报
+              </el-button>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -992,8 +1091,8 @@ onMounted(async () => {
               <el-option label="滚动自动" :value="2" />
             </el-select>
           </el-form-item>
-          <el-form-item label="覆盖周数">
-            <el-input-number v-model="planForm.week_count" :min="1" :max="26" style="width: 160px" />
+          <el-form-item :label="planForm.plan_type === 2 ? '覆盖月数' : '覆盖周数'">
+            <el-input-number v-model="planForm.week_count" :min="1" :max="planForm.plan_type === 2 ? 12 : 26" style="width: 160px" />
           </el-form-item>
         </div>
         <div class="toolbar">
@@ -1044,11 +1143,11 @@ onMounted(async () => {
           </el-form-item>
         </div>
         <div class="toolbar">
-          <el-form-item label="开始周">
-            <el-input v-model="versionForm.begin_week" placeholder="例如 2026W18" style="width: 180px" />
+          <el-form-item :label="activePlan?.plan_type === 2 ? '开始月' : '开始周'">
+            <el-input v-model="versionForm.begin_week" :placeholder="activePlan?.plan_type === 2 ? '例如 2026M01' : '例如 2026W18'" style="width: 180px" />
           </el-form-item>
-          <el-form-item label="覆盖周数">
-            <el-input-number v-model="versionForm.week_count" :min="1" :max="26" style="width: 160px" />
+          <el-form-item :label="activePlan?.plan_type === 2 ? '覆盖月数' : '覆盖周数'">
+            <el-input-number v-model="versionForm.week_count" :min="1" :max="activePlan?.plan_type === 2 ? 12 : 26" style="width: 160px" />
           </el-form-item>
         </div>
         <el-form-item label="继承版本">
@@ -1083,12 +1182,20 @@ onMounted(async () => {
             />
           </el-select>
         </el-form-item>
+        <el-alert
+          v-if="rollReferenceVersion"
+          :title="`参考版本 ${rollReferenceVersion.version_label || rollReferenceVersion.version_code} 结束${activePlan?.plan_type === 2 ? '月' : '周'}：${rollReferenceVersion.end_week}，滚动版本默认从下${activePlan?.plan_type === 2 ? '月' : '周'}开始`"
+          type="info"
+          :closable="false"
+          show-icon
+          style="margin-bottom: 12px"
+        />
         <div class="toolbar">
-          <el-form-item label="开始周">
-            <el-input v-model="rollForm.begin_week" placeholder="可空，默认取参考版本结束周的下一周" style="width: 260px" />
+          <el-form-item :label="activePlan?.plan_type === 2 ? '开始月' : '开始周'">
+            <el-input v-model="rollForm.begin_week" :placeholder="activePlan?.plan_type === 2 ? '可空，默认取参考版本结束月的下一月' : '可空，默认取参考版本结束周的下一周'" style="width: 260px" />
           </el-form-item>
-          <el-form-item label="覆盖周数">
-            <el-input-number v-model="rollForm.week_count" :min="1" :max="26" style="width: 160px" />
+          <el-form-item :label="activePlan?.plan_type === 2 ? '覆盖月数' : '覆盖周数'">
+            <el-input-number v-model="rollForm.week_count" :min="1" :max="activePlan?.plan_type === 2 ? 12 : 26" style="width: 160px" />
           </el-form-item>
         </div>
         <el-form-item label="版本名称">

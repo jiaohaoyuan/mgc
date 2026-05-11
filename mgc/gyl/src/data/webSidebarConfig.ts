@@ -94,6 +94,13 @@ export const webSidebarConfig: SidebarSection[] = [
       },
       {
         type: 'item',
+        id: 'channel-demand-submission',
+        label: '渠道需求提报',
+        icon: 'Box',
+        path: '/demand/channel-submission'
+      },
+      {
+        type: 'item',
         id: 'pasture',
         label: '牧场与奶源运营中心',
         icon: 'Van',
