@@ -38,10 +38,18 @@ const ensureSubmissionStructures = (db) => {
 
 const buildSubmissionNo = (db) => {
     const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const maxSeq = arr(db.biz.channel_demand_submissions)
-        .filter((row) => String(row.submission_no || '').startsWith(`CDS${datePart}`))
-        .reduce((max, row) => Math.max(max, toNum(String(row.submission_no || '').slice(-4), 0)), 0);
-    return `CDS${datePart}${String(maxSeq + 1).padStart(4, '0')}`;
+    // O(1) counter stored in db.meta — avoids full array scan on every call
+    db.meta = db.meta || {};
+    db.meta._submission_seq = db.meta._submission_seq || {};
+    const key = `CDS${datePart}`;
+    if (!db.meta._submission_seq[key]) {
+        const maxSeq = arr(db.biz.channel_demand_submissions)
+            .filter((row) => String(row.submission_no || '').startsWith(key))
+            .reduce((max, row) => Math.max(max, toNum(String(row.submission_no || '').slice(-4), 0)), 0);
+        db.meta._submission_seq[key] = maxSeq + 1;
+    }
+    const seq = db.meta._submission_seq[key]++;
+    return `${key}${String(seq).padStart(4, '0')}`;
 };
 
 // ===== Warehouse matching helpers =====
@@ -251,6 +259,12 @@ const autoAllocateAllLines = (db, submissionNo, warehouseCount, ratios) => {
 const dispatchSubmission = (db, submissionNo, operator) => {
     ensureSubmissionStructures(db);
 
+    // Initialize inventory arrays that are owned by inventoryOps but used here
+    db.biz.transfer_orders = arr(db.biz.transfer_orders);
+    db.biz.transfer_tracks = arr(db.biz.transfer_tracks);
+    db.biz.inventory_locks = arr(db.biz.inventory_locks);
+    db.biz.inventory_ledger = arr(db.biz.inventory_ledger);
+
     const submission = arr(db.biz.channel_demand_submissions).find(
         (s) => String(s.submission_no) === String(submissionNo)
     );
@@ -267,6 +281,17 @@ const dispatchSubmission = (db, submissionNo, operator) => {
     const lockRecords = [];
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
+    // Seed transfer counter once before all loops
+    db.meta = db.meta || {};
+    db.meta._transfer_seq = db.meta._transfer_seq || {};
+    const trKey = `TR${today}`;
+    if (!db.meta._transfer_seq[trKey]) {
+        const maxSeq = arr(db.biz.transfer_orders)
+            .filter((row) => String(row.transfer_no || '').startsWith(trKey))
+            .reduce((max, row) => Math.max(max, toNum(String(row.transfer_no || '').slice(-4), 0)), 0);
+        db.meta._transfer_seq[trKey] = maxSeq + 1;
+    }
+
     lines.forEach((line) => {
         const allocations = arr(db.biz.channel_demand_submission_warehouses).filter(
             (w) => Number(w.line_id) === Number(line.id)
@@ -275,11 +300,9 @@ const dispatchSubmission = (db, submissionNo, operator) => {
         allocations.forEach((alloc) => {
             if (toNum(alloc.allocation_qty, 0) <= 0) return;
 
-            // Build transfer order number
-            const maxSeq = arr(db.biz.transfer_orders)
-                .filter((row) => String(row.transfer_no || '').startsWith(`TR${today}`))
-                .reduce((max, row) => Math.max(max, toNum(String(row.transfer_no || '').slice(-4), 0)), 0);
-            const transferNo = `TR${today}${String(maxSeq + 1).padStart(4, '0')}`;
+            // O(1) counter lookup — no array scan per allocation
+            const seq = db.meta._transfer_seq[trKey]++;
+            const transferNo = `${trKey}${String(seq).padStart(4, '0')}`;
 
             const transfer = {
                 id: nextId(arr(db.biz.transfer_orders)),

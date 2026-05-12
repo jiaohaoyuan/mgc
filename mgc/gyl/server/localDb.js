@@ -781,7 +781,16 @@ const updateDb = (updater) => {
 
 const nextId = (rows) => {
     if (!rows?.length) return 1;
-    return Math.max(...rows.map((r) => Number(r.id) || 0)) + 1;
+    // WeakMap cache: first call per array object scans once, subsequent calls O(1)
+    // When readDb() loads fresh arrays, old WeakMap entries auto-GC
+    if (!nextId._cache) nextId._cache = new WeakMap();
+    let maxId = nextId._cache.get(rows);
+    if (maxId === undefined) {
+        maxId = rows.reduce((m, r) => Math.max(m, Number(r.id) || 0), 0);
+    }
+    const next = maxId + 1;
+    nextId._cache.set(rows, next);
+    return next;
 };
 
 module.exports = { DB_FILE, nowIso, readDb, updateDb, nextId };

@@ -289,12 +289,25 @@ const applyLockSnapshotToRows = (db, rows) => {
     return rows;
 };
 
-const decorateVersionRow = (db, row) => {
+const buildLockedCountMap = (db) => {
+    const map = new Map();
+    arr(db.biz.channel_demand_plan_data).forEach((item) => {
+        if (Number(item.is_locked) !== 1) return;
+        const vc = String(item.version_code);
+        map.set(vc, (map.get(vc) || 0) + 1);
+    });
+    return map;
+};
+
+const decorateVersionRow = (db, row, lockedCountMap) => {
     const channelStatuses = getVersionChannelStatuses(db, row.version_code);
     const submittedCount = channelStatuses.filter((item) => Number(item.submit_status) === 1).length;
-    const lockedCount = arr(db.biz.channel_demand_plan_data).filter(
-        (item) => String(item.version_code) === String(row.version_code) && Number(item.is_locked) === 1
-    ).length;
+    // Use pre-built map (O(1)) instead of scanning channel_demand_plan_data per version (O(n))
+    const lockedCount = lockedCountMap
+        ? (lockedCountMap.get(String(row.version_code)) || 0)
+        : arr(db.biz.channel_demand_plan_data).filter(
+            (item) => String(item.version_code) === String(row.version_code) && Number(item.is_locked) === 1
+        ).length;
 
     return {
         ...row,
@@ -995,10 +1008,15 @@ const compareVersionCore = (db, sourceVersionCode, targetVersionCode, onlyChange
         throw createBizError('仅支持同一计划下的版本对比', 409);
     }
 
-    const sourceRows = arr(db.biz.channel_demand_plan_data).filter((row) => String(row.version_code) === String(sourceVersionCode));
-    const targetRows = arr(db.biz.channel_demand_plan_data).filter((row) => String(row.version_code) === String(targetVersionCode));
-    const sourceMap = new Map(sourceRows.map((row) => [`${row.lv2_channel_code}__${row.sku_code}__${row.plan_week}`, row]));
-    const targetMap = new Map(targetRows.map((row) => [`${row.lv2_channel_code}__${row.sku_code}__${row.plan_week}`, row]));
+    // Single pass over channel_demand_plan_data instead of 2x filter + 2x map
+    const sourceMap = new Map();
+    const targetMap = new Map();
+    arr(db.biz.channel_demand_plan_data).forEach((row) => {
+        const vc = String(row.version_code);
+        const key = `${row.lv2_channel_code}__${row.sku_code}__${row.plan_week}`;
+        if (vc === String(sourceVersionCode)) sourceMap.set(key, row);
+        else if (vc === String(targetVersionCode)) targetMap.set(key, row);
+    });
     const keys = [...new Set([...sourceMap.keys(), ...targetMap.keys()])];
 
     const rows = keys.map((key) => {
@@ -1405,7 +1423,8 @@ const registerChannelDemandPlanRoutes = ({ app, authRequired, apiOk, apiErr, pag
     app.get('/api/demand/channel-plan/:planCode/version', authRequired, (req, res) => {
         const db = readDb();
         ensureChannelDemandPlanStructures(db);
-        const rows = getVersionRows(db, req.params.planCode).map((row) => decorateVersionRow(db, row));
+        const lockedCountMap = buildLockedCountMap(db);
+        const rows = getVersionRows(db, req.params.planCode).map((row) => decorateVersionRow(db, row, lockedCountMap));
         apiOk(res, req, rows, '获取成功');
     });
 

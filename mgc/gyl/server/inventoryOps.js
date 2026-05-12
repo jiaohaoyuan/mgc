@@ -36,10 +36,19 @@ const updateLedgerFlags = (row) => {
 
 const buildTransferNo = (db) => {
     const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const maxSeq = arr(db.biz.transfer_orders)
-        .filter((row) => String(row.transfer_no || '').startsWith(`TR${datePart}`))
-        .reduce((max, row) => Math.max(max, toNum(String(row.transfer_no || '').slice(-4), 0)), 0);
-    return `TR${datePart}${String(maxSeq + 1).padStart(4, '0')}`;
+    // O(1) counter stored in db.meta — avoids full array scan on every call
+    db.meta = db.meta || {};
+    db.meta._transfer_seq = db.meta._transfer_seq || {};
+    const key = `TR${datePart}`;
+    if (!db.meta._transfer_seq[key]) {
+        // First call for this date: scan once to seed the counter
+        const maxSeq = arr(db.biz.transfer_orders)
+            .filter((row) => String(row.transfer_no || '').startsWith(key))
+            .reduce((max, row) => Math.max(max, toNum(String(row.transfer_no || '').slice(-4), 0)), 0);
+        db.meta._transfer_seq[key] = maxSeq + 1;
+    }
+    const seq = db.meta._transfer_seq[key]++;
+    return `${key}${String(seq).padStart(4, '0')}`;
 };
 
 const createLedgerRow = (db, payload = {}) => {
@@ -232,11 +241,41 @@ const ensureInventoryOpsStructures = (db) => {
     }
 };
 
-const findLedgerRow = (db, query) => arr(db.biz.inventory_ledger).find((row) => (
-    String(row.warehouse_code) === String(query.warehouse_code)
-    && String(row.sku_code) === String(query.sku_code)
-    && String(row.batch_no) === String(query.batch_no)
-));
+// Build O(1) lookup index for inventory_ledger by (warehouse::sku::batch)
+// Cached per array object via WeakMap — rebuilds once per readDb() cycle
+const _ledgerIdxCache = new WeakMap();
+const ledgerIndexKey = (wh, sku, batch) => `${wh}::${sku}::${batch}`;
+const buildLedgerIndex = (db) => {
+    const ledger = arr(db.biz.inventory_ledger);
+    let idx = _ledgerIdxCache.get(ledger);
+    if (!idx) {
+        idx = new Map();
+        ledger.forEach((row, i) => idx.set(ledgerIndexKey(row.warehouse_code, row.sku_code, row.batch_no), i));
+        _ledgerIdxCache.set(ledger, idx);
+    }
+    return { ledger, idx };
+};
+
+const findLedgerRow = (db, query) => {
+    const { ledger, idx } = buildLedgerIndex(db);
+    const key = ledgerIndexKey(query.warehouse_code, query.sku_code, query.batch_no);
+    const pos = idx.get(key);
+    if (pos !== undefined && pos < ledger.length) {
+        const row = ledger[pos];
+        // Verify the row at this position still matches (in case of array shifts)
+        if (String(row.warehouse_code) === String(query.warehouse_code)
+            && String(row.sku_code) === String(query.sku_code)
+            && String(row.batch_no) === String(query.batch_no)) {
+            return row;
+        }
+    }
+    // Fallback linear scan (handles edge cases like array reordering)
+    return ledger.find((row) => (
+        String(row.warehouse_code) === String(query.warehouse_code)
+        && String(row.sku_code) === String(query.sku_code)
+        && String(row.batch_no) === String(query.batch_no)
+    ));
+};
 
 const previewLedgerAfter = (ledgerRow, delta = {}) => {
     const next = {
@@ -762,21 +801,18 @@ const registerInventoryOpsRoutes = ({ app, authRequired, apiOk, apiErr, paginate
     app.get('/api/inventory-ops/options', authRequired, (req, res) => {
         const db = readDb();
         ensureInventoryOpsStructures(db);
-        refreshWarnings(db);
         apiOk(res, req, buildOptions(db), '获取成功');
     });
 
     app.get('/api/inventory-ops/dashboard', authRequired, (req, res) => {
         const db = readDb();
         ensureInventoryOpsStructures(db);
-        refreshWarnings(db);
         apiOk(res, req, buildDashboard(db), '获取成功');
     });
 
     app.get('/api/inventory-ops/ledger/list', authRequired, (req, res) => {
         const db = readDb();
         ensureInventoryOpsStructures(db);
-        refreshWarnings(db);
 
         const {
             page = 1,
@@ -1332,7 +1368,6 @@ const registerInventoryOpsRoutes = ({ app, authRequired, apiOk, apiErr, paginate
     app.get('/api/inventory-ops/warnings/list', authRequired, (req, res) => {
         const db = readDb();
         ensureInventoryOpsStructures(db);
-        refreshWarnings(db);
 
         const {
             page = 1,
