@@ -101,6 +101,27 @@ export const webSidebarConfig: SidebarSection[] = [
       },
       {
         type: 'item',
+        id: 'rule-config-center',
+        label: '规则配置中心',
+        icon: 'Setting',
+        path: '/rules'
+      },
+      {
+        type: 'item',
+        id: 'cold-chain-submission',
+        label: '低温需求提报',
+        icon: 'ColdDrink',
+        path: '/demand/cold-chain-submission'
+      },
+      {
+        type: 'item',
+        id: 'daily-transfer',
+        label: '日分仓调拨需求提报',
+        icon: 'Calendar',
+        path: '/daily-transfer'
+      },
+      {
+        type: 'item',
         id: 'pasture',
         label: '牧场与奶源运营中心',
         icon: 'Van',

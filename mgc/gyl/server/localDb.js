@@ -28,7 +28,10 @@ const DEFAULT_PLATFORM_PAGES = [
     { id: 49, name: '经营分析与管理驾驶舱', path: '/management-cockpit', permission: 'biz:management:cockpit:view', parent_id: 20 },
     { id: 50, name: '企业级平台能力中心', path: '/enterprise-platform', permission: 'sys:enterprise:platform:view', parent_id: 10 },
     { id: 51, name: '渠道需求计划', path: '/demand/channel-plan', permission: 'biz:demand:channel-plan:view', parent_id: 20 },
-    { id: 52, name: '渠道需求提报', path: '/demand/channel-submission', permission: 'biz:demand:channel-submission:view', parent_id: 20 }
+    { id: 52, name: '渠道需求提报', path: '/demand/channel-submission', permission: 'biz:demand:channel-submission:view', parent_id: 20 },
+    { id: 53, name: '规则配置中心', path: '/rules', permission: 'biz:rules:view', parent_id: 20 },
+    { id: 54, name: '低温需求提报', path: '/demand/cold-chain-submission', permission: 'biz:demand:cold-chain-submission:view', parent_id: 20 },
+    { id: 55, name: '日分仓调拨需求提报', path: '/daily-transfer', permission: 'biz:daily-transfer:view', parent_id: 20 }
 ];
 
 const DEFAULT_MDM_PAGES = [
@@ -190,6 +193,8 @@ const createSeedDb = () => {
         [27, '经营分析与管理驾驶舱', '/management-cockpit', 'biz:management:cockpit:view', 20],
         [28, '渠道需求计划', '/demand/channel-plan', 'biz:demand:channel-plan:view', 20],
         [29, '渠道需求提报', '/demand/channel-submission', 'biz:demand:channel-submission:view', 20],
+        [30, '规则配置中心', '/rules', 'biz:rules:view', 20],
+        [33, '低温需求提报', '/demand/cold-chain-submission', 'biz:demand:cold-chain-submission:view', 20],
         [31, 'SKU管理', '/mdm/sku', 'mdm:sku:view', 30],
         [32, '经销关系', '/mdm/reseller-relation', 'mdm:relation:view', 30]
     ].map(([id, name, pathVal, permission, parent]) => ({
@@ -301,7 +306,17 @@ const createSeedDb = () => {
             downstream_demand_plan_jobs: [],
             channel_demand_submissions: [],
             channel_demand_submission_lines: [],
-            channel_demand_submission_warehouses: []
+            channel_demand_submission_warehouses: [],
+            freshness_rules: [],
+            datetime_rules: [],
+            slot_definitions: [],
+            slot_allocation_rules: [],
+            plan_revisions: [],
+            cold_chain_submissions: [],
+            cold_chain_submission_lines: [],
+            cold_chain_submission_warehouses: [],
+            daily_transfer_submissions: [],
+            daily_transfer_lines: []
         },
         platform: {
             dict_types: cloneJson(DEFAULT_DICT_TYPES),
@@ -630,7 +645,7 @@ const ensurePlatformStructures = (db) => {
     });
 
     const intelligentPage = db.system.pages.find((page) => String(page.path) === '/intelligent');
-    const inheritedPages = ['/intelligent-closed-loop', '/inventory-ops', '/channel-dealer-ops', '/workflow-center', '/management-cockpit', '/demand/channel-plan', '/demand/channel-submission']
+    const inheritedPages = ['/intelligent-closed-loop', '/inventory-ops', '/channel-dealer-ops', '/workflow-center', '/management-cockpit', '/demand/channel-plan', '/demand/channel-submission', '/demand/cold-chain-submission', '/daily-transfer', '/rules']
         .map((p) => db.system.pages.find((page) => String(page.path) === p))
         .filter(Boolean);
     if (intelligentPage && inheritedPages.length) {
@@ -682,6 +697,16 @@ const ensurePlatformStructures = (db) => {
     ensureBizArray('channel_demand_submissions');
     ensureBizArray('channel_demand_submission_lines');
     ensureBizArray('channel_demand_submission_warehouses');
+    ensureBizArray('freshness_rules');
+    ensureBizArray('datetime_rules');
+    ensureBizArray('slot_definitions');
+    ensureBizArray('slot_allocation_rules');
+    ensureBizArray('plan_revisions');
+    ensureBizArray('cold_chain_submissions');
+    ensureBizArray('cold_chain_submission_lines');
+    ensureBizArray('cold_chain_submission_warehouses');
+    ensureBizArray('daily_transfer_submissions');
+    ensureBizArray('daily_transfer_lines');
 
     if (!db.biz.order_allocation_weights || typeof db.biz.order_allocation_weights !== 'object' || Array.isArray(db.biz.order_allocation_weights)) {
         db.biz.order_allocation_weights = {
@@ -793,4 +818,22 @@ const nextId = (rows) => {
     return next;
 };
 
-module.exports = { DB_FILE, nowIso, readDb, updateDb, nextId };
+const toNumLocal = (v, fb = 0) => { const n = Number(v); return Number.isNaN(n) ? fb : n; };
+
+const buildSequenceNo = (db, { prefix, metaKey, array, field } = {}) => {
+    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    db.meta = db.meta || {};
+    db.meta[metaKey] = db.meta[metaKey] || {};
+    const key = `${prefix}${datePart}`;
+    if (!db.meta[metaKey][key]) {
+        const rows = array || [];
+        const maxSeq = rows
+            .filter((r) => String(r[field] || '').startsWith(key))
+            .reduce((max, r) => Math.max(max, toNumLocal(String(r[field] || '').slice(-4), 0)), 0);
+        db.meta[metaKey][key] = maxSeq + 1;
+    }
+    const seq = db.meta[metaKey][key]++;
+    return `${key}${String(seq).padStart(4, '0')}`;
+};
+
+module.exports = { DB_FILE, nowIso, readDb, updateDb, nextId, buildSequenceNo };

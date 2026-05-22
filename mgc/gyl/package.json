@@ -6,6 +6,9 @@
   "scripts": {
     "setup": "node setup-env.cjs",
     "dev": "vite",
+    "dev:client": "vite --host 0.0.0.0",
+    "dev:server": "npm --prefix server start",
+    "dev:all": "run-p dev:server dev:client",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",

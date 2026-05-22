@@ -19,6 +19,10 @@ const { registerMdmGovernanceRoutes, runQualityCheckCore } = require('./mdmGover
 const { registerChannelDealerOpsRoutes } = require('./channelDealerOps');
 const { registerChannelDemandPlanRoutes } = require('./channelDemandPlan');
 const { registerChannelDemandSubmissionRoutes } = require('./channelDemandSubmission');
+const { registerFreshnessRuleRoutes } = require('./freshnessRules');
+const { registerSlotRuleRoutes } = require('./slotRules');
+const { registerColdChainRoutes } = require('./coldChainSubmission');
+const { registerDailyTransferRoutes } = require('./dailyTransferSubmission');
 const { registerWorkflowCenterRoutes } = require('./workflowCenter');
 const { registerManagementCockpitRoutes } = require('./managementCockpit');
 const {
@@ -71,6 +75,9 @@ const API_PERMISSION_RULES = [
     { matcher: /^\/channel-dealer-ops(?:\/|$)/, permissionPath: '/channel-dealer-ops' },
     { matcher: /^\/demand\/channel-plan(?:\/|$)/, permissionPath: '/demand/channel-plan' },
     { matcher: /^\/demand\/channel-submission(?:\/|$)/, permissionPath: '/demand/channel-submission' },
+    { matcher: /^\/rules(?:\/|$)/, permissionPath: '/rules' },
+    { matcher: /^\/demand\/cold-chain-submission(?:\/|$)/, permissionPath: '/demand/cold-chain-submission' },
+    { matcher: /^\/daily-transfer(?:\/|$)/, permissionPath: '/daily-transfer' },
     { matcher: /^\/workflow-center(?:\/|$)/, permissionPath: '/workflow-center' },
     { matcher: /^\/management-cockpit(?:\/|$)/, permissionPath: '/management-cockpit' },
     { matcher: /^\/platform(?:\/|$)/, permissionPath: '/enterprise-platform' }
@@ -205,9 +212,9 @@ const buildDiffSummary = (beforeSnapshot, afterSnapshot) => {
     };
 };
 
-const appendSecurityLog = (req, payload) => {
+const appendSecurityLog = (req, payload, existingDb = null) => {
     try {
-        updateDb((db) => {
+        const doPush = (db) => {
             if (!db.platform) db.platform = {};
             const rows = ensureArray(db.platform.security_logs);
             db.platform.security_logs = rows;
@@ -256,15 +263,16 @@ const appendSecurityLog = (req, payload) => {
                 metadata: summarizePayload(payload.metadata || {}),
                 created_at: nowIso()
             });
-        });
+        };
+        if (existingDb) { doPush(existingDb); } else { updateDb(doPush); }
     } catch (error) {
         console.warn('[security-log] append failed:', error?.message || error);
     }
 };
 
-const appendOperationLog = (req, payload) => {
+const appendOperationLog = (req, payload, existingDb = null) => {
     try {
-        updateDb((db) => {
+        const doPush = (db) => {
             const rows = Array.isArray(db.platform?.operation_logs) ? db.platform.operation_logs : [];
             if (!db.platform) db.platform = {};
             db.platform.operation_logs = rows;
@@ -290,7 +298,8 @@ const appendOperationLog = (req, payload) => {
                 after_snapshot: safeClone(payload.afterSnapshot),
                 created_at: nowIso()
             });
-        });
+        };
+        if (existingDb) { doPush(existingDb); } else { updateDb(doPush); }
     } catch (error) {
         console.warn('[operation-log] append failed:', error?.message || error);
     }
@@ -570,46 +579,19 @@ app.post('/api/login', (req, res) => {
     const db = readDb();
     const account = db.system.accounts.find(a => a.login_id === username);
     if (!account) {
-        appendOperationLog(req, {
-            moduleCode: 'auth',
-            bizObjectType: 'account',
-            bizObjectId: username || '',
-            actionType: 'LOGIN',
-            resultStatus: 'FAILED',
-            message: `登录失败，账号不存在 ${username}`,
-            requestSummary: { username }
-        });
-        appendSecurityLog(req, {
-            eventType: 'LOGIN',
-            actionType: 'LOGIN_FAIL',
-            username,
-            result: 'FAILED',
-            moduleCode: 'auth',
-            message: `账号不存在：${username}`,
-            metadata: { reason: 'ACCOUNT_NOT_FOUND' }
+        updateDb((db) => {
+            appendOperationLog(req, { moduleCode: 'auth', bizObjectType: 'account', bizObjectId: username || '', actionType: 'LOGIN', resultStatus: 'FAILED', message: `登录失败，账号不存在 ${username}`, requestSummary: { username } }, db);
+            appendSecurityLog(req, { eventType: 'LOGIN', actionType: 'LOGIN_FAIL', username, result: 'FAILED', moduleCode: 'auth', message: `账号不存在：${username}`, metadata: { reason: 'ACCOUNT_NOT_FOUND' } }, db);
+            return null;
         });
         return apiErr(res, req, 401, '账号或密码错误');
     }
     const passOk = (account.password_hash && bcrypt.compareSync(String(password), String(account.password_hash))) || String(password) === String(account.password_hash);
     if (!passOk) {
-        appendOperationLog(req, {
-            moduleCode: 'auth',
-            bizObjectType: 'account',
-            bizObjectId: account.id,
-            actionType: 'LOGIN',
-            resultStatus: 'FAILED',
-            message: `登录失败，密码错误 ${username}`,
-            requestSummary: { username }
-        });
-        appendSecurityLog(req, {
-            eventType: 'LOGIN',
-            actionType: 'LOGIN_FAIL',
-            username,
-            userId: account.id,
-            result: 'FAILED',
-            moduleCode: 'auth',
-            message: `密码错误：${username}`,
-            metadata: { reason: 'WRONG_PASSWORD' }
+        updateDb((db) => {
+            appendOperationLog(req, { moduleCode: 'auth', bizObjectType: 'account', bizObjectId: account.id, actionType: 'LOGIN', resultStatus: 'FAILED', message: `登录失败，密码错误 ${username}`, requestSummary: { username } }, db);
+            appendSecurityLog(req, { eventType: 'LOGIN', actionType: 'LOGIN_FAIL', username, userId: account.id, result: 'FAILED', moduleCode: 'auth', message: `密码错误：${username}`, metadata: { reason: 'WRONG_PASSWORD' } }, db);
+            return null;
         });
         return apiErr(res, req, 401, '账号或密码错误');
     }
@@ -639,22 +621,17 @@ app.post('/api/login', (req, res) => {
     const userPayload = sanitizeUser(account, rbac);
     const token = jwt.sign({ id: account.id, username: account.login_id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     req.user = userPayload;
-    appendOperationLog(req, {
-        moduleCode: 'auth',
-        bizObjectType: 'account',
-        bizObjectId: account.id,
-        actionType: 'LOGIN',
-        message: `用户登录 ${account.login_id}`,
-        requestSummary: { username }
-    });
-    appendSecurityLog(req, {
-        eventType: 'LOGIN',
-        actionType: 'LOGIN_SUCCESS',
-        username,
-        userId: account.id,
-        result: 'SUCCESS',
-        moduleCode: 'auth',
-        message: `登录成功：${username}`
+    // Batch both log writes in a single updateDb call (avoids 2x JSON.stringify + disk write)
+    updateDb((db) => {
+        appendOperationLog(req, {
+            moduleCode: 'auth', bizObjectType: 'account', bizObjectId: account.id,
+            actionType: 'LOGIN', message: `用户登录 ${account.login_id}`, requestSummary: { username }
+        }, db);
+        appendSecurityLog(req, {
+            eventType: 'LOGIN', actionType: 'LOGIN_SUCCESS', username, userId: account.id,
+            result: 'SUCCESS', moduleCode: 'auth', message: `登录成功：${username}`
+        }, db);
+        return null;
     });
     apiOk(res, req, { ...userPayload, token }, '登录成功');
 });
@@ -2624,6 +2601,38 @@ registerChannelDemandSubmissionRoutes({
     apiErr,
     paginate,
     appendOperationLog
+});
+
+registerFreshnessRuleRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate
+});
+
+registerSlotRuleRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate
+});
+
+registerColdChainRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate
+});
+
+registerDailyTransferRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate
 });
 
 registerWorkflowCenterRoutes({

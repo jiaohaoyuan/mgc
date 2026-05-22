@@ -151,6 +151,24 @@ const router = createRouter({
             meta: { title: '渠道需求提报', icon: 'Box', permissionPath: '/demand/channel-submission' }
         },
         {
+            path: '/rules',
+            name: 'RuleConfigCenter',
+            component: () => import('@/views/RuleConfigCenter.vue'),
+            meta: { title: '规则配置中心', icon: 'Setting', permissionPath: '/rules' }
+        },
+        {
+            path: '/demand/cold-chain-submission',
+            name: 'ColdChainSubmission',
+            component: () => import('@/views/ColdChainSubmission.vue'),
+            meta: { title: '低温需求提报', icon: 'ColdDrink', permissionPath: '/demand/cold-chain-submission' }
+        },
+        {
+            path: '/daily-transfer',
+            name: 'DailyTransferSubmission',
+            component: () => import('@/views/DailyTransferSubmission.vue'),
+            meta: { title: '日分仓调拨需求提报', icon: 'Calendar', permissionPath: '/daily-transfer' }
+        },
+        {
             path: '/workflow-center',
             name: 'WorkflowCenter',
             component: () => import('@/views/WorkflowCenter.vue'),

@@ -380,12 +380,44 @@ const fetchSubmissionLookup = async () => {
   }
 }
 
-const goToSubmission = (versionCode: string) => {
+const goToSubmission = (versionCode: string, openExisting = true) => {
   const sub = submissionLookup.value[versionCode]
-  if (sub && sub.submission_no) {
-    // Navigate to submission page — submission list will show it
-    router.push('/demand/channel-submission')
+  if (openExisting && sub?.submission_no) {
+    router.push({
+      path: '/demand/channel-submission',
+      query: { submission_no: sub.submission_no }
+    })
+    return
   }
+
+  router.push({
+    path: '/demand/channel-submission',
+    query: { version_code: versionCode }
+  })
+}
+
+// Roll version
+const handleRollVersion = async (plan: any) => {
+  try {
+    await ElMessageBox.confirm('将基于最新已确认版本自动滚动生成新版本，确定继续？', '滚动更新', { type: 'info' })
+  } catch { return }
+  rollingVersion.value = true
+  try {
+    const { data } = await axios.post(`/demand/channel-plan/${plan.plan_code}/version/roll`)
+    if (data.code === 200) {
+      ElMessage.success(`滚动生成成功，新版本: ${data.data.version_code}`)
+      // Refresh version list
+      if (activePlan.value) {
+        versionLoading.value = true
+        const res = await axios.get(`/demand/channel-plan/${activePlan.value.plan_code}/version`)
+        versionRows.value = res.data?.data || []
+        versionLoading.value = false
+        fetchSubmissionLookup()
+      }
+    }
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.msg || '滚动失败')
+  } finally { rollingVersion.value = false }
 }
 
 const openVersionDetail = async (row: any, channelCode = '') => {
@@ -868,6 +900,7 @@ onMounted(async () => {
         <el-button type="primary" @click="openVersionDialog()">新建版本</el-button>
         <el-button @click="openRollDialog()">滚动生成版本</el-button>
         <el-button @click="openCompareDialog()">版本对比</el-button>
+        <el-button type="warning" :loading="rollingVersion" @click="handleRollVersion(activePlan)">滚动更新</el-button>
       </div>
       <el-table :data="versionRows" v-loading="versionLoading" border stripe>
         <el-table-column prop="version_code" label="版本号" width="240" />

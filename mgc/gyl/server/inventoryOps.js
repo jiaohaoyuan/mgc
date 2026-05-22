@@ -1,4 +1,4 @@
-﻿const { readDb, updateDb, nextId, nowIso } = require('./localDb');
+﻿const { readDb, updateDb, nextId, nowIso, buildSequenceNo } = require('./localDb');
 
 const TX_TYPES = ['INBOUND', 'OUTBOUND', 'TRANSFER_OUT', 'TRANSFER_IN', 'FREEZE', 'UNFREEZE', 'ADJUST', 'DAMAGE'];
 const TRANSFER_STATUS = ['DRAFT', 'PENDING_REVIEW', 'APPROVED', 'OUTBOUND', 'DONE', 'CANCELED'];
@@ -35,20 +35,7 @@ const updateLedgerFlags = (row) => {
 };
 
 const buildTransferNo = (db) => {
-    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    // O(1) counter stored in db.meta — avoids full array scan on every call
-    db.meta = db.meta || {};
-    db.meta._transfer_seq = db.meta._transfer_seq || {};
-    const key = `TR${datePart}`;
-    if (!db.meta._transfer_seq[key]) {
-        // First call for this date: scan once to seed the counter
-        const maxSeq = arr(db.biz.transfer_orders)
-            .filter((row) => String(row.transfer_no || '').startsWith(key))
-            .reduce((max, row) => Math.max(max, toNum(String(row.transfer_no || '').slice(-4), 0)), 0);
-        db.meta._transfer_seq[key] = maxSeq + 1;
-    }
-    const seq = db.meta._transfer_seq[key]++;
-    return `${key}${String(seq).padStart(4, '0')}`;
+    return buildSequenceNo(db, { prefix: 'TR', metaKey: '_transfer_seq', array: arr(db.biz.transfer_orders), field: 'transfer_no' });
 };
 
 const createLedgerRow = (db, payload = {}) => {

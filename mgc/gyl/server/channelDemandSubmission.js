@@ -1,6 +1,8 @@
 const XLSX = require('xlsx');
-const { readDb, updateDb, nextId, nowIso } = require('./localDb');
+const { readDb, updateDb, nextId, nowIso, buildSequenceNo } = require('./localDb');
 const { ensureChannelDemandPlanStructures } = require('./channelDemandPlan');
+const { queryFreshnessRules, findApplicableRule, sortByFefo, evaluateBatchSupply, getWarehouseChannelScope } = require('./freshnessRules');
+const { getSlotWeights } = require('./slotRules');
 
 const SUBMISSION_STATUS = {
     DRAFT: 0,
@@ -37,88 +39,18 @@ const ensureSubmissionStructures = (db) => {
 };
 
 const buildSubmissionNo = (db) => {
-    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    // O(1) counter stored in db.meta — avoids full array scan on every call
-    db.meta = db.meta || {};
-    db.meta._submission_seq = db.meta._submission_seq || {};
-    const key = `CDS${datePart}`;
-    if (!db.meta._submission_seq[key]) {
-        const maxSeq = arr(db.biz.channel_demand_submissions)
-            .filter((row) => String(row.submission_no || '').startsWith(key))
-            .reduce((max, row) => Math.max(max, toNum(String(row.submission_no || '').slice(-4), 0)), 0);
-        db.meta._submission_seq[key] = maxSeq + 1;
-    }
-    const seq = db.meta._submission_seq[key]++;
-    return `${key}${String(seq).padStart(4, '0')}`;
+    return buildSequenceNo(db, { prefix: 'CDS', metaKey: '_submission_seq', array: arr(db.biz.channel_demand_submissions), field: 'submission_no' });
 };
 
 // ===== Warehouse matching helpers =====
 
-const getChannelProvince = (db, channelCode) => {
-    const channel = arr(db.master.channel).find(
-        (c) => String(c.channel_code) === String(channelCode)
-    );
-    return normalize(channel?.province_name || channel?.province || '');
-};
-
-const getWarehouseProvince = (db, warehouseCode) => {
-    const wh = arr(db.master.warehouse).find(
-        (w) => String(w.warehouse_code) === String(warehouseCode)
-    );
-    return normalize(wh?.province_name || wh?.province || '');
-};
-
-/**
- * Calculate warehouse priority for a given channel:
- * 0 = same province (best), 1 = neighbor province (good), 99 = others
- * Neighbor logic uses a simple adjacency map for common Chinese provinces.
- */
-const NEIGHBOR_MAP = {
-    '浙江': ['江苏', '上海', '安徽', '福建', '江西'],
-    '江苏': ['浙江', '上海', '安徽', '山东'],
-    '上海': ['浙江', '江苏'],
-    '安徽': ['浙江', '江苏', '河南', '湖北', '江西'],
-    '福建': ['浙江', '江西', '广东'],
-    '江西': ['浙江', '福建', '广东', '湖南', '湖北', '安徽'],
-    '山东': ['江苏', '河南', '河北'],
-    '河南': ['山东', '安徽', '湖北', '陕西', '山西', '河北'],
-    '湖北': ['河南', '安徽', '江西', '湖南', '重庆', '陕西'],
-    '湖南': ['湖北', '江西', '广东', '广西', '贵州', '重庆'],
-    '广东': ['福建', '江西', '湖南', '广西'],
-    '广西': ['广东', '湖南', '贵州', '云南'],
-    '四川': ['重庆', '贵州', '云南', '陕西', '甘肃', '青海', '西藏'],
-    '重庆': ['四川', '湖北', '湖南', '贵州'],
-    '贵州': ['四川', '重庆', '湖南', '广西', '云南'],
-    '云南': ['四川', '贵州', '广西'],
-    '北京': ['天津', '河北'],
-    '天津': ['北京', '河北'],
-    '河北': ['北京', '天津', '山东', '河南', '山西', '辽宁'],
-    '辽宁': ['河北', '吉林'],
-    '吉林': ['辽宁'],
-    '黑龙江': ['内蒙古'],
-    '内蒙古': ['黑龙江', '吉林', '辽宁', '河北', '山西', '陕西', '宁夏', '甘肃'],
-    '山西': ['河北', '河南', '陕西', '内蒙古'],
-    '陕西': ['山西', '河南', '湖北', '甘肃', '四川', '宁夏', '内蒙古'],
-    '甘肃': ['陕西', '青海', '新疆', '宁夏', '内蒙古', '四川'],
-    '青海': ['甘肃', '四川', '西藏', '新疆'],
-    '宁夏': ['陕西', '甘肃', '内蒙古'],
-    '新疆': ['甘肃', '青海', '西藏'],
-    '西藏': ['四川', '青海', '新疆', '云南'],
-    '海南': ['广东'],
-    '香港': ['广东'],
-    '澳门': ['广东'],
-    '台湾': ['福建']
-};
-
+// calcWarehousePriority delegates to getWarehouseChannelScope (freshnessRules.js)
+// — the single source of truth for province adjacency. Eliminates ~50-line duplicate NEIGHBOR_MAP.
 const calcWarehousePriority = (db, warehouseCode, channelCode) => {
-    const chProv = getChannelProvince(db, channelCode);
-    const whProv = getWarehouseProvince(db, warehouseCode);
-
-    if (!chProv || !whProv) return 50; // unknown => medium priority
-    if (chProv === whProv) return 0;   // same province
-    const neighbors = NEIGHBOR_MAP[chProv] || [];
-    if (neighbors.includes(whProv)) return 1; // neighbor province
-    return 99; // far away
+    const scope = getWarehouseChannelScope(db, warehouseCode, channelCode);
+    if (scope === 0) return 0;
+    if (scope === 1) return 1;
+    return 99;
 };
 
 /**
@@ -165,24 +97,98 @@ const getSkuWarehouseStock = (db, skuCode, channelCode) => {
 
 // ===== Core allocation logic =====
 
+// Apply freshness rules to filter and adjust available warehouse stock
+const applyFreshnessFilter = (db, warehouses, skuCode, channelCode) => {
+    // Get SKU temperature zone
+    const sku = arr(db.master.sku).find(s => String(s.sku_code) === String(skuCode));
+    const temperatureZone = sku ? (Number(sku.temperature_zone) || 0) : 0;
+
+    const freshRules = queryFreshnessRules(db, { skuCode, temperatureZone });
+    if (freshRules.length === 0) return warehouses; // no rules, allow all
+
+    // Get ledger batches for this SKU
+    const ledgerBatches = arr(db.biz.inventory_ledger).filter(
+        r => String(r.sku_code) === String(skuCode) && toNum(r.available_qty, 0) > 0
+    );
+
+    // Check if any rule requires force_fefo
+    const forceFefo = freshRules.some(r => Boolean(r.force_fefo));
+
+    return warehouses.map(wh => {
+        // Get batches for this warehouse
+        const whBatches = ledgerBatches.filter(
+            r => String(r.warehouse_code) === String(wh.warehouse_code)
+        );
+
+        if (whBatches.length === 0) return { ...wh, available_qty: 0, freshness_blocked: true };
+
+        // Filter batches by freshness rules
+        const validBatches = whBatches.filter(batch => {
+            const remainingDays = Number(batch.remaining_days) || 0;
+            const rule = findApplicableRule(freshRules, remainingDays);
+            if (!rule) return true; // no matching rule = no restriction
+            const scope = Number(rule.allowed_scope) || 2;
+            const batchScope = getWarehouseChannelScope(db, wh.warehouse_code, channelCode);
+            return batchScope <= scope;
+        });
+
+        // Sort by FEFO if required
+        const sorted = forceFefo
+            ? [...validBatches].sort((a, b) => (a.expiry_date || '9999').localeCompare(b.expiry_date || '9999'))
+            : validBatches;
+
+        const validQty = sorted.reduce((sum, b) => sum + toNum(b.available_qty, 0), 0);
+
+        return {
+            ...wh,
+            available_qty: validQty,
+            freshness_blocked: validQty === 0,
+            _freshness: { temperatureZone, forceFefo, validBatchCount: sorted.length }
+        };
+    }).filter(wh => wh.available_qty > 0); // remove warehouses with zero valid stock
+};
+
 const autoAllocateLine = (db, line, warehouseCount, ratios) => {
     const { sku_code, lv2_channel_code, plan_value } = line;
     const targetQty = toNum(plan_value, 0);
     if (targetQty <= 0) return [];
 
     // Get available warehouse stock for this SKU
-    const warehouses = getSkuWarehouseStock(db, sku_code, lv2_channel_code);
+    const rawWarehouses = getSkuWarehouseStock(db, sku_code, lv2_channel_code);
+
+    // Apply freshness rule filtering
+    const warehouses = applyFreshnessFilter(db, rawWarehouses, sku_code, lv2_channel_code);
 
     // Take top N warehouses (up to warehouseCount)
     const selected = warehouses.slice(0, Math.max(1, warehouseCount));
 
     if (selected.length === 0) return [];
 
-    // Normalize ratios to match selected count
-    const effectiveRatios = ratios.slice(0, selected.length);
-    // Pad with 0 for any ratio slots beyond user-specified ratios
-    while (effectiveRatios.length < selected.length) {
-        effectiveRatios.push(0);
+    // Check for active slot override: if a promotional/festival slot is active,
+    // its warehouse weights override the default ratios
+    const slotResult = getSlotWeights(db, {
+        channelCode: lv2_channel_code,
+        skuCode: sku_code,
+        defaultRatios: ratios
+    });
+    let effectiveRatios;
+    if (slotResult.slot_code && slotResult.weights.length > 0) {
+        // Build weight map once
+        const whWeightMap = new Map(slotResult.weights.map(w => [w.warehouse_code, w.weight]));
+        // Reorder warehouses by slot weight descending
+        selected.sort((a, b) => {
+            const wa = whWeightMap.get(a.warehouse_code) || 0;
+            const wb = whWeightMap.get(b.warehouse_code) || 0;
+            return wb - wa;
+        });
+        // Rebuild ratios aligned with the sorted selected warehouses
+        effectiveRatios = selected.map(wh => whWeightMap.get(wh.warehouse_code) || 0);
+    } else {
+        // Use default ratios, padded to match selected count
+        effectiveRatios = ratios.slice(0, selected.length);
+        while (effectiveRatios.length < selected.length) {
+            effectiveRatios.push(0);
+        }
     }
     const ratioSum = effectiveRatios.reduce((s, r) => s + r, 0);
     const normalizedRatios = ratioSum > 0

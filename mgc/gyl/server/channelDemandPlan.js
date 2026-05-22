@@ -1639,5 +1639,6 @@ module.exports = {
     ensureChannelDemandPlanStructures,
     registerChannelDemandPlanRoutes,
     buildWeekSequence,
-    applyLockSnapshotToRows
+    applyLockSnapshotToRows,
+    addWeeksToWeekCode
 };

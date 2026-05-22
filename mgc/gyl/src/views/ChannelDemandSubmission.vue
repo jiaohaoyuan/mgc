@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAppStore } from '@/stores/appStore'
 
 const router = useRouter()
+const route = useRoute()
 const appStore = useAppStore()
 const isSuperAdmin = computed(() => appStore.isSuperAdmin)
 
@@ -101,6 +102,7 @@ const editingValue = ref('')
 const stockWarnings = ref<any[]>([])
 
 // ===== Computed =====
+const warehouseColumns = computed(() => lineRows.value[0]?.warehouses || [])
 const canEdit = computed(() => {
   const s = activeSubmission.value
   if (!s) return false
@@ -169,7 +171,7 @@ const handleQuery = () => {
 }
 
 // ===== Create =====
-const openCreateDialog = async () => {
+const openCreateDialog = async (presetVersionCode = '') => {
   createForm.version_code = ''
   createForm.warehouse_count = 2
   createForm.ratios = [70, 30]
@@ -181,6 +183,9 @@ const openCreateDialog = async () => {
       if (confirmedVersions.value.length === 0) {
         ElMessage.warning('暂无已确认的需求计划版本，请先在渠道需求计划中确认一个版本')
         return
+      }
+      if (presetVersionCode && confirmedVersions.value.some((v) => String(v.version_code) === String(presetVersionCode))) {
+        createForm.version_code = presetVersionCode
       }
     }
   } catch {
@@ -552,9 +557,60 @@ const goToDemandPlan = () => {
   router.push('/demand/channel-plan')
 }
 
+const openSubmissionByNo = async (submissionNo: string) => {
+  const target = submissionRows.value.find((row) => String(row.submission_no) === String(submissionNo))
+  if (target) {
+    await openEditDrawer(target)
+    return
+  }
+
+  try {
+    const { data } = await axios.get(`${apiBase}/${submissionNo}`)
+    if (data.code === 200 && data.data) {
+      await openEditDrawer({
+        submission_no: submissionNo,
+        ...data.data
+      })
+    }
+  } catch {
+    ElMessage.warning('未找到对应提报单')
+  }
+}
+
+const openCreateByVersionCode = async (versionCode: string) => {
+  await openCreateDialog(versionCode)
+}
+
+watch(
+  () => route.query.submission_no,
+  async (submissionNo) => {
+    if (typeof submissionNo === 'string' && submissionNo) {
+      await openSubmissionByNo(submissionNo)
+    }
+  }
+)
+
+watch(
+  () => route.query.version_code,
+  async (versionCode) => {
+    if (typeof versionCode === 'string' && versionCode) {
+      await openCreateByVersionCode(versionCode)
+    }
+  }
+)
+
 // ===== Init =====
-onMounted(() => {
-  fetchList()
+onMounted(async () => {
+  await fetchList()
+  const submissionNo = typeof route.query.submission_no === 'string' ? route.query.submission_no : ''
+  if (submissionNo) {
+    await openSubmissionByNo(submissionNo)
+    return
+  }
+  const versionCode = typeof route.query.version_code === 'string' ? route.query.version_code : ''
+  if (versionCode) {
+    await openCreateByVersionCode(versionCode)
+  }
 })
 </script>
 
@@ -863,7 +919,7 @@ onMounted(() => {
 
           <!-- Dynamic warehouse columns -->
           <el-table-column
-            v-for="(wh, whIdx) in (lineRows[0]?.warehouses || [])"
+            v-for="(wh, whIdx) in warehouseColumns"
             :key="'wh_' + whIdx"
             min-width="180"
           >
@@ -886,18 +942,17 @@ onMounted(() => {
                       style="width: 90px"
                       @keydown="handleEditKeydown($event, row)"
                       @blur="finishEditCell(row)"
-                      ref=""
                     />
                   </div>
                   <div
                     v-else
                     class="qty-display"
                     :class="{ editable: canEdit }"
-                    @click="canEdit && startEditCell(row.id, whIdx, row.warehouses[whIdx].allocation_qty)"
+                    @click="canEdit && startEditCell(Number(row.id), Number(whIdx), Number(row.warehouses[whIdx].allocation_qty || 0))"
                   >
                     <span
                       :style="{
-                        color: row.warehouses[whIdx].allocation_qty > row.warehouses[whIdx].available_qty ? '#f56c6c' : '#303133',
+                        color: Number(row.warehouses[whIdx].allocation_qty || 0) > Number(row.warehouses[whIdx].available_qty || 0) ? '#f56c6c' : '#303133',
                         fontWeight: 'bold'
                       }"
                     >
@@ -910,7 +965,7 @@ onMounted(() => {
                   <div style="font-size: 11px; color: #909399">
                     库存: {{ fmtQty(row.warehouses[whIdx].available_qty) }}
                     <el-tooltip
-                      v-if="row.warehouses[whIdx].allocation_qty > row.warehouses[whIdx].available_qty"
+                      v-if="Number(row.warehouses[whIdx].allocation_qty || 0) > Number(row.warehouses[whIdx].available_qty || 0)"
                       content="分配量超过可用库存！"
                       placement="top"
                     >
