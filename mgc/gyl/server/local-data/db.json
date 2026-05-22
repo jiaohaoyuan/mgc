@@ -1,11 +1,14 @@
 {
   "meta": {
     "created_at": "2026-04-09T03:02:20.246Z",
-    "updated_at": "2026-05-21T08:45:00.000Z",
+    "updated_at": "2026-05-22T02:09:22.446Z",
     "storage_mode": "local-json",
     "helper_code": "952746",
     "helper_code_updated_at": "2026-04-09T03:02:20.246Z",
-    "sms_codes": {}
+    "sms_codes": {},
+    "_daily_seq": {
+      "DT20260522": 2
+    }
   },
   "system": {
     "departments": [
@@ -17494,7 +17497,7 @@
         "batch_no": "WH-HQ-HZ-SKU-UHT-UHT-250ML-24BX-PLN-001-20260715",
         "production_date": "2026-07-15",
         "expiry_date": "2026-08-14",
-        "remaining_days": 85,
+        "remaining_days": 84,
         "total_qty": 300,
         "available_qty": 120,
         "locked_qty": 0,
@@ -17503,7 +17506,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "TRANSFER_OUT:TR202604090004",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 2,
@@ -17514,7 +17517,7 @@
         "batch_no": "WH-HQ-HZ-SKU-UHT-UHT-250ML-12BX-A2N-001-20260625",
         "production_date": "2026-06-25",
         "expiry_date": "2026-07-25",
-        "remaining_days": 65,
+        "remaining_days": 64,
         "total_qty": 220,
         "available_qty": 220,
         "locked_qty": 0,
@@ -17523,7 +17526,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "RECOVERY_INIT",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 3,
@@ -17534,7 +17537,7 @@
         "batch_no": "WH-HQ-HZ-SKU-PWD-PWD-800G-01CN-HPR-001-20270312",
         "production_date": "2027-03-12",
         "expiry_date": "2027-04-11",
-        "remaining_days": 325,
+        "remaining_days": 324,
         "total_qty": 160,
         "available_qty": 136,
         "locked_qty": 24,
@@ -17543,7 +17546,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_ALLOCATE:SO202604100006",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 4,
@@ -17554,7 +17557,7 @@
         "batch_no": "WH-DC-SUZHOU-SKU-UHT-UHT-250ML-24BX-PLN-001-20260615",
         "production_date": "2026-06-15",
         "expiry_date": "2026-07-15",
-        "remaining_days": 55,
+        "remaining_days": 54,
         "total_qty": 108,
         "available_qty": 108,
         "locked_qty": 0,
@@ -17563,7 +17566,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "ORDER_UNLOCK:SO202604090018",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 5,
@@ -17574,7 +17577,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-PWD-PWD-800G-01CN-HPR-001-20270511",
         "production_date": "2027-05-11",
         "expiry_date": "2027-06-10",
-        "remaining_days": 385,
+        "remaining_days": 384,
         "total_qty": 42,
         "available_qty": 42,
         "locked_qty": 0,
@@ -17583,7 +17586,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "TRANSFER_DONE:TR202604090006",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 6,
@@ -17594,7 +17597,7 @@
         "batch_no": "WH-RDC-EAST-SH-SKU-UHT-UHT-1L-12BX-PLN-001-20260725",
         "production_date": "2026-07-25",
         "expiry_date": "2026-08-24",
-        "remaining_days": 95,
+        "remaining_days": 94,
         "total_qty": 110,
         "available_qty": 110,
         "locked_qty": 0,
@@ -17603,7 +17606,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "RECOVERY_INIT",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 7,
@@ -17614,7 +17617,7 @@
         "batch_no": "WH-DC-CHANGSHA-SKU-FRM-PAS-950ML-01BT-PLN-001-20260321",
         "production_date": "2026-03-21",
         "expiry_date": "2026-04-20",
-        "remaining_days": -31,
+        "remaining_days": -32,
         "total_qty": 72,
         "available_qty": 72,
         "locked_qty": 0,
@@ -17623,7 +17626,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "RECOVERY_INIT",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 8,
@@ -17634,7 +17637,7 @@
         "batch_no": "WH-DC-BEIJING-SKU-UHT-UHT-250ML-12BX-A2N-001-20260116",
         "production_date": "2026-01-16",
         "expiry_date": "2026-07-15",
-        "remaining_days": 55,
+        "remaining_days": 54,
         "total_qty": 36,
         "available_qty": 36,
         "locked_qty": 0,
@@ -17643,7 +17646,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "PO_RECEIPT:PO202604010018",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 9,
@@ -17654,7 +17657,7 @@
         "batch_no": "WH-DC-SHENZHEN-SKU-YOG-CHL-200G-10CP-ZSG-001-20260406",
         "production_date": "2026-04-06",
         "expiry_date": "2026-04-27",
-        "remaining_days": -24,
+        "remaining_days": -25,
         "total_qty": 18,
         "available_qty": 18,
         "locked_qty": 0,
@@ -17663,7 +17666,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "DAMAGE:DM202604090001",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 10,
@@ -17674,7 +17677,7 @@
         "batch_no": "WH-RDC-WEST-CD-SKU-CHS-CRM-180G-01BX-PLN-001-20251216",
         "production_date": "2025-12-16",
         "expiry_date": "2026-04-15",
-        "remaining_days": -36,
+        "remaining_days": -37,
         "total_qty": 24,
         "available_qty": 24,
         "locked_qty": 0,
@@ -17683,7 +17686,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "PO_RECEIPT:PO202604030021",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 11,
@@ -17694,7 +17697,7 @@
         "batch_no": "WH-RDC-SOUTH-GZ-SKU-YOG-CHL-200G-10CP-ZSG-001-20260409",
         "production_date": "2026-04-09",
         "expiry_date": "2026-04-30",
-        "remaining_days": -21,
+        "remaining_days": -22,
         "total_qty": 180,
         "available_qty": 180,
         "locked_qty": 0,
@@ -17703,7 +17706,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "PO_RECEIPT:PO202604090001",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 12,
@@ -17714,7 +17717,7 @@
         "batch_no": "WH-DC-QINGDAO-SKU-PWD-PWD-800G-01CN-HPR-001-20251109",
         "production_date": "2025-11-09",
         "expiry_date": "2027-05-03",
-        "remaining_days": 347,
+        "remaining_days": 346,
         "total_qty": 18,
         "available_qty": 18,
         "locked_qty": 0,
@@ -17723,7 +17726,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "PO_RECEIPT:PO202603260019",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 13,
@@ -17734,7 +17737,7 @@
         "batch_no": "WH-DC-FOSHAN-SKU-YOG-CHL-200G-10CP-ZSG-001-20260405",
         "production_date": "2026-04-05",
         "expiry_date": "2026-04-24",
-        "remaining_days": -27,
+        "remaining_days": -28,
         "total_qty": 16,
         "available_qty": 16,
         "locked_qty": 0,
@@ -17743,7 +17746,7 @@
         "near_expiry_flag": 1,
         "unsellable_flag": 1,
         "last_change_source": "PO_RECEIPT:PO202604070017",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 14,
@@ -17754,7 +17757,7 @@
         "batch_no": "WH-DC-XIAN-SKU-PWD-PWD-800G-01CN-HPR-001-20251113",
         "production_date": "2025-11-13",
         "expiry_date": "2027-05-07",
-        "remaining_days": 351,
+        "remaining_days": 350,
         "total_qty": 12,
         "available_qty": 12,
         "locked_qty": 0,
@@ -17763,7 +17766,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "PO_RECEIPT:PO202603280024",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       },
       {
         "id": 15,
@@ -17774,7 +17777,7 @@
         "batch_no": "WH-RDC-NORTH-TJ-SKU-PWD-PWD-800G-01CN-HPR-001-20270511",
         "production_date": "2027-05-11",
         "expiry_date": "2027-06-10",
-        "remaining_days": 385,
+        "remaining_days": 384,
         "total_qty": 48,
         "available_qty": 48,
         "locked_qty": 0,
@@ -17783,7 +17786,7 @@
         "near_expiry_flag": 0,
         "unsellable_flag": 0,
         "last_change_source": "TRANSFER_IN:TR202604090006",
-        "updated_at": "2026-05-21T09:09:24.261Z"
+        "updated_at": "2026-05-22T02:09:09.866Z"
       }
     ],
     "inventory_transactions": [
@@ -100207,6 +100210,17 @@
         "created_time": "2026-05-21T08:30:00.000Z",
         "updated_by": "焦浩元",
         "updated_time": "2026-05-21T08:30:00.000Z"
+      },
+      {
+        "id": 2,
+        "daily_no": "DT202605220001",
+        "source_type": "DEMAND_SUBMISSION",
+        "source_submission_no": "CDS202606010001",
+        "status": 0,
+        "created_by": "焦浩元",
+        "created_time": "2026-05-22T02:09:22.446Z",
+        "updated_by": "焦浩元",
+        "updated_time": "2026-05-22T02:09:22.446Z"
       }
     ],
     "daily_transfer_lines": [
@@ -101649,6 +101663,386 @@
         "transfer_no": "TR202606019071",
         "category_code": "CAT-L3-CHILLED-YOG",
         "category_name": "低温酸奶"
+      },
+      {
+        "id": 73,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-UHT-UHT-250ML-12BX-PLN-001",
+        "sku_name": "常温纯牛奶250ml*12",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W24",
+        "date": "2026-06-08",
+        "allocated_qty": 31,
+        "adjusted_qty": 31,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 74,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-UHT-UHT-250ML-12BX-PLN-001",
+        "sku_name": "常温纯牛奶250ml*12",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W24",
+        "date": "2026-06-09",
+        "allocated_qty": 31,
+        "adjusted_qty": 31,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 75,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-DC-SUZHOU",
+        "warehouse_name": "苏州渠道分拨仓",
+        "sku_code": "SKU-UHT-UHT-250ML-12BX-PLN-001",
+        "sku_name": "常温纯牛奶250ml*12",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W24",
+        "date": "2026-06-08",
+        "allocated_qty": 25,
+        "adjusted_qty": 25,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 76,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-DC-SUZHOU",
+        "warehouse_name": "苏州渠道分拨仓",
+        "sku_code": "SKU-UHT-UHT-250ML-12BX-PLN-001",
+        "sku_name": "常温纯牛奶250ml*12",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W24",
+        "date": "2026-06-09",
+        "allocated_qty": 25,
+        "adjusted_qty": 25,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 77,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-UHT-UHT-1L-12BX-PLN-001",
+        "sku_name": "常温纯牛奶1L*12",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W25",
+        "date": "2026-06-15",
+        "allocated_qty": 26,
+        "adjusted_qty": 26,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 78,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-UHT-UHT-1L-12BX-PLN-001",
+        "sku_name": "常温纯牛奶1L*12",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W25",
+        "date": "2026-06-16",
+        "allocated_qty": 26,
+        "adjusted_qty": 26,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 79,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-DC-SUZHOU",
+        "warehouse_name": "苏州渠道分拨仓",
+        "sku_code": "SKU-UHT-UHT-1L-12BX-PLN-001",
+        "sku_name": "常温纯牛奶1L*12",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W25",
+        "date": "2026-06-15",
+        "allocated_qty": 22,
+        "adjusted_qty": 22,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 80,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-DC-SUZHOU",
+        "warehouse_name": "苏州渠道分拨仓",
+        "sku_code": "SKU-UHT-UHT-1L-12BX-PLN-001",
+        "sku_name": "常温纯牛奶1L*12",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W25",
+        "date": "2026-06-16",
+        "allocated_qty": 21,
+        "adjusted_qty": 21,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 81,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-FRM-PAS-450ML-01BT-PLN-001",
+        "sku_name": "巴氏鲜奶450ml",
+        "channel_code": "CH-L2-DIST",
+        "channel_name": "经销渠道",
+        "week": "2026W24",
+        "date": "2026-06-08",
+        "allocated_qty": 21,
+        "adjusted_qty": 21,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 82,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-FRM-PAS-450ML-01BT-PLN-001",
+        "sku_name": "巴氏鲜奶450ml",
+        "channel_code": "CH-L2-DIST",
+        "channel_name": "经销渠道",
+        "week": "2026W24",
+        "date": "2026-06-09",
+        "allocated_qty": 21,
+        "adjusted_qty": 21,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 83,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-DC-SUZHOU",
+        "warehouse_name": "苏州渠道分拨仓",
+        "sku_code": "SKU-FRM-PAS-450ML-01BT-PLN-001",
+        "sku_name": "巴氏鲜奶450ml",
+        "channel_code": "CH-L2-DIST",
+        "channel_name": "经销渠道",
+        "week": "2026W24",
+        "date": "2026-06-08",
+        "allocated_qty": 17,
+        "adjusted_qty": 17,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 84,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-DC-SUZHOU",
+        "warehouse_name": "苏州渠道分拨仓",
+        "sku_code": "SKU-FRM-PAS-450ML-01BT-PLN-001",
+        "sku_name": "巴氏鲜奶450ml",
+        "channel_code": "CH-L2-DIST",
+        "channel_name": "经销渠道",
+        "week": "2026W24",
+        "date": "2026-06-09",
+        "allocated_qty": 17,
+        "adjusted_qty": 17,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 85,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-YOG-CHL-200G-10CP-PLN-001",
+        "sku_name": "低温原味酸奶200g*10",
+        "channel_code": "CH-L2-DIST",
+        "channel_name": "经销渠道",
+        "week": "2026W25",
+        "date": "2026-06-15",
+        "allocated_qty": 18,
+        "adjusted_qty": 18,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 86,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-YOG-CHL-200G-10CP-PLN-001",
+        "sku_name": "低温原味酸奶200g*10",
+        "channel_code": "CH-L2-DIST",
+        "channel_name": "经销渠道",
+        "week": "2026W25",
+        "date": "2026-06-16",
+        "allocated_qty": 17,
+        "adjusted_qty": 17,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 87,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-DC-SUZHOU",
+        "warehouse_name": "苏州渠道分拨仓",
+        "sku_code": "SKU-YOG-CHL-200G-10CP-PLN-001",
+        "sku_name": "低温原味酸奶200g*10",
+        "channel_code": "CH-L2-DIST",
+        "channel_name": "经销渠道",
+        "week": "2026W25",
+        "date": "2026-06-15",
+        "allocated_qty": 15,
+        "adjusted_qty": 15,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 88,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-DC-SUZHOU",
+        "warehouse_name": "苏州渠道分拨仓",
+        "sku_code": "SKU-YOG-CHL-200G-10CP-PLN-001",
+        "sku_name": "低温原味酸奶200g*10",
+        "channel_code": "CH-L2-DIST",
+        "channel_name": "经销渠道",
+        "week": "2026W25",
+        "date": "2026-06-16",
+        "allocated_qty": 14,
+        "adjusted_qty": 14,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 89,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-YOG-CHL-200G-10CP-STR-001",
+        "sku_name": "低温草莓酸奶200g*10",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W26",
+        "date": "2026-06-22",
+        "allocated_qty": 16,
+        "adjusted_qty": 16,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 90,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-RDC-EAST-SH",
+        "warehouse_name": "上海华东RDC",
+        "sku_code": "SKU-YOG-CHL-200G-10CP-STR-001",
+        "sku_name": "低温草莓酸奶200g*10",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W26",
+        "date": "2026-06-23",
+        "allocated_qty": 16,
+        "adjusted_qty": 16,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 91,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-DC-SUZHOU",
+        "warehouse_name": "苏州渠道分拨仓",
+        "sku_code": "SKU-YOG-CHL-200G-10CP-STR-001",
+        "sku_name": "低温草莓酸奶200g*10",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W26",
+        "date": "2026-06-22",
+        "allocated_qty": 13,
+        "adjusted_qty": 13,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
+      },
+      {
+        "id": 92,
+        "daily_no": "DT202605220001",
+        "warehouse_code": "WH-DC-SUZHOU",
+        "warehouse_name": "苏州渠道分拨仓",
+        "sku_code": "SKU-YOG-CHL-200G-10CP-STR-001",
+        "sku_name": "低温草莓酸奶200g*10",
+        "channel_code": "CH-L2-KA",
+        "channel_name": "现代商超",
+        "week": "2026W26",
+        "date": "2026-06-23",
+        "allocated_qty": 13,
+        "adjusted_qty": 13,
+        "is_adjusted": false,
+        "lead_days": 3,
+        "temperature_zone": 0,
+        "transfer_no": "",
+        "freshness_allocation_preview": []
       }
     ]
   },
@@ -110692,6 +111086,36 @@
         "before_snapshot": null,
         "after_snapshot": null,
         "created_at": "2026-05-21T09:05:17.863Z"
+      },
+      {
+        "id": 130,
+        "log_type": "BUSINESS",
+        "module_code": "auth",
+        "biz_object_type": "account",
+        "biz_object_id": 1,
+        "action_type": "LOGIN",
+        "operator_id": 1,
+        "operator_name": "焦浩元",
+        "operator_roles": [
+          "超级管理员",
+          "平台管理员",
+          "业务运营经理",
+          "仓配运营主管",
+          "主数据治理专员"
+        ],
+        "operator_ip": "::1",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
+        "request_path": "/api/login",
+        "request_method": "POST",
+        "trace_id": "bc4329ad-12f1-4078-9683-76543f2a67b7",
+        "result_status": "SUCCESS",
+        "message": "用户登录 jiaohaoyuan",
+        "request_summary": {
+          "username": "jiaohaoyuan"
+        },
+        "before_snapshot": null,
+        "after_snapshot": null,
+        "created_at": "2026-05-22T02:09:00.352Z"
       }
     ],
     "import_tasks": [
@@ -121281,6 +121705,21 @@
         "message": "登录成功：jiaohaoyuan",
         "metadata": {},
         "created_at": "2026-05-21T09:05:17.863Z"
+      },
+      {
+        "id": 95,
+        "event_type": "LOGIN",
+        "username": "jiaohaoyuan",
+        "user_id": 1,
+        "module_code": "auth",
+        "action_type": "LOGIN_SUCCESS",
+        "result": "SUCCESS",
+        "risk_level": "LOW",
+        "operator_ip": "::1",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
+        "message": "登录成功：jiaohaoyuan",
+        "metadata": {},
+        "created_at": "2026-05-22T02:09:00.352Z"
       }
     ],
     "system_configs": [
