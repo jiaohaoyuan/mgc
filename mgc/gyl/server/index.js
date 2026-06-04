@@ -25,6 +25,9 @@ const { registerColdChainRoutes } = require('./coldChainSubmission');
 const { registerDailyTransferRoutes } = require('./dailyTransferSubmission');
 const { registerWorkflowCenterRoutes } = require('./workflowCenter');
 const { registerManagementCockpitRoutes } = require('./managementCockpit');
+const { registerSafetyStockParamsRoutes } = require('./safetyStockParams');
+const { registerWarehouseCapacityRulesRoutes } = require('./warehouseCapacityRules');
+const { registerAdjustableDaysRulesRoutes } = require('./adjustableDaysRules');
 const {
     buildSkuRuleConfig,
     inferStandardSkuCode,
@@ -80,7 +83,10 @@ const API_PERMISSION_RULES = [
     { matcher: /^\/daily-transfer(?:\/|$)/, permissionPath: '/daily-transfer' },
     { matcher: /^\/workflow-center(?:\/|$)/, permissionPath: '/workflow-center' },
     { matcher: /^\/management-cockpit(?:\/|$)/, permissionPath: '/management-cockpit' },
-    { matcher: /^\/platform(?:\/|$)/, permissionPath: '/enterprise-platform' }
+    { matcher: /^\/platform(?:\/|$)/, permissionPath: '/enterprise-platform' },
+    { matcher: /^\/safety-stock-params(?:\/|$)/, permissionPath: '/safety-stock-params' },
+    { matcher: /^\/rules\/warehouse-capacity(?:\/|$)/, permissionPath: '/rules/warehouse-capacity' },
+    { matcher: /^\/rules\/adjustable-days(?:\/|$)/, permissionPath: '/rules/adjustable-days' }
 ];
 
 const createTraceId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -2656,6 +2662,30 @@ registerMdmGovernanceRoutes({
     superAdminRequired,
     apiOk,
     apiErr
+});
+
+registerSafetyStockParamsRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate
+});
+
+registerWarehouseCapacityRulesRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate
+});
+
+registerAdjustableDaysRulesRoutes({
+    app,
+    authRequired,
+    apiOk,
+    apiErr,
+    paginate
 });
 
 const withMasterFilter = (rows, { keyword = '', status = '' }, fields) => {

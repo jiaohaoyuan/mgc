@@ -126,6 +126,27 @@ export const webSidebarConfig: SidebarSection[] = [
         label: '牧场与奶源运营中心',
         icon: 'Van',
         path: '/pasture'
+      },
+      {
+        type: 'item',
+        id: 'safety-stock-params',
+        label: '安全库存参数设置',
+        icon: 'Setting',
+        path: '/safety-stock-params'
+      },
+      {
+        type: 'item',
+        id: 'warehouse-capacity-rules',
+        label: '仓能力规则',
+        icon: 'HomeFilled',
+        path: '/rules/warehouse-capacity'
+      },
+      {
+        type: 'item',
+        id: 'adjustable-days-rules',
+        label: '可调天数规则',
+        icon: 'Calendar',
+        path: '/rules/adjustable-days'
       }
     ]
   },

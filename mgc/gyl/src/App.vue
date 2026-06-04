@@ -58,7 +58,10 @@ const COMMON_ROUTE_PRELOADERS: Array<() => Promise<unknown>> = [
   () => import('@/views/PlatformArchiveStrategyPage.vue'),
   () => import('@/views/PlatformMonitorPage.vue'),
   () => import('@/views/PlatformFinePermissionPage.vue'),
-  () => import('@/views/PlatformHealthViewPage.vue')
+  () => import('@/views/PlatformHealthViewPage.vue'),
+  () => import('@/views/SafetyStockParams.vue'),
+  () => import('@/views/WarehouseCapacityRules.vue'),
+  () => import('@/views/AdjustableDaysRules.vue')
 ]
 
 let chunksWarmedUp = false

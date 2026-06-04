@@ -222,6 +222,9 @@ export const useAppStore = defineStore('app', () => {
             '/mdm/rltn/org-reseller',
             '/mdm/rltn/product-sku',
             '/mdm/governance',
+            '/safety-stock-params',
+            '/rules/warehouse-capacity',
+            '/rules/adjustable-days',
             '/profile'
         ]
 

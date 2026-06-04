@@ -281,6 +281,24 @@ const router = createRouter({
             name: 'MdmGovernanceCenter',
             component: () => import('@/views/MdmGovernanceCenter.vue'),
             meta: { title: '主数据治理平台', icon: 'DataBoard', requiresSuperAdmin: true, permissionPath: '/mdm/governance' }
+        },
+        {
+            path: '/safety-stock-params',
+            name: 'SafetyStockParams',
+            component: () => import('@/views/SafetyStockParams.vue'),
+            meta: { title: '安全库存参数设置', icon: 'Setting', permissionPath: '/safety-stock-params' }
+        },
+        {
+            path: '/rules/warehouse-capacity',
+            name: 'WarehouseCapacityRules',
+            component: () => import('@/views/WarehouseCapacityRules.vue'),
+            meta: { title: '仓能力规则', icon: 'HomeFilled', permissionPath: '/rules/warehouse-capacity' }
+        },
+        {
+            path: '/rules/adjustable-days',
+            name: 'AdjustableDaysRules',
+            component: () => import('@/views/AdjustableDaysRules.vue'),
+            meta: { title: '可调天数规则', icon: 'Calendar', permissionPath: '/rules/adjustable-days' }
         }
 
     ]
